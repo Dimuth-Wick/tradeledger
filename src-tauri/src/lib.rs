@@ -4,6 +4,8 @@ mod commands;
 // flagged as dead code before the commands that call them exist.
 pub mod db;
 pub mod models;
+pub mod risk;
+pub mod trade_entry;
 
 use std::sync::Mutex;
 
@@ -28,7 +30,15 @@ pub fn run() {
         })
         // Every command the UI may call must be listed here; unlisted
         // functions are unreachable from the webview.
-        .invoke_handler(tauri::generate_handler![commands::ping, commands::db_info])
+        .invoke_handler(tauri::generate_handler![
+            commands::ping,
+            commands::db_info,
+            commands::trades::create_trade,
+            commands::trades::update_trade,
+            commands::trades::delete_trade,
+            commands::trades::get_trade,
+            commands::trades::list_trades,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

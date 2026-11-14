@@ -1,6 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { invoke } from "@tauri-apps/api/core";
-import { dbInfo, ping } from "./api";
+import {
+  createTrade,
+  dbInfo,
+  deleteTrade,
+  getTrade,
+  listTrades,
+  ping,
+  updateTrade,
+  type TradeInput,
+} from "./api";
 
 // Tests run in Node, not inside the Tauri window, so there is no Rust core to
 // answer. We replace invoke() with a fake and check what the wrapper asks for.
@@ -41,5 +50,49 @@ describe("api.dbInfo", () => {
 
     await expect(dbInfo()).resolves.toEqual(info);
     expect(invokeMock).toHaveBeenCalledWith("db_info");
+  });
+});
+
+describe("trade commands", () => {
+  // Fake trade input (not real data).
+  const input: TradeInput = {
+    exchange: "binance",
+    market: "usdm",
+    symbol: "BTCUSDT",
+    direction: "long",
+    openTime: 1_700_000_000_000,
+    qty: "0.01",
+    avgEntry: "36500",
+    stopLoss: "36000",
+  };
+
+  beforeEach(() => {
+    invokeMock.mockReset();
+    invokeMock.mockResolvedValue(undefined);
+  });
+
+  // Command names and argument keys must match the Rust #[tauri::command]
+  // function and parameter names exactly, or the call fails at runtime.
+  it.each([
+    ["create_trade", () => createTrade(input), { input }],
+    ["update_trade", () => updateTrade(7, input), { id: 7, input }],
+    ["delete_trade", () => deleteTrade(7), { id: 7 }],
+    ["get_trade", () => getTrade(7), { id: 7 }],
+  ] as const)("%s sends the right arguments", async (name, call, args) => {
+    await call();
+    expect(invokeMock).toHaveBeenCalledWith(name, args);
+  });
+
+  it("list_trades takes no arguments", async () => {
+    invokeMock.mockResolvedValue([]);
+    await expect(listTrades()).resolves.toEqual([]);
+    expect(invokeMock).toHaveBeenCalledWith("list_trades");
+  });
+
+  it("validation errors from Rust reject the promise", async () => {
+    invokeMock.mockRejectedValue("quantity must be greater than 0");
+    await expect(createTrade({ ...input, qty: "0" })).rejects.toBe(
+      "quantity must be greater than 0",
+    );
   });
 });
