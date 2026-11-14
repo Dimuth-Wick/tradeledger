@@ -24,9 +24,10 @@
 //!   `Trade.funding` = −(sum of Binance amounts), i.e. positive = paid.
 //! - Net PnL = gross − fees − funding.
 
+pub mod edit;
 pub mod persist;
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 
 use rust_decimal::Decimal;
 use thiserror::Error;
@@ -119,6 +120,8 @@ struct Builder {
     fees: Decimal,
     unconverted: BTreeMap<String, Decimal>,
     legs: Vec<Leg>,
+    /// Closed by a split rule: its open position moved to the next trade.
+    carried_out: bool,
 }
 
 impl Builder {
@@ -138,7 +141,22 @@ impl Builder {
             fees: Decimal::ZERO,
             unconverted: BTreeMap::new(),
             legs: Vec::new(),
+            carried_out: false,
         }
+    }
+
+    /// Split rule: ends this trade here and starts a new one that takes over
+    /// the open position at its average cost. Total PnL is unchanged; the
+    /// first trade keeps only what it already realized.
+    fn split_carry(mut self, time: TimestampMs) -> (Self, Self) {
+        let mut next = Builder::new(self.direction, time);
+        next.position = self.position;
+        next.open_qty = self.open_qty;
+        next.open_cost = self.open_cost;
+        next.entry_qty = self.open_qty;
+        next.entry_quote = self.open_cost;
+        self.carried_out = true;
+        (self, next)
     }
 
     fn sign(&self) -> Decimal {
@@ -180,7 +198,7 @@ impl Builder {
     }
 
     fn finish(self, first: &Fill) -> GroupedTrade {
-        let closed = self.position.is_zero();
+        let closed = self.position.is_zero() || self.carried_out;
         let trade = Trade {
             exchange: first.exchange.clone(),
             market: first.market,
@@ -219,10 +237,30 @@ impl Builder {
     }
 }
 
+/// The user's manual grouping rules for one instrument, keyed by the fill's
+/// dedupe hash (stable across re-imports).
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct Overrides {
+    /// "Don't start a new trade at this fill": join it to the trade that just
+    /// closed, if that trade has the same direction.
+    pub merge_at: HashSet<String>,
+    /// "Start a new trade at this fill", carrying any open position over.
+    pub split_at: HashSet<String>,
+}
+
 /// Groups one instrument's fills into trades and attaches its funding.
 pub fn group_instrument(
     fills: &[WithId<Fill>],
     funding: &[WithId<FundingEvent>],
+) -> Result<GroupResult, GroupError> {
+    group_instrument_with(fills, funding, &Overrides::default())
+}
+
+/// Same as `group_instrument`, following the user's merge/split rules.
+pub fn group_instrument_with(
+    fills: &[WithId<Fill>],
+    funding: &[WithId<FundingEvent>],
+    overrides: &Overrides,
 ) -> Result<GroupResult, GroupError> {
     let Some(first) = fills.first() else {
         return Ok(GroupResult {
@@ -244,10 +282,25 @@ pub fn group_instrument(
     let (base, quote) = split_symbol(&first.item.symbol).unwrap_or(("", ""));
     let mut result = GroupResult::default();
     let mut current: Option<Builder> = None;
+    // A trade that just went flat. Kept aside (not finished yet) in case the
+    // next opening fill has a merge rule and should continue it.
+    let mut flat: Option<Builder> = None;
 
     for f in sorted {
         let fill = &f.item;
         let is_buy = fill.side == Side::Buy;
+
+        if overrides.split_at.contains(&fill.dedupe_hash) {
+            // A split also cancels any merge at this point.
+            if let Some(done) = flat.take() {
+                result.trades.push(done.finish(fill));
+            }
+            if let Some(open) = current.take() {
+                let (done, next) = open.split_carry(fill.time);
+                result.trades.push(done.finish(fill));
+                current = Some(next);
+            }
+        }
         // Spot: a fee paid in the base asset comes out of the coins you hold.
         let base_fee = if market == Market::Spot && fill.fee_asset == base {
             fill.fee
@@ -279,7 +332,17 @@ pub fn group_instrument(
                     } else {
                         Direction::Short
                     };
-                    current.insert(Builder::new(dir, fill.time))
+                    let resume = flat.take().and_then(|prev| {
+                        let wanted =
+                            overrides.merge_at.contains(&fill.dedupe_hash) && prev.direction == dir;
+                        if wanted {
+                            Some(prev)
+                        } else {
+                            result.trades.push(prev.finish(fill));
+                            None
+                        }
+                    });
+                    current.insert(resume.unwrap_or_else(|| Builder::new(dir, fill.time)))
                 }
             };
 
@@ -313,10 +376,13 @@ pub fn group_instrument(
             left_eff -= part_eff;
             left_qty -= part_qty;
             if builder.position.is_zero() {
-                let done = current.take().expect("builder exists");
-                result.trades.push(done.finish(fill));
+                flat = current.take();
             }
         }
+    }
+    // At most one of these is set: `current` only opens after `flat` is used.
+    if let Some(done) = flat.take() {
+        result.trades.push(done.finish(&first.item));
     }
     if let Some(open) = current.take() {
         result.trades.push(open.finish(&first.item));

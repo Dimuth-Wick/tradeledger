@@ -111,6 +111,15 @@ export interface ImportPreview {
   instruments: InstrumentPreview[];
 }
 
+/** Mirrors Rust `grouping::persist::RegroupSummary`. */
+export interface RegroupSummary {
+  tradesCreated: number;
+  tradesUpdated: number;
+  tradesRemoved: number;
+  orphanFills: number;
+  unassignedFunding: number;
+}
+
 /** Mirrors Rust `import_flow::ImportResult`. */
 export interface ImportResult {
   import: {
@@ -119,13 +128,22 @@ export interface ImportResult {
     inserted: number;
     duplicates: number;
   };
-  regroup: {
-    tradesCreated: number;
-    tradesUpdated: number;
-    tradesRemoved: number;
-    orphanFills: number;
-    unassignedFunding: number;
-  };
+  regroup: RegroupSummary;
+}
+
+/** Mirrors Rust `grouping::edit::TradeFill`: one fill as used by a trade. */
+export interface TradeFill {
+  fillId: number;
+  time: TimestampMs;
+  side: "buy" | "sell";
+  price: Decimal;
+  /** The fill's full quantity. */
+  fillQty: Decimal;
+  /** The part used by this trade (smaller for a fill that flips the position). */
+  qty: Decimal;
+  isEntry: boolean;
+  fee: Decimal;
+  feeAsset: string;
 }
 
 export function ping(): Promise<string> {
@@ -162,6 +180,28 @@ export function getTrade(id: number): Promise<WithId<Trade> | null> {
 
 export function listTrades(): Promise<WithId<Trade>[]> {
   return invoke<WithId<Trade>[]>("list_trades");
+}
+
+export function listTradeFills(tradeId: number): Promise<TradeFill[]> {
+  return invoke<TradeFill[]>("list_trade_fills", { tradeId });
+}
+
+/** Joins an imported trade to the previous one (same coin and direction). */
+export function mergeTradeWithPrevious(id: number): Promise<RegroupSummary> {
+  return invoke<RegroupSummary>("merge_trade_with_previous", { id });
+}
+
+/** Starts a new trade at this fill (also undoes a merge). */
+export function splitTradeAtFill(
+  tradeId: number,
+  fillId: number,
+): Promise<RegroupSummary> {
+  return invoke<RegroupSummary>("split_trade_at_fill", { tradeId, fillId });
+}
+
+/** Removes all manual merge/split rules for this trade's coin. */
+export function resetGrouping(tradeId: number): Promise<RegroupSummary> {
+  return invoke<RegroupSummary>("reset_grouping", { tradeId });
 }
 
 /** Parses the CSV text and shows what importing would do. Saves nothing. */

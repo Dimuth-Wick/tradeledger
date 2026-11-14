@@ -180,7 +180,9 @@ fn preview_instrument(
         );
     }
 
-    let result = grouping::group_instrument(&fills, &funding)?;
+    // Same rules as the real regroup, so the preview matches the outcome.
+    let overrides = db::overrides::load(conn, exchange, market, symbol)?;
+    let result = grouping::group_instrument_with(&fills, &funding, &overrides)?;
     let mut unconverted_fees = BTreeMap::new();
     for g in &result.trades {
         for (asset, amount) in &g.unconverted_fees {

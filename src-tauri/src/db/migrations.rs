@@ -19,7 +19,7 @@ use rusqlite_migration::{M, Migrations};
 /// Bump together with adding a migration below; tests check they agree.
 /// Test-only: the app itself just runs `to_latest()` and needn't know the number.
 #[cfg(test)]
-pub const LATEST_VERSION: u32 = 3;
+pub const LATEST_VERSION: u32 = 4;
 
 pub fn migrations() -> Migrations<'static> {
     Migrations::new(vec![
@@ -35,6 +35,20 @@ pub fn migrations() -> Migrations<'static> {
         // v3: fills ↔ trades becomes many-to-many (a flip fill belongs to two
         // trades), and imported trades get a stable identity for regrouping.
         M::up(V3_ALLOCATIONS),
+        // v4: the user's manual merge/split rules, kept across regroups.
+        M::up(
+            "CREATE TABLE grouping_overrides (
+                id        INTEGER PRIMARY KEY,
+                exchange  TEXT NOT NULL,
+                market    TEXT NOT NULL CHECK (market IN ('spot', 'usdm')),
+                symbol    TEXT NOT NULL,
+                -- dedupe_hash of the fill the rule applies to (stable on re-import)
+                fill_hash TEXT NOT NULL,
+                kind      TEXT NOT NULL CHECK (kind IN ('merge', 'split')),
+                -- one rule per fill: a newer merge/split replaces the older one
+                UNIQUE (exchange, market, symbol, fill_hash)
+            ) STRICT;",
+        ),
     ])
 }
 
@@ -267,6 +281,7 @@ mod tests {
             "fill_allocations",
             "fills",
             "funding_events",
+            "grouping_overrides",
             "import_batches",
             "playbook_checks",
             "playbook_rules",

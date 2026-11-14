@@ -50,6 +50,10 @@ pub fn run() {
             commands::trades::list_trades,
             commands::import::preview_import,
             commands::import::confirm_import,
+            commands::grouping::list_trade_fills,
+            commands::grouping::merge_trade_with_previous,
+            commands::grouping::split_trade_at_fill,
+            commands::grouping::reset_grouping,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

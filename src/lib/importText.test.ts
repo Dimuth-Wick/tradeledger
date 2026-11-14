@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { ImportPreview, InstrumentPreview, ImportResult } from "./api";
-import { newRowCount, previewWarnings, resultSummary } from "./importText";
+import {
+  newRowCount,
+  previewWarnings,
+  regroupSummary,
+  resultSummary,
+} from "./importText";
 
 function instrument(over: Partial<InstrumentPreview>): InstrumentPreview {
   return {
@@ -61,6 +66,18 @@ describe("import text", () => {
     expect(w[1]).toContain("0.0006125 BNB");
     expect(w[2]).toContain("3 funding payments");
     expect(w[3]).toContain("3 rows skipped");
+  });
+
+  it("summarizes a regroup (merge/split)", () => {
+    expect(
+      regroupSummary({
+        tradesCreated: 0,
+        tradesUpdated: 1,
+        tradesRemoved: 1,
+        orphanFills: 0,
+        unassignedFunding: 0,
+      }),
+    ).toBe("trades: 0 new, 1 updated, 1 removed");
   });
 
   it("summarizes the result", () => {

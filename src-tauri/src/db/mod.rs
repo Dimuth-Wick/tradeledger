@@ -13,6 +13,7 @@ pub mod allocations;
 pub mod fills;
 pub mod funding;
 pub mod import_batches;
+pub mod overrides;
 pub mod settings;
 pub mod trades;
 

@@ -1,4 +1,4 @@
-import type { ImportPreview, ImportResult } from "./api";
+import type { ImportPreview, ImportResult, RegroupSummary } from "./api";
 
 // Turns import preview/result numbers into sentences for the Import page.
 // Wording only: every number is computed in Rust.
@@ -44,14 +44,20 @@ export function previewWarnings(p: ImportPreview): string[] {
   return out;
 }
 
+/** "trades: 1 new, 2 updated, 1 removed" (removed only if any). */
+export function regroupSummary(r: RegroupSummary): string {
+  return (
+    `trades: ${r.tradesCreated} new, ${r.tradesUpdated} updated` +
+    (r.tradesRemoved > 0 ? `, ${r.tradesRemoved} removed` : "")
+  );
+}
+
 export function resultSummary(r: ImportResult): string {
   const { inserted, duplicates } = r.import;
-  const { tradesCreated, tradesUpdated, tradesRemoved } = r.regroup;
   const parts = [
     `Imported ${plural(inserted, "new row")}`,
     duplicates > 0 ? `${duplicates} already imported (skipped)` : null,
-    `trades: ${tradesCreated} new, ${tradesUpdated} updated` +
-      (tradesRemoved > 0 ? `, ${tradesRemoved} removed` : ""),
+    regroupSummary(r.regroup),
   ];
   return parts.filter(Boolean).join(" · ");
 }

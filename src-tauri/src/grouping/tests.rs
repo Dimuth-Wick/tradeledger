@@ -366,6 +366,70 @@ fn mixed_instruments_are_rejected() {
     assert!(matches!(err, GroupError::MixedInstruments(..)));
 }
 
+// ───────────────────────────── overrides ─────────────────────────────
+
+fn rules(merge: &[&str], split: &[&str]) -> Overrides {
+    Overrides {
+        merge_at: merge.iter().map(|s| s.to_string()).collect(),
+        split_at: split.iter().map(|s| s.to_string()).collect(),
+    }
+}
+
+#[test]
+fn merge_rule_joins_same_direction_round_trips() {
+    let fills = vec![
+        fut(1, 1, Buy, dec!(1), dec!(10)),
+        fut(2, 2, Sell, dec!(1), dec!(11)),
+        fut(3, 3, Buy, dec!(1), dec!(10)),
+        fut(4, 4, Sell, dec!(1), dec!(12)),
+    ];
+    let r = group_instrument_with(&fills, &[], &rules(&["h3"], &[])).unwrap();
+    assert_eq!(r.trades.len(), 1);
+    assert_eq!(r.trades[0].trade.gross_pnl, dec!(3));
+    assert_eq!(r.trades[0].legs.len(), 4);
+}
+
+#[test]
+fn merge_rule_is_ignored_across_a_direction_change() {
+    let fills = vec![
+        fut(1, 1, Buy, dec!(1), dec!(10)),
+        fut(2, 2, Sell, dec!(1), dec!(11)),
+        fut(3, 3, Sell, dec!(1), dec!(12)), // opens a short
+        fut(4, 4, Buy, dec!(1), dec!(11)),
+    ];
+    let r = group_instrument_with(&fills, &[], &rules(&["h3"], &[])).unwrap();
+    assert_eq!(r.trades.len(), 2);
+}
+
+#[test]
+fn split_rule_at_a_natural_boundary_or_first_fill_changes_nothing() {
+    let fills = vec![
+        fut(1, 1, Buy, dec!(1), dec!(10)),
+        fut(2, 2, Sell, dec!(1), dec!(11)),
+        fut(3, 3, Buy, dec!(1), dec!(10)),
+        fut(4, 4, Sell, dec!(1), dec!(12)),
+    ];
+    let plain = group_instrument(&fills, &[]).unwrap();
+    let ruled = group_instrument_with(&fills, &[], &rules(&[], &["h1", "h3"])).unwrap();
+    assert_eq!(plain, ruled);
+}
+
+#[test]
+fn split_rule_keeps_total_pnl() {
+    let fills = vec![
+        fut(1, 1, Buy, dec!(1), dec!(100)),
+        fut(2, 2, Sell, dec!(0.5), dec!(110)),
+        fut(3, 3, Buy, dec!(1), dec!(90)),
+        fut(4, 4, Sell, dec!(1.5), dec!(120)),
+    ];
+    let total = |r: &GroupResult| -> Decimal { r.trades.iter().map(|g| g.trade.gross_pnl).sum() };
+    let plain = group_instrument(&fills, &[]).unwrap();
+    let split = group_instrument_with(&fills, &[], &rules(&[], &["h3"])).unwrap();
+    assert_eq!(split.trades.len(), 2);
+    assert_eq!(total(&split), total(&plain));
+    assert_eq!(split.trades[0].trade.gross_pnl, dec!(5)); // realized before the split
+}
+
 #[test]
 fn symbol_split_knows_common_quotes() {
     assert_eq!(split_symbol("BTCUSDT"), Some(("BTC", "USDT")));

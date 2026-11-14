@@ -234,6 +234,42 @@ label textarea {
   font-size: 0.85em;
 }
 
+/* --- Trade list: fills panel --- */
+
+.actions-cell {
+  white-space: nowrap;
+}
+
+.fills-row > td {
+  background: var(--bg);
+  padding: 8px 16px 12px;
+}
+
+.fills-panel table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9em;
+}
+
+.fills-panel th,
+.fills-panel td {
+  padding: 4px 8px;
+  text-align: left;
+}
+
+.fills-panel .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+button.link {
+  border: none;
+  background: none;
+  color: var(--accent);
+  padding: 4px 0;
+  margin-top: 4px;
+}
+
 /* --- Tabs --- */
 
 .tabs {

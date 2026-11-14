@@ -18,7 +18,7 @@ use std::collections::{BTreeSet, HashMap};
 use rusqlite::Connection;
 use serde::Serialize;
 
-use super::group_instrument;
+use super::group_instrument_with;
 use crate::db::{self, DbError};
 use crate::importers::ParseReport;
 use crate::models::{Market, Trade, TradeStatus};
@@ -98,25 +98,34 @@ pub fn merge_journal(computed: Trade, existing: &Trade) -> Trade {
     t
 }
 
-/// Rebuilds one instrument's imported trades from its fills and funding.
-/// All-or-nothing (one transaction).
+/// Rebuilds one instrument's imported trades from its fills, funding and the
+/// user's merge/split rules. All-or-nothing (one transaction).
 pub fn regroup_instrument(conn: &Connection, inst: &Instrument) -> Result<RegroupSummary, DbError> {
-    let (exchange, market, symbol) = (inst.exchange.as_str(), inst.market, inst.symbol.as_str());
     let tx = conn.unchecked_transaction()?;
+    let summary = regroup_in_tx(&tx, inst)?;
+    tx.commit()?;
+    Ok(summary)
+}
 
-    let fills = db::fills::list_for_instrument(&tx, exchange, market, symbol)?;
+/// The regroup itself, for callers that already opened a transaction
+/// (e.g. a merge that also moves journal data, all-or-nothing).
+pub fn regroup_in_tx(tx: &Connection, inst: &Instrument) -> Result<RegroupSummary, DbError> {
+    let (exchange, market, symbol) = (inst.exchange.as_str(), inst.market, inst.symbol.as_str());
+
+    let fills = db::fills::list_for_instrument(tx, exchange, market, symbol)?;
     let funding = match market {
-        Market::Usdm => db::funding::list_for_symbol(&tx, exchange, symbol)?,
+        Market::Usdm => db::funding::list_for_symbol(tx, exchange, symbol)?,
         Market::Spot => Vec::new(),
     };
-    let result =
-        group_instrument(&fills, &funding).expect("fills were queried for a single instrument");
+    let overrides = db::overrides::load(tx, exchange, market, symbol)?;
+    let result = group_instrument_with(&fills, &funding, &overrides)
+        .expect("fills were queried for a single instrument");
     let hash_of: HashMap<i64, &str> = fills
         .iter()
         .map(|f| (f.id, f.item.dedupe_hash.as_str()))
         .collect();
 
-    let existing = db::trades::list_imported_for_instrument(&tx, exchange, market, symbol)?;
+    let existing = db::trades::list_imported_for_instrument(tx, exchange, market, symbol)?;
     let by_key: HashMap<&str, usize> = existing
         .iter()
         .enumerate()
@@ -159,40 +168,38 @@ pub fn regroup_instrument(conn: &Connection, inst: &Instrument) -> Result<Regrou
     // UNIQUE index would reject the intermediate state.
     for (i, (trade, _)) in existing.iter().enumerate() {
         if claimed[i] {
-            db::trades::set_group_key(&tx, trade.id, None)?;
+            db::trades::set_group_key(tx, trade.id, None)?;
         } else {
-            db::trades::delete(&tx, trade.id)?;
+            db::trades::delete(tx, trade.id)?;
             summary.trades_removed += 1;
         }
     }
-    db::allocations::delete_for_instrument(&tx, exchange, market, symbol)?;
+    db::allocations::delete_for_instrument(tx, exchange, market, symbol)?;
     if market == Market::Usdm {
-        db::funding::clear_trade_links(&tx, exchange, symbol)?;
+        db::funding::clear_trade_links(tx, exchange, symbol)?;
     }
 
     for (i, g) in result.trades.iter().enumerate() {
         let id = match matched[i] {
             Some(e) => {
                 let old = &existing[e].0;
-                db::trades::update(&tx, old.id, &merge_journal(g.trade.clone(), &old.item))?;
+                db::trades::update(tx, old.id, &merge_journal(g.trade.clone(), &old.item))?;
                 summary.trades_updated += 1;
                 old.id
             }
             None => {
                 summary.trades_created += 1;
-                db::trades::insert(&tx, &g.trade)?
+                db::trades::insert(tx, &g.trade)?
             }
         };
-        db::trades::set_group_key(&tx, id, Some(keys[i]))?;
+        db::trades::set_group_key(tx, id, Some(keys[i]))?;
         for leg in &g.legs {
-            db::allocations::insert(&tx, leg.fill_id, id, leg.qty, leg.is_entry)?;
+            db::allocations::insert(tx, leg.fill_id, id, leg.qty, leg.is_entry)?;
         }
         for &funding_id in &g.funding_ids {
-            db::funding::set_trade(&tx, funding_id, id)?;
+            db::funding::set_trade(tx, funding_id, id)?;
         }
     }
-
-    tx.commit()?;
     Ok(summary)
 }
 
