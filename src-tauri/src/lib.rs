@@ -9,6 +9,7 @@ pub mod importers;
 pub mod models;
 pub mod risk;
 pub mod trade_entry;
+pub mod trade_query;
 
 use std::sync::Mutex;
 
@@ -48,6 +49,8 @@ pub fn run() {
             commands::trades::delete_trade,
             commands::trades::get_trade,
             commands::trades::list_trades,
+            commands::trades::query_trades,
+            commands::trades::list_symbols,
             commands::import::preview_import,
             commands::import::confirm_import,
             commands::grouping::list_trade_fills,

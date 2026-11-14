@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useState } from "react";
 import {
   listTradeFills,
+  type SortField,
   type Trade,
   type TradeFill,
   type WithId,
@@ -13,6 +14,46 @@ interface Props {
   onMerge: (id: number) => void;
   onSplit: (tradeId: number, fillId: number) => void;
   onReset: (tradeId: number) => void;
+  /** Current sort; when given with `onSort`, headers become clickable. */
+  sort?: { field: SortField; descending: boolean };
+  onSort?: (field: SortField) => void;
+  emptyText?: string;
+}
+
+/** Column header that sorts when clicked (plain text if sorting is off). */
+function SortHeader({
+  label,
+  field,
+  sort,
+  onSort,
+  className,
+}: {
+  label: string;
+  field: SortField;
+  sort?: Props["sort"];
+  onSort?: Props["onSort"];
+  className?: string;
+}) {
+  if (!onSort) return <th className={className}>{label}</th>;
+  const active = sort?.field === field;
+  const arrow = active ? (sort.descending ? " ↓" : " ↑") : "";
+  return (
+    <th
+      className={className}
+      aria-sort={
+        active ? (sort.descending ? "descending" : "ascending") : "none"
+      }
+    >
+      <button
+        type="button"
+        className="sort-button"
+        onClick={() => onSort(field)}
+      >
+        {label}
+        {arrow}
+      </button>
+    </th>
+  );
 }
 
 const COLUMNS = 7;
@@ -29,6 +70,9 @@ export default function TradeList({
   onMerge,
   onSplit,
   onReset,
+  sort,
+  onSort,
+  emptyText = "No trades yet.",
 }: Props) {
   // Two-step delete: first click arms, second click deletes.
   const [armed, setArmed] = useState<number | null>(null);
@@ -44,19 +88,20 @@ export default function TradeList({
   }
 
   if (trades.length === 0) {
-    return <p className="hint">No trades yet.</p>;
+    return <p className="hint">{emptyText}</p>;
   }
 
+  const h = { sort, onSort };
   return (
     <table className="trade-list">
       <thead>
         <tr>
-          <th>Opened</th>
-          <th>Symbol</th>
+          <SortHeader label="Opened" field="openTime" {...h} />
+          <SortHeader label="Symbol" field="symbol" {...h} />
           <th>Side</th>
           <th>Status</th>
-          <th className="num">Net PnL</th>
-          <th className="num">R</th>
+          <SortHeader label="Net PnL" field="netPnl" className="num" {...h} />
+          <SortHeader label="R" field="rMultiple" className="num" {...h} />
           <th aria-label="Actions" />
         </tr>
       </thead>

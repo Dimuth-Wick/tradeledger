@@ -1,43 +1,32 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import TradeForm from "../components/TradeForm";
-import TradeList from "../components/TradeList";
+import TradeLog from "../components/TradeLog";
 import {
   dbInfo,
   deleteTrade,
-  listTrades,
   mergeTradeWithPrevious,
   resetGrouping,
   splitTradeAtFill,
   type DbInfo,
   type RegroupSummary,
-  type Trade,
-  type WithId,
 } from "../lib/api";
 import { regroupSummary } from "../lib/importText";
 
 export default function HomePage() {
-  const [trades, setTrades] = useState<WithId<Trade>[]>([]);
+  // Bumping this tells the trade log to fetch again (after save/merge/...).
+  const [version, setVersion] = useState(0);
+  const refresh = () => setVersion((v) => v + 1);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [db, setDb] = useState<DbInfo | null>(null);
 
-  const reload = useCallback(() => {
-    listTrades()
-      .then((list) => {
-        setTrades(list);
-        setError(null);
-      })
-      .catch((err) => setError(String(err)));
-  }, []);
-
   useEffect(() => {
-    reload();
     dbInfo()
       .then(setDb)
       .catch((err) => setError(String(err)));
-  }, [reload]);
+  }, []);
 
-  /** Runs a grouping action, then shows what changed and reloads the list. */
+  /** Runs a grouping action, then shows what changed and refreshes the log. */
   async function regroupAction(
     label: string,
     run: () => Promise<RegroupSummary>,
@@ -46,16 +35,17 @@ export default function HomePage() {
     setNotice(null);
     try {
       setNotice(`${label}: ${regroupSummary(await run())}`);
-      reload();
+      refresh();
     } catch (err) {
       setError(String(err));
     }
   }
 
   async function remove(id: number) {
+    setError(null);
     try {
       await deleteTrade(id);
-      reload();
+      refresh();
     } catch (err) {
       setError(String(err));
     }
@@ -69,15 +59,15 @@ export default function HomePage() {
 
       <section>
         <h2>New trade</h2>
-        <TradeForm onSaved={reload} />
+        <TradeForm onSaved={refresh} />
       </section>
 
       <section>
-        <h2>Recent trades</h2>
+        <h2>Trade log</h2>
         {error && <p className="status error">{error}</p>}
         {notice && <p className="status ok">{notice}</p>}
-        <TradeList
-          trades={trades}
+        <TradeLog
+          version={version}
           onDelete={remove}
           onMerge={(id) =>
             regroupAction("Merged", () => mergeTradeWithPrevious(id))

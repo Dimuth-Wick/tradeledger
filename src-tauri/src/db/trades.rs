@@ -135,6 +135,27 @@ pub fn list(conn: &Connection) -> Result<Vec<WithId<Trade>>, DbError> {
     Ok(rows.collect::<rusqlite::Result<_>>()?)
 }
 
+/// Trades matching a WHERE clause built by the caller (e.g. the trade log
+/// filters). `where_sql` must use `?` placeholders only, values go in
+/// `params`, so user input is never pasted into the SQL text.
+pub fn list_where(
+    conn: &Connection,
+    where_sql: &str,
+    params: &[rusqlite::types::Value],
+) -> Result<Vec<WithId<Trade>>, DbError> {
+    let sql = format!("SELECT * FROM trades WHERE {where_sql}");
+    let mut stmt = conn.prepare(&sql)?;
+    let rows = stmt.query_map(rusqlite::params_from_iter(params), from_row)?;
+    Ok(rows.collect::<rusqlite::Result<_>>()?)
+}
+
+/// Distinct symbols, for the trade log's symbol filter.
+pub fn symbols(conn: &Connection) -> Result<Vec<String>, DbError> {
+    let mut stmt = conn.prepare("SELECT DISTINCT symbol FROM trades ORDER BY symbol")?;
+    let rows = stmt.query_map([], |r| r.get(0))?;
+    Ok(rows.collect::<rusqlite::Result<_>>()?)
+}
+
 fn from_row(r: &Row<'_>) -> rusqlite::Result<WithId<Trade>> {
     Ok(WithId {
         id: r.get("id")?,

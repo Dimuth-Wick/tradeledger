@@ -77,6 +77,44 @@ export interface TradeInput {
   playbookId?: number | null;
 }
 
+export type Outcome = "win" | "loss" | "breakeven";
+export type SortField =
+  "openTime" | "closeTime" | "symbol" | "netPnl" | "rMultiple";
+
+/** Mirrors Rust `trade_query::TradeQuery`. Every filter is optional. */
+export interface TradeQuery {
+  /** Opened at or after (ms, inclusive). */
+  from?: TimestampMs | null;
+  /** Opened before (ms, exclusive). */
+  to?: TimestampMs | null;
+  /** Part of the symbol, any case. */
+  symbol?: string | null;
+  market?: Market | null;
+  direction?: Direction | null;
+  status?: TradeStatus | null;
+  /** Implies closed trades only. */
+  outcome?: Outcome | null;
+  tagIds?: number[];
+  sort?: SortField;
+  descending?: boolean;
+  /** 0-based. */
+  page?: number;
+  pageSize?: number;
+}
+
+/** Mirrors Rust `trade_query::TradePage`. */
+export interface TradePage {
+  items: WithId<Trade>[];
+  total: number;
+  page: number;
+  pageSize: number;
+  pageCount: number;
+  /** Net PnL of all matching closed trades (every page). */
+  closedNetPnl: Decimal;
+  wins: number;
+  losses: number;
+}
+
 /** Mirrors Rust `importers::RowError`. */
 export interface RowError {
   /** Line in the file (header = 1). */
@@ -180,6 +218,15 @@ export function getTrade(id: number): Promise<WithId<Trade> | null> {
 
 export function listTrades(): Promise<WithId<Trade>[]> {
   return invoke<WithId<Trade>[]>("list_trades");
+}
+
+/** Trade log: filtered, sorted, paginated in Rust. */
+export function queryTrades(query: TradeQuery): Promise<TradePage> {
+  return invoke<TradePage>("query_trades", { query });
+}
+
+export function listSymbols(): Promise<string[]> {
+  return invoke<string[]>("list_symbols");
 }
 
 export function listTradeFills(tradeId: number): Promise<TradeFill[]> {

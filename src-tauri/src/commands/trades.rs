@@ -9,6 +9,7 @@ use tauri::State;
 use crate::db::{self, Db};
 use crate::models::{Trade, WithId};
 use crate::trade_entry::{self, TradeInput};
+use crate::trade_query::{self, TradePage, TradeQuery};
 
 /// Runs `f` with the locked connection and converts any error to a String.
 fn with_conn<T, E: Display>(
@@ -54,4 +55,15 @@ pub fn get_trade(db: State<'_, Db>, id: i64) -> Result<Option<WithId<Trade>>, St
 #[tauri::command]
 pub fn list_trades(db: State<'_, Db>) -> Result<Vec<WithId<Trade>>, String> {
     with_conn(&db, db::trades::list)
+}
+
+/// Trade log: filtered, sorted, paginated, with totals.
+#[tauri::command]
+pub fn query_trades(db: State<'_, Db>, query: TradeQuery) -> Result<TradePage, String> {
+    with_conn(&db, |c| trade_query::query(c, &query))
+}
+
+#[tauri::command]
+pub fn list_symbols(db: State<'_, Db>) -> Result<Vec<String>, String> {
+    with_conn(&db, db::trades::symbols)
 }

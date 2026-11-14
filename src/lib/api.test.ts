@@ -14,6 +14,7 @@ import {
   ping,
   previewImport,
   previewTrade,
+  queryTrades,
   updateTrade,
   type TradeInput,
 } from "./api";
@@ -86,6 +87,11 @@ describe("trade commands", () => {
     ["update_trade", () => updateTrade(7, input), { id: 7, input }],
     ["delete_trade", () => deleteTrade(7), { id: 7 }],
     ["get_trade", () => getTrade(7), { id: 7 }],
+    [
+      "query_trades",
+      () => queryTrades({ symbol: "btc" }),
+      { query: { symbol: "btc" } },
+    ],
     ["list_trade_fills", () => listTradeFills(7), { tradeId: 7 }],
     ["merge_trade_with_previous", () => mergeTradeWithPrevious(7), { id: 7 }],
     [
