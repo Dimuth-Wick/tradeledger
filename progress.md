@@ -2,7 +2,7 @@
 
 Status: ⬜ todo · 🟨 in progress · ✅ done
 
-**Current task:** T2.2 — Schema v1 + structs + repository + tests
+**Current task:** T3.1 — Trade CRUD + R:R / R-multiple calculator
 
 | Task  | Description                                               | Status | Commit  | Date       |
 | ----- | --------------------------------------------------------- | ------ | ------- | ---------- |
@@ -12,7 +12,7 @@ Status: ⬜ todo · 🟨 in progress · ✅ done
 | T1.1  | Scaffold Tauri 2 + React + TS                             | ✅     | 383b82f | 2026-11-14 |
 | T1.2  | First `invoke()` command + lint/format                    | ✅     | 1e70ec4 | 2026-11-14 |
 | T2.1  | SQLite in app-data + migrations                           | ✅     | 2a706ba | 2026-11-14 |
-| T2.2  | Schema v1 + structs + repository + tests                  | ⬜     |         |            |
+| T2.2  | Schema v1 + structs + repository + tests                  | ✅     | 8fac8a3 | 2026-11-14 |
 | T3.1  | Trade CRUD + R:R / R-multiple calculator                  | ⬜     |         |            |
 | T3.2  | Trade entry form + live R:R preview                       | ⬜     |         |            |
 | T4.1  | Binance CSV study + fixtures                              | ⬜     |         |            |
@@ -42,6 +42,17 @@ Status: ⬜ todo · 🟨 in progress · ✅ done
 ## Log
 
 <!-- Newest first. One entry per finished task: what was built, what was learned, quiz result, any follow-ups. -->
+
+### 2026-11-14 — T2.2 Schema + structs + repositories
+
+- New deps: `rust_decimal` (serde → decimals sent to UI as strings), `rust_decimal_macros` (tests only).
+- Migration v2: all 13 trading tables from plan §3 (STRICT, CHECK-ed enums, decimals as TEXT, times as ms INTEGER, FK rules: deleting a trade unlinks fills/funding and cascades tags/screenshots/custom values/checks).
+- Schema additions vs. draft: `exchange` on trades; `exchange`, `dedupe_hash`, `import_batch_id` on funding_events. plan.md §3 updated.
+- `models.rs`: Fill, Trade, FundingEvent, ImportBatch, `WithId<T>`, enums Market/Side/Direction/TradeStatus.
+- Repositories: settings, import_batches, fills (dedupe insert, list by instrument/trade, link), funding (dedupe insert, list by trade), trades (insert/get/update/delete/list). Tags, screenshots, custom fields, playbooks repos come with their tasks.
+- Tests: Rust 31 (incl. v1→v2 upgrade, exact decimal round-trip, FK + CHECK enforcement, cascade/unlink on delete), TS 3.
+- Verified in the real app: existing v1 DB upgraded to "schema v2".
+- Next: T3.1.
 
 ### 2026-11-14 — T2.1 SQLite in app-data + migrations
 
