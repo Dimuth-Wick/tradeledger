@@ -2,7 +2,7 @@
 
 Status: ⬜ todo · 🟨 in progress · ✅ done
 
-**Current task:** T1.2 — First `invoke()` command + lint/format
+**Current task:** T2.1 — SQLite in app-data + migrations
 
 | Task  | Description                                               | Status | Commit  | Date       |
 | ----- | --------------------------------------------------------- | ------ | ------- | ---------- |
@@ -10,7 +10,7 @@ Status: ⬜ todo · 🟨 in progress · ✅ done
 | T0.1  | Install & verify toolchain                                | ✅     | b236bc7 | 2026-11-14 |
 | T0.2  | Git identity + GitHub repo + first push                   | ✅     | b236bc7 | 2026-11-14 |
 | T1.1  | Scaffold Tauri 2 + React + TS                             | ✅     | 383b82f | 2026-11-14 |
-| T1.2  | First `invoke()` command + lint/format                    | ⬜     |         |            |
+| T1.2  | First `invoke()` command + lint/format                    | ✅     | 1e70ec4 | 2026-11-14 |
 | T2.1  | SQLite in app-data + migrations                           | ⬜     |         |            |
 | T2.2  | Schema v1 + structs + repository + tests                  | ⬜     |         |            |
 | T3.1  | Trade CRUD + R:R / R-multiple calculator                  | ⬜     |         |            |
@@ -42,6 +42,15 @@ Status: ⬜ todo · 🟨 in progress · ✅ done
 ## Log
 
 <!-- Newest first. One entry per finished task: what was built, what was learned, quiz result, any follow-ups. -->
+
+### 2026-11-14 — T1.2 First `invoke()` command + lint/format
+
+- Rust: `commands::ping` (returns `Result<String, String>`, the shape all commands use) + unit test; template `greet` removed.
+- UI: `src/lib/api.ts` typed wrapper around `invoke()`; `src/pages/HomePage.tsx` with a "Ping Rust core" button; template logos removed.
+- Tooling: ESLint (typescript-eslint, react-hooks, react-refresh), Prettier, Vitest. Scripts: `lint`, `format`, `format:check`, `test`.
+- Verified: cargo fmt / clippy `-D warnings` / test (1), npm lint / format:check / test (2) / build all pass; clicking the button in the real window showed "pong from TradeLedger core v0.1.0".
+- Note: `npm audit` reports 7 moderate issues in `minimatch` under typescript-eslint (dev-only lint tool, not shipped in the app).
+- Next: T2.1.
 
 ### 2026-11-14 — T1.1 Scaffold Tauri 2 + React + TS
 
