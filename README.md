@@ -19,11 +19,11 @@
 
 ## Tech stack
 
-| Part | Tech |
-|---|---|
-| Desktop app | [Tauri 2](https://tauri.app) |
-| Core logic | Rust (SQLite via rusqlite, `rust_decimal` for money math) |
-| UI | React + TypeScript + Vite |
+| Part        | Tech                                                      |
+| ----------- | --------------------------------------------------------- |
+| Desktop app | [Tauri 2](https://tauri.app)                              |
+| Core logic  | Rust (SQLite via rusqlite, `rust_decimal` for money math) |
+| UI          | React + TypeScript + Vite                                 |
 
 ## Privacy
 
