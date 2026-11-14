@@ -31,12 +31,44 @@ TradeLedger has no server and no account. Your trades are stored in your OS app-
 
 ## Getting started (development)
 
-Prerequisites: Rust (rustup), Node.js LTS, and the [Tauri prerequisites](https://tauri.app/start/prerequisites/) for your OS (on Windows: WebView2 and the MSVC Build Tools).
+### 1. Install the system tools (once per computer)
+
+| Tool                                 | Version        | Why                                                        |
+| ------------------------------------ | -------------- | ---------------------------------------------------------- |
+| [Node.js](https://nodejs.org)        | LTS (22+)      | Runs the UI tooling (Vite, TypeScript, ESLint)             |
+| [Rust](https://rustup.rs) via rustup | stable (1.85+) | Compiles the core                                          |
+| Tauri prerequisites                  | —              | [OS-specific list](https://tauri.app/start/prerequisites/) |
+| Git                                  | any recent     | Clone the repo                                             |
+
+On **Windows** (PowerShell), the Tauri prerequisites are the MSVC Build Tools + WebView2 (WebView2 is already part of Windows 10/11):
+
+```powershell
+winget install --id Microsoft.VisualStudio.2022.BuildTools --override "--wait --passive --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended"
+winget install --id Rustlang.Rustup
+winget install --id OpenJS.NodeJS.LTS
+```
+
+Restart the terminal afterwards so `cargo` and `node` are on the PATH. On macOS/Linux follow the Tauri link above.
+
+### 2. Clone and run
 
 ```bash
-npm install
-npm run tauri dev   # first run compiles the Rust core and takes a few minutes
+git clone https://github.com/Dimuth-Wick/tradeledger.git
+cd tradeledger
+npm install          # JS libraries, from package.json / package-lock.json
+npm run tauri dev    # Rust libraries download + compile automatically (first run takes a few minutes)
 ```
+
+Library versions are pinned by `package-lock.json` and `src-tauri/Cargo.lock`; there is no separate requirements file.
+
+### 3. Checks before committing
+
+```bash
+npm run lint && npm run format:check && npm test
+cd src-tauri && cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test
+```
+
+Your data lives in `%APPDATA%\TradeLedger` (Windows), outside the repo.
 
 ## Disclaimer
 
