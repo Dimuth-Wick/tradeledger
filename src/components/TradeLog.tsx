@@ -166,7 +166,8 @@ export default function TradeLog({ version, ...actions }: Props) {
         <>
           <p className="log-summary">
             {result.total} trade{result.total === 1 ? "" : "s"} · {result.wins}{" "}
-            wins / {result.losses} losses · closed net{" "}
+            win{result.wins === 1 ? "" : "s"} / {result.losses} loss
+            {result.losses === 1 ? "" : "es"} · closed net{" "}
             <span className={pnlClass(result.closedNetPnl)}>
               {signed(result.closedNetPnl)}
             </span>
