@@ -2,14 +2,14 @@
 
 Status: ⬜ todo · 🟨 in progress · ✅ done
 
-**Current task:** T1.1 — Scaffold Tauri 2 + React + TS
+**Current task:** T1.2 — First `invoke()` command + lint/format
 
 | Task | Description | Status | Commit | Date |
 |---|---|---|---|---|
 | — | Requirements grilling + plan, README, progress, CLAUDE.md | ✅ | — | 2026-11-14 |
 | T0.1 | Install & verify toolchain | ✅ | b236bc7 | 2026-11-14 |
 | T0.2 | Git identity + GitHub repo + first push | ✅ | b236bc7 | 2026-11-14 |
-| T1.1 | Scaffold Tauri 2 + React + TS | ⬜ | | |
+| T1.1 | Scaffold Tauri 2 + React + TS | ✅ | 383b82f | 2026-11-14 |
 | T1.2 | First `invoke()` command + lint/format | ⬜ | | |
 | T2.1 | SQLite in app-data + migrations | ⬜ | | |
 | T2.2 | Schema v1 + structs + repository + tests | ⬜ | | |
@@ -41,6 +41,14 @@ Status: ⬜ todo · 🟨 in progress · ✅ done
 
 ## Log
 <!-- Newest first. One entry per finished task: what was built, what was learned, quiz result, any follow-ups. -->
+
+### 2026-11-14 — T1.1 Scaffold Tauri 2 + React + TS
+- Generated with `create-tauri-app` 4.7.5 (react-ts template, npm, identifier `com.dimuthwick.tradeledger`), copied into the repo; existing README and `.gitignore` kept.
+- Branded: product name / window title "TradeLedger", 1200×800 window, Cargo metadata (author, MIT).
+- Verified: `npm run build`, `cargo clippy -- -D warnings`, `cargo fmt --check`, `cargo test` (0 tests yet) all pass; `npm run tauri dev` opened the "TradeLedger" window.
+- Template `greet` command left in place; T1.2 replaces it with `ping`.
+- Note: build stopped once because C: was full; ~23 GB freed.
+- Next: T1.2.
 
 ### 2026-11-14 — T0.2 Git identity + GitHub repo + first push
 - Repo-local git identity set: Dimuth-Wick + GitHub noreply email.
