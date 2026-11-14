@@ -40,8 +40,6 @@ npm run tauri dev   # first run compiles the Rust core and takes a few minutes
 
 ## Project docs
 
-- [plan.md](plan.md): decisions, architecture, data model, roadmap
-- [progress.md](progress.md): task-by-task progress log
 - [CLAUDE.md](CLAUDE.md): how the AI coding assistant works on this repo
 
 ## Disclaimer

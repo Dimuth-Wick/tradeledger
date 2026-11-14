@@ -30,7 +30,7 @@ pub fn migrations() -> Migrations<'static> {
                 value TEXT NOT NULL
             ) STRICT;",
         ),
-        // v2: trading data (plan.md §3).
+        // v2: trading data (fills, trades, funding, tags, journal tables).
         M::up(V2_TRADING_SCHEMA),
     ])
 }

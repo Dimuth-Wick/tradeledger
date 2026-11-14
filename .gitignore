@@ -12,6 +12,10 @@ backups/
 .env
 .env.*
 
+# --- Private planning notes (kept locally, not published) ---
+/plan.md
+/progress.md
+
 # --- Rust / Tauri ---
 /src-tauri/target/
 target/

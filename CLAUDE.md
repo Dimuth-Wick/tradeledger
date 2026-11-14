@@ -1,6 +1,7 @@
 # CLAUDE.md — rules for working on TradeLedger
 
 Read `plan.md` and `progress.md` at the start of every session. The current task is at the top of `progress.md`.
+Both files are **local only** (git-ignored): never commit them, and never make a commit just because they changed.
 
 ## Who you're working with
 
@@ -12,7 +13,7 @@ Read `plan.md` and `progress.md` at the start of every session. The current task
 
 1. Implement the task I name. Follow plan.md. No concept explanations, no quizzes.
 2. Add tests; run cargo test / clippy / lint / npm test where they exist. Fix failures.
-3. Update progress.md (mark ✅, commit hash, date, a short log entry).
+3. Update progress.md (mark ✅, commit hash, date, a short log entry). Local file only, not committed.
 4. Commit and push per the Git rules.
 5. Reply with a SHORT summary only:
    - files changed (one line each: what + why)
