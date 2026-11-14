@@ -31,12 +31,11 @@ TradeLedger has no server and no account. Your trades are stored in your OS app-
 
 ## Getting started (development)
 
-> Setup instructions will be completed in task T0.1 / T1.1. See [plan.md](plan.md).
+Prerequisites: Rust (rustup), Node.js LTS, and the [Tauri prerequisites](https://tauri.app/start/prerequisites/) for your OS (on Windows: WebView2 and the MSVC Build Tools).
 
 ```bash
-# prerequisites: Rust (rustup), Node.js LTS, Tauri prerequisites for your OS
 npm install
-npm run tauri dev
+npm run tauri dev   # first run compiles the Rust core and takes a few minutes
 ```
 
 ## Project docs
