@@ -64,7 +64,7 @@ A customizable, offline crypto trading journal for Windows (TradeZella-style), b
 
 ---
 
-## 3. Data model (draft — finalized in Phase 2)
+## 3. Data model (implemented in T2.2 — source of truth: `src-tauri/src/db/migrations.rs`)
 
 ```
 fills ──many-to-one──► trades ◄── funding_events
@@ -77,16 +77,20 @@ settings (theme, dashboard layout, preferences)
 import_batches (which file, when, how many rows)
 ```
 
-| Table                                              | Main columns                                                                                                                                                                                                                                                      |
-| -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `fills`                                            | id, exchange, market (spot/usdm), symbol, side, qty, price, fee, fee_asset, realized_pnl, time, **dedupe_hash (unique)**, trade_id, import_batch_id                                                                                                               |
-| `trades`                                           | id, market, symbol, direction (long/short), open_time, close_time, qty, avg_entry, avg_exit, leverage?, gross_pnl, fees, funding, net_pnl, **planned_entry, stop_loss, take_profit, planned_rr, r_multiple**, notes, playbook_id, status (open/closed), is_manual |
-| `funding_events`                                   | id, symbol, amount, time, trade_id                                                                                                                                                                                                                                |
-| `tag_groups` / `tags` / `trade_tags`               | e.g. groups _Setup_, _Mistake_, _Emotion_ — user-defined                                                                                                                                                                                                          |
-| `screenshots`                                      | id, trade_id, file_name, caption                                                                                                                                                                                                                                  |
-| `custom_fields` / `custom_values`                  | field type: text / number / select / checkbox                                                                                                                                                                                                                     |
-| `playbooks` / `playbook_rules` / `playbook_checks` | setup rules checklist per trade                                                                                                                                                                                                                                   |
-| `settings`                                         | key → JSON value                                                                                                                                                                                                                                                  |
+| Table                                              | Main columns                                                                                                                                                                                                                                                                |
+| -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `fills`                                            | id, exchange, market (spot/usdm), symbol, side, qty, price, fee, fee_asset, realized_pnl, time, **dedupe_hash (unique)**, trade_id, import_batch_id                                                                                                                         |
+| `trades`                                           | id, exchange, market, symbol, direction (long/short), open_time, close_time, qty, avg_entry, avg_exit, leverage?, gross_pnl, fees, funding, net_pnl, **planned_entry, stop_loss, take_profit, planned_rr, r_multiple**, notes, playbook_id, status (open/closed), is_manual |
+| `funding_events`                                   | id, exchange, symbol, amount, time, **dedupe_hash (unique)**, trade_id, import_batch_id                                                                                                                                                                                     |
+| `tag_groups` / `tags` / `trade_tags`               | e.g. groups _Setup_, _Mistake_, _Emotion_ — user-defined                                                                                                                                                                                                                    |
+| `screenshots`                                      | id, trade_id, file_name, caption                                                                                                                                                                                                                                            |
+| `custom_fields` / `custom_values`                  | field type: text / number / select / checkbox                                                                                                                                                                                                                               |
+| `playbooks` / `playbook_rules` / `playbook_checks` | setup rules checklist per trade                                                                                                                                                                                                                                             |
+| `settings`                                         | key → JSON value                                                                                                                                                                                                                                                            |
+
+Storage rules: money/qty/price = TEXT decimal strings (exact); times = INTEGER ms since epoch UTC; enums = TEXT with CHECK; all tables STRICT; foreign keys on.
+Deleting a trade keeps its fills/funding (unlinked, ready to regroup) and removes its tags links, screenshots rows, custom values and checks.
+Repository functions exist for settings, import_batches, fills, funding_events, trades; tags, screenshots, custom fields and playbooks get theirs in T5.3, T5.4, T5.5, T8.2.
 
 ---
 

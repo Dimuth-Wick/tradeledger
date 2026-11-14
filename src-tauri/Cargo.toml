@@ -30,6 +30,9 @@ rusqlite = { version = "0.41", features = ["bundled"] }
 rusqlite_migration = "2.7.0"
 # Typed error enums with less boilerplate.
 thiserror = "2.0.21"
+# Exact decimal money math (never f64). "serde" sends values to the UI as
+# strings, so JavaScript can't round them.
+rust_decimal = { version = "1.43.0", features = ["serde"] }
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
@@ -39,3 +42,7 @@ lto = true
 opt-level = 3
 panic = "abort"
 strip = true
+
+[dev-dependencies]
+# dec!(1.25) literals in tests.
+rust_decimal_macros = "1.40.0"

@@ -1,0 +1,79 @@
+//! Futures funding payments. Deduplicated like fills.
+
+use rusqlite::{Connection, Row, params};
+
+use super::sql::{SqlDec, dec};
+use super::{DbError, InsertOutcome};
+use crate::models::{FundingEvent, WithId};
+
+pub fn insert(conn: &Connection, e: &FundingEvent) -> Result<InsertOutcome, DbError> {
+    let changed = conn.execute(
+        "INSERT INTO funding_events
+            (exchange, symbol, amount, time, dedupe_hash, trade_id, import_batch_id)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
+         ON CONFLICT(dedupe_hash) DO NOTHING",
+        params![
+            e.exchange,
+            e.symbol,
+            SqlDec(e.amount),
+            e.time,
+            e.dedupe_hash,
+            e.trade_id,
+            e.import_batch_id
+        ],
+    )?;
+    Ok(if changed == 0 {
+        InsertOutcome::Duplicate
+    } else {
+        InsertOutcome::Inserted(conn.last_insert_rowid())
+    })
+}
+
+pub fn list_for_trade(
+    conn: &Connection,
+    trade_id: i64,
+) -> Result<Vec<WithId<FundingEvent>>, DbError> {
+    let mut stmt =
+        conn.prepare("SELECT * FROM funding_events WHERE trade_id = ?1 ORDER BY time, id")?;
+    let rows = stmt.query_map([trade_id], from_row)?;
+    Ok(rows.collect::<rusqlite::Result<_>>()?)
+}
+
+fn from_row(r: &Row<'_>) -> rusqlite::Result<WithId<FundingEvent>> {
+    Ok(WithId {
+        id: r.get("id")?,
+        item: FundingEvent {
+            exchange: r.get("exchange")?,
+            symbol: r.get("symbol")?,
+            amount: dec(r, "amount")?,
+            time: r.get("time")?,
+            dedupe_hash: r.get("dedupe_hash")?,
+            trade_id: r.get("trade_id")?,
+            import_batch_id: r.get("import_batch_id")?,
+        },
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::db::{open_in_memory, test_data, trades};
+
+    #[test]
+    fn insert_dedupes_and_lists_by_trade() {
+        let conn = open_in_memory().unwrap();
+        let trade_id = trades::insert(&conn, &test_data::trade()).unwrap();
+
+        let mut e = test_data::funding("f1");
+        e.trade_id = Some(trade_id);
+        let InsertOutcome::Inserted(id) = insert(&conn, &e).unwrap() else {
+            panic!("expected insert");
+        };
+        assert_eq!(insert(&conn, &e).unwrap(), InsertOutcome::Duplicate);
+
+        assert_eq!(
+            list_for_trade(&conn, trade_id).unwrap(),
+            vec![WithId { id, item: e }]
+        );
+    }
+}

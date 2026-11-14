@@ -5,6 +5,18 @@
 //! on Windows), never inside the repo, so real trades can't be committed.
 
 mod migrations;
+mod sql;
+
+// Repositories: one module per table group. Each takes a `&Connection`, so
+// tests can pass an in-memory DB and commands can pass the shared one.
+pub mod fills;
+pub mod funding;
+pub mod import_batches;
+pub mod settings;
+pub mod trades;
+
+#[cfg(test)]
+mod test_data;
 
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
@@ -30,6 +42,17 @@ pub enum DbError {
     Sqlite(#[from] rusqlite::Error),
     #[error("migration failed: {0}")]
     Migration(#[from] rusqlite_migration::Error),
+    #[error("invalid JSON in settings: {0}")]
+    Json(#[from] serde_json::Error),
+}
+
+/// Result of inserting a row that has a `dedupe_hash`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum InsertOutcome {
+    /// New row, with its id.
+    Inserted(i64),
+    /// Same hash already stored; nothing written.
+    Duplicate,
 }
 
 /// Shared connection held in Tauri state. A `Mutex` because SQLite
