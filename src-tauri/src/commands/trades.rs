@@ -19,6 +19,14 @@ fn with_conn<T, E: Display>(
     f(&conn).map_err(|e| e.to_string())
 }
 
+/// Computes status, PnL, R:R and R-multiple for the form's live preview
+/// without saving. Same code path as `create_trade`, so the preview always
+/// matches what will be stored.
+#[tauri::command]
+pub fn preview_trade(input: TradeInput) -> Result<Trade, String> {
+    trade_entry::build_trade(&input, true).map_err(|e| e.to_string())
+}
+
 #[tauri::command]
 pub fn create_trade(db: State<'_, Db>, input: TradeInput) -> Result<WithId<Trade>, String> {
     with_conn(&db, |c| trade_entry::create(c, &input))

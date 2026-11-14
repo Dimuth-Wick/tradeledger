@@ -1,51 +1,67 @@
-import { useEffect, useState } from "react";
-import { dbInfo, ping, type DbInfo } from "../lib/api";
-
-type Status =
-  | { kind: "idle" }
-  | { kind: "ok"; message: string }
-  | { kind: "error"; message: string };
+import { useCallback, useEffect, useState } from "react";
+import TradeForm from "../components/TradeForm";
+import TradeList from "../components/TradeList";
+import {
+  dbInfo,
+  deleteTrade,
+  listTrades,
+  type DbInfo,
+  type Trade,
+  type WithId,
+} from "../lib/api";
 
 export default function HomePage() {
-  const [status, setStatus] = useState<Status>({ kind: "idle" });
+  const [trades, setTrades] = useState<WithId<Trade>[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const [db, setDb] = useState<DbInfo | null>(null);
-  const [dbError, setDbError] = useState<string | null>(null);
 
-  // Load once on start so the user can see where their data is stored.
-  useEffect(() => {
-    dbInfo()
-      .then(setDb)
-      .catch((err) => setDbError(String(err)));
+  const reload = useCallback(() => {
+    listTrades()
+      .then((list) => {
+        setTrades(list);
+        setError(null);
+      })
+      .catch((err) => setError(String(err)));
   }, []);
 
-  async function checkCore() {
+  useEffect(() => {
+    reload();
+    dbInfo()
+      .then(setDb)
+      .catch((err) => setError(String(err)));
+  }, [reload]);
+
+  async function remove(id: number) {
     try {
-      setStatus({ kind: "ok", message: await ping() });
+      await deleteTrade(id);
+      reload();
     } catch (err) {
-      setStatus({ kind: "error", message: String(err) });
+      setError(String(err));
     }
   }
 
   return (
-    <main className="container">
-      <h1>TradeLedger</h1>
-      <p>Offline crypto trading journal</p>
+    <main className="page">
+      <header>
+        <h1>TradeLedger</h1>
+      </header>
 
-      <button type="button" onClick={checkCore}>
-        Ping Rust core
-      </button>
+      <section>
+        <h2>New trade</h2>
+        <TradeForm onSaved={reload} />
+      </section>
 
-      {status.kind === "ok" && <p className="status ok">{status.message}</p>}
-      {status.kind === "error" && (
-        <p className="status error">Error: {status.message}</p>
-      )}
+      <section>
+        <h2>Recent trades</h2>
+        {error && <p className="status error">{error}</p>}
+        <TradeList trades={trades} onDelete={remove} />
+      </section>
 
       {db && (
-        <p className="db-info">
+        <footer className="db-info">
           Database: {db.path} (schema v{db.schemaVersion})
-        </p>
+        </footer>
       )}
-      {dbError && <p className="status error">Database error: {dbError}</p>}
     </main>
   );
 }

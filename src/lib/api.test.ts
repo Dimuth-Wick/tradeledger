@@ -7,6 +7,7 @@ import {
   getTrade,
   listTrades,
   ping,
+  previewTrade,
   updateTrade,
   type TradeInput,
 } from "./api";
@@ -74,6 +75,7 @@ describe("trade commands", () => {
   // Command names and argument keys must match the Rust #[tauri::command]
   // function and parameter names exactly, or the call fails at runtime.
   it.each([
+    ["preview_trade", () => previewTrade(input), { input }],
     ["create_trade", () => createTrade(input), { input }],
     ["update_trade", () => updateTrade(7, input), { id: 7, input }],
     ["delete_trade", () => deleteTrade(7), { id: 7 }],

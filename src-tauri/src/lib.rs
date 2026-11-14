@@ -33,6 +33,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::ping,
             commands::db_info,
+            commands::trades::preview_trade,
             commands::trades::create_trade,
             commands::trades::update_trade,
             commands::trades::delete_trade,

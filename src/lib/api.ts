@@ -85,6 +85,11 @@ export function dbInfo(): Promise<DbInfo> {
   return invoke<DbInfo>("db_info");
 }
 
+/** Derived values for the form preview; nothing is saved. */
+export function previewTrade(input: TradeInput): Promise<Trade> {
+  return invoke<Trade>("preview_trade", { input });
+}
+
 export function createTrade(input: TradeInput): Promise<WithId<Trade>> {
   return invoke<WithId<Trade>>("create_trade", { input });
 }
