@@ -51,7 +51,6 @@ fn fut(id: i64, time: i64, side: Side, qty: Decimal, price: Decimal) -> WithId<F
             realized_pnl: None,
             time,
             dedupe_hash: format!("h{id}"),
-            trade_id: None,
             import_batch_id: None,
         },
     }

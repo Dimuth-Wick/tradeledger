@@ -19,7 +19,7 @@ use rusqlite_migration::{M, Migrations};
 /// Bump together with adding a migration below; tests check they agree.
 /// Test-only: the app itself just runs `to_latest()` and needn't know the number.
 #[cfg(test)]
-pub const LATEST_VERSION: u32 = 2;
+pub const LATEST_VERSION: u32 = 3;
 
 pub fn migrations() -> Migrations<'static> {
     Migrations::new(vec![
@@ -32,8 +32,54 @@ pub fn migrations() -> Migrations<'static> {
         ),
         // v2: trading data (fills, trades, funding, tags, journal tables).
         M::up(V2_TRADING_SCHEMA),
+        // v3: fills ↔ trades becomes many-to-many (a flip fill belongs to two
+        // trades), and imported trades get a stable identity for regrouping.
+        M::up(V3_ALLOCATIONS),
     ])
 }
+
+const V3_ALLOCATIONS: &str = "
+-- SQLite can't drop a column that has a foreign key, so fills is rebuilt
+-- without trade_id. Nothing references fills yet, so this is safe.
+CREATE TABLE fills_v3 (
+    id              INTEGER PRIMARY KEY,
+    exchange        TEXT    NOT NULL,
+    market          TEXT    NOT NULL CHECK (market IN ('spot', 'usdm')),
+    symbol          TEXT    NOT NULL,
+    side            TEXT    NOT NULL CHECK (side IN ('buy', 'sell')),
+    qty             TEXT    NOT NULL,
+    price           TEXT    NOT NULL,
+    fee             TEXT    NOT NULL DEFAULT '0',
+    fee_asset       TEXT    NOT NULL DEFAULT '',
+    realized_pnl    TEXT,
+    time            INTEGER NOT NULL,
+    dedupe_hash     TEXT    NOT NULL UNIQUE,
+    import_batch_id INTEGER REFERENCES import_batches(id) ON DELETE SET NULL
+) STRICT;
+INSERT INTO fills_v3
+    SELECT id, exchange, market, symbol, side, qty, price, fee, fee_asset,
+           realized_pnl, time, dedupe_hash, import_batch_id
+    FROM fills;
+DROP TABLE fills;
+ALTER TABLE fills_v3 RENAME TO fills;
+CREATE INDEX idx_fills_grouping ON fills(exchange, market, symbol, time);
+
+-- Which part of a fill belongs to which trade. Rebuilt on every regroup.
+CREATE TABLE fill_allocations (
+    fill_id  INTEGER NOT NULL REFERENCES fills(id)  ON DELETE CASCADE,
+    trade_id INTEGER NOT NULL REFERENCES trades(id) ON DELETE CASCADE,
+    qty      TEXT    NOT NULL,
+    is_entry INTEGER NOT NULL CHECK (is_entry IN (0, 1)),
+    PRIMARY KEY (fill_id, trade_id)
+) STRICT, WITHOUT ROWID;
+CREATE INDEX idx_alloc_trade ON fill_allocations(trade_id);
+
+-- Imported trades: dedupe_hash of the fill that opened them. Lets a regroup
+-- find the same trade again and keep the user's notes, plan and tags.
+-- NULL for manual trades (several NULLs are allowed by a UNIQUE index).
+ALTER TABLE trades ADD COLUMN group_key TEXT;
+CREATE UNIQUE INDEX idx_trades_group_key ON trades(group_key);
+";
 
 const V2_TRADING_SCHEMA: &str = "
 -- One row per imported file, so the user can see what came from where.
@@ -218,6 +264,7 @@ mod tests {
         for expected in [
             "custom_fields",
             "custom_values",
+            "fill_allocations",
             "fills",
             "funding_events",
             "import_batches",
@@ -233,6 +280,45 @@ mod tests {
         ] {
             assert!(tables.iter().any(|t| t == expected), "missing {expected}");
         }
+    }
+
+    /// v2 → v3 rebuilds `fills`; existing rows must survive with the same ids.
+    #[test]
+    fn upgrades_from_v2_keeping_fills() {
+        let mut conn = rusqlite::Connection::open_in_memory().unwrap();
+        conn.pragma_update(None, "foreign_keys", "ON").unwrap();
+        migrations().to_version(&mut conn, 2).unwrap();
+        conn.execute_batch(
+            "INSERT INTO trades (id, exchange, market, symbol, direction, status, open_time, qty, avg_entry)
+                 VALUES (7, 'binance', 'spot', 'ETHUSDT', 'long', 'open', 1, '1', '2000');
+             INSERT INTO fills (id, exchange, market, symbol, side, qty, price, time, dedupe_hash, trade_id)
+                 VALUES (42, 'binance', 'spot', 'ETHUSDT', 'buy', '1', '2000', 1, 'h', 7);",
+        )
+        .unwrap();
+
+        migrations().to_latest(&mut conn).unwrap();
+
+        let (id, hash): (i64, String) = conn
+            .query_row("SELECT id, dedupe_hash FROM fills", [], |r| {
+                Ok((r.get(0)?, r.get(1)?))
+            })
+            .unwrap();
+        assert_eq!((id, hash.as_str()), (42, "h"));
+        let has_trade_id: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM pragma_table_info('fills') WHERE name = 'trade_id'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(has_trade_id, 0);
+        // The trade survives; its group_key starts empty.
+        let key: Option<String> = conn
+            .query_row("SELECT group_key FROM trades WHERE id = 7", [], |r| {
+                r.get(0)
+            })
+            .unwrap();
+        assert_eq!(key, None);
     }
 
     /// A v1 database (only `settings`) must upgrade to v2 and keep its data.

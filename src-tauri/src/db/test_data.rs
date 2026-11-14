@@ -45,7 +45,6 @@ pub fn fill(hash: &str, time: i64) -> Fill {
         realized_pnl: None,
         time,
         dedupe_hash: hash.into(),
-        trade_id: None,
         import_batch_id: None,
     }
 }

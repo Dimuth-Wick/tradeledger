@@ -24,6 +24,8 @@
 //!   `Trade.funding` = −(sum of Binance amounts), i.e. positive = paid.
 //! - Net PnL = gross − fees − funding.
 
+pub mod persist;
+
 use std::collections::BTreeMap;
 
 use rust_decimal::Decimal;

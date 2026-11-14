@@ -1,5 +1,8 @@
 //! Exchange executions. Inserts skip rows whose `dedupe_hash` already exists,
 //! so importing the same CSV twice adds nothing.
+//!
+//! Which trade(s) a fill belongs to is stored in `fill_allocations` (see
+//! `db::allocations`), because a flip fill belongs to two trades.
 
 use rusqlite::{Connection, Row, params};
 
@@ -11,8 +14,8 @@ pub fn insert(conn: &Connection, f: &Fill) -> Result<InsertOutcome, DbError> {
     let changed = conn.execute(
         "INSERT INTO fills
             (exchange, market, symbol, side, qty, price, fee, fee_asset,
-             realized_pnl, time, dedupe_hash, trade_id, import_batch_id)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)
+             realized_pnl, time, dedupe_hash, import_batch_id)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)
          ON CONFLICT(dedupe_hash) DO NOTHING",
         params![
             f.exchange,
@@ -26,7 +29,6 @@ pub fn insert(conn: &Connection, f: &Fill) -> Result<InsertOutcome, DbError> {
             f.realized_pnl.map(SqlDec),
             f.time,
             f.dedupe_hash,
-            f.trade_id,
             f.import_batch_id
         ],
     )?;
@@ -55,19 +57,16 @@ pub fn list_for_instrument(
     Ok(rows.collect::<rusqlite::Result<_>>()?)
 }
 
+/// Fills used by a trade (a flip fill shows up in both of its trades).
 pub fn list_for_trade(conn: &Connection, trade_id: i64) -> Result<Vec<WithId<Fill>>, DbError> {
-    let mut stmt = conn.prepare("SELECT * FROM fills WHERE trade_id = ?1 ORDER BY time, id")?;
+    let mut stmt = conn.prepare(
+        "SELECT f.* FROM fills f
+         JOIN fill_allocations a ON a.fill_id = f.id
+         WHERE a.trade_id = ?1
+         ORDER BY f.time, f.id",
+    )?;
     let rows = stmt.query_map([trade_id], from_row)?;
     Ok(rows.collect::<rusqlite::Result<_>>()?)
-}
-
-/// Link a fill to a trade (or unlink with `None`). Returns false if no such fill.
-pub fn set_trade(conn: &Connection, fill_id: i64, trade_id: Option<i64>) -> Result<bool, DbError> {
-    let changed = conn.execute(
-        "UPDATE fills SET trade_id = ?1 WHERE id = ?2",
-        params![trade_id, fill_id],
-    )?;
-    Ok(changed > 0)
 }
 
 fn from_row(r: &Row<'_>) -> rusqlite::Result<WithId<Fill>> {
@@ -85,7 +84,6 @@ fn from_row(r: &Row<'_>) -> rusqlite::Result<WithId<Fill>> {
             realized_pnl: opt_dec(r, "realized_pnl")?,
             time: r.get("time")?,
             dedupe_hash: r.get("dedupe_hash")?,
-            trade_id: r.get("trade_id")?,
             import_batch_id: r.get("import_batch_id")?,
         },
     })
@@ -94,7 +92,7 @@ fn from_row(r: &Row<'_>) -> rusqlite::Result<WithId<Fill>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::db::{open_in_memory, test_data, trades};
+    use crate::db::{allocations, open_in_memory, test_data, trades};
     use crate::models::Side;
     use rust_decimal_macros::dec;
 
@@ -143,28 +141,16 @@ mod tests {
     }
 
     #[test]
-    fn link_to_trade_and_unlink() {
+    fn list_for_trade_follows_allocations() {
         let conn = open_in_memory().unwrap();
         let trade_id = trades::insert(&conn, &test_data::trade()).unwrap();
         let InsertOutcome::Inserted(fill_id) = insert(&conn, &test_data::fill("x", 1)).unwrap()
         else {
             panic!("expected insert");
         };
-
-        assert!(set_trade(&conn, fill_id, Some(trade_id)).unwrap());
-        assert_eq!(list_for_trade(&conn, trade_id).unwrap().len(), 1);
-
-        assert!(set_trade(&conn, fill_id, None).unwrap());
         assert!(list_for_trade(&conn, trade_id).unwrap().is_empty());
 
-        assert!(!set_trade(&conn, 999, None).unwrap());
-    }
-
-    #[test]
-    fn linking_to_missing_trade_is_rejected() {
-        let conn = open_in_memory().unwrap();
-        let mut f = test_data::fill("fk", 1);
-        f.trade_id = Some(12345);
-        assert!(insert(&conn, &f).is_err(), "foreign key must be enforced");
+        allocations::insert(&conn, fill_id, trade_id, dec!(0.5), true).unwrap();
+        assert_eq!(list_for_trade(&conn, trade_id).unwrap()[0].id, fill_id);
     }
 }

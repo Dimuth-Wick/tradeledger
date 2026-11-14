@@ -294,9 +294,13 @@ mod tests {
     #[test]
     fn failed_store_leaves_db_unchanged() {
         let conn = open_in_memory().unwrap();
-        let mut report = BinanceSpot.parse(SPOT).unwrap();
-        // Points at a trade that doesn't exist → foreign key error mid-way.
-        report.fills[3].trade_id = Some(999);
+        let report = BinanceSpot.parse(SPOT).unwrap();
+        // Make the 4th insert (first SOL fill) fail half-way through the file.
+        conn.execute_batch(
+            "CREATE TEMP TRIGGER fail_sol BEFORE INSERT ON fills
+             WHEN NEW.symbol = 'SOLUSDT' BEGIN SELECT RAISE(ABORT, 'boom'); END;",
+        )
+        .unwrap();
         assert!(store(&conn, &BinanceSpot, "spot.csv", 1, &report).is_err());
 
         assert_eq!(count_rows(&conn, "fills"), 0);

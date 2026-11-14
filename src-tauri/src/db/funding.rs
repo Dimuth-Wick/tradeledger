@@ -29,6 +29,36 @@ pub fn insert(conn: &Connection, e: &FundingEvent) -> Result<InsertOutcome, DbEr
     })
 }
 
+/// All funding of one futures symbol, in time order (input for grouping).
+pub fn list_for_symbol(
+    conn: &Connection,
+    exchange: &str,
+    symbol: &str,
+) -> Result<Vec<WithId<FundingEvent>>, DbError> {
+    let mut stmt = conn.prepare(
+        "SELECT * FROM funding_events WHERE exchange = ?1 AND symbol = ?2 ORDER BY time, id",
+    )?;
+    let rows = stmt.query_map(params![exchange, symbol], from_row)?;
+    Ok(rows.collect::<rusqlite::Result<_>>()?)
+}
+
+/// Unlinks all funding of a symbol from trades (before regrouping it).
+pub fn clear_trade_links(conn: &Connection, exchange: &str, symbol: &str) -> Result<(), DbError> {
+    conn.execute(
+        "UPDATE funding_events SET trade_id = NULL WHERE exchange = ?1 AND symbol = ?2",
+        params![exchange, symbol],
+    )?;
+    Ok(())
+}
+
+pub fn set_trade(conn: &Connection, funding_id: i64, trade_id: i64) -> Result<(), DbError> {
+    conn.execute(
+        "UPDATE funding_events SET trade_id = ?1 WHERE id = ?2",
+        params![trade_id, funding_id],
+    )?;
+    Ok(())
+}
+
 pub fn list_for_trade(
     conn: &Connection,
     trade_id: i64,

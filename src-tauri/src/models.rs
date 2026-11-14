@@ -25,7 +25,7 @@ pub struct WithId<T> {
 macro_rules! text_enum {
     ($(#[$meta:meta])* $name:ident { $($variant:ident => $text:literal),+ $(,)? }) => {
         $(#[$meta])*
-        #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+        #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
         pub enum $name {
             $( #[serde(rename = $text)] $variant ),+
         }
@@ -90,8 +90,8 @@ pub struct Fill {
     pub time: TimestampMs,
     /// Fingerprint of the source row; identical rows are imported once.
     pub dedupe_hash: String,
-    /// Set by the grouping engine; `None` = not yet grouped.
-    pub trade_id: Option<i64>,
+    // Which trade(s) use this fill lives in `fill_allocations`, because a
+    // fill that flips a position belongs to two trades.
     pub import_batch_id: Option<i64>,
 }
 

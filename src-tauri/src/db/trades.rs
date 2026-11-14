@@ -5,7 +5,7 @@ use rusqlite::{Connection, OptionalExtension, Row};
 
 use super::DbError;
 use super::sql::{SqlDec, dec, opt_dec};
-use crate::models::{Trade, WithId};
+use crate::models::{Market, Trade, WithId};
 
 /// Column order used by both INSERT and UPDATE; `bind` passes values in the
 /// same order. Keep the three in sync.
@@ -98,6 +98,36 @@ pub fn delete(conn: &Connection, id: i64) -> Result<bool, DbError> {
     Ok(conn.execute("DELETE FROM trades WHERE id = ?1", [id])? > 0)
 }
 
+/// Stable identity of an imported trade (see migration v3). `None` clears it.
+pub fn set_group_key(conn: &Connection, id: i64, key: Option<&str>) -> Result<(), DbError> {
+    conn.execute(
+        "UPDATE trades SET group_key = ?1 WHERE id = ?2",
+        rusqlite::params![key, id],
+    )?;
+    Ok(())
+}
+
+/// A stored trade plus its `group_key` (`None` until grouped).
+pub type KeyedTrade = (WithId<Trade>, Option<String>);
+
+/// Imported (non-manual) trades of one instrument with their group keys.
+pub fn list_imported_for_instrument(
+    conn: &Connection,
+    exchange: &str,
+    market: Market,
+    symbol: &str,
+) -> Result<Vec<KeyedTrade>, DbError> {
+    let mut stmt = conn.prepare(
+        "SELECT * FROM trades
+         WHERE exchange = ?1 AND market = ?2 AND symbol = ?3 AND is_manual = 0
+         ORDER BY open_time, id",
+    )?;
+    let rows = stmt.query_map(rusqlite::params![exchange, market, symbol], |r| {
+        Ok((from_row(r)?, r.get("group_key")?))
+    })?;
+    Ok(rows.collect::<rusqlite::Result<_>>()?)
+}
+
 /// Newest first. Filtering and paging arrive with the trade log (T5.1).
 pub fn list(conn: &Connection) -> Result<Vec<WithId<Trade>>, DbError> {
     let mut stmt = conn.prepare("SELECT * FROM trades ORDER BY open_time DESC, id DESC")?;
@@ -139,7 +169,7 @@ fn from_row(r: &Row<'_>) -> rusqlite::Result<WithId<Trade>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::db::{InsertOutcome, fills, funding, open_in_memory, test_data};
+    use crate::db::{InsertOutcome, allocations, fills, funding, open_in_memory, test_data};
     use crate::models::{Direction, TradeStatus};
     use rust_decimal_macros::dec;
 
@@ -195,11 +225,12 @@ mod tests {
         let conn = open_in_memory().unwrap();
         let trade_id = insert(&conn, &test_data::trade()).unwrap();
 
-        let mut f = test_data::fill("f", 1);
-        f.trade_id = Some(trade_id);
-        let InsertOutcome::Inserted(fill_id) = fills::insert(&conn, &f).unwrap() else {
+        let InsertOutcome::Inserted(fill_id) =
+            fills::insert(&conn, &test_data::fill("f", 1)).unwrap()
+        else {
             panic!("expected insert");
         };
+        allocations::insert(&conn, fill_id, trade_id, dec!(0.5), true).unwrap();
         let mut e = test_data::funding("e");
         e.trade_id = Some(trade_id);
         funding::insert(&conn, &e).unwrap();
@@ -214,13 +245,14 @@ mod tests {
         assert!(delete(&conn, trade_id).unwrap());
         assert!(!delete(&conn, trade_id).unwrap());
 
-        // Fill survives, unlinked.
-        let fill_trade: Option<i64> = conn
-            .query_row("SELECT trade_id FROM fills WHERE id = ?1", [fill_id], |r| {
+        // Fill survives; only its allocation to the deleted trade is gone.
+        let fills_left: i64 = conn
+            .query_row("SELECT COUNT(*) FROM fills WHERE id = ?1", [fill_id], |r| {
                 r.get(0)
             })
             .unwrap();
-        assert_eq!(fill_trade, None);
+        assert_eq!(fills_left, 1);
+        assert!(fills::list_for_trade(&conn, trade_id).unwrap().is_empty());
         assert!(funding::list_for_trade(&conn, trade_id).unwrap().is_empty());
         let links: i64 = conn
             .query_row("SELECT COUNT(*) FROM trade_tags", [], |r| r.get(0))

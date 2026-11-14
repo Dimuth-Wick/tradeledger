@@ -9,6 +9,7 @@ mod sql;
 
 // Repositories: one module per table group. Each takes a `&Connection`, so
 // tests can pass an in-memory DB and commands can pass the shared one.
+pub mod allocations;
 pub mod fills;
 pub mod funding;
 pub mod import_batches;
@@ -16,7 +17,7 @@ pub mod settings;
 pub mod trades;
 
 #[cfg(test)]
-mod test_data;
+pub(crate) mod test_data;
 
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;

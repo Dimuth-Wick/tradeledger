@@ -160,7 +160,6 @@ fn parse_trade_row(
         realized_pnl,
         time,
         dedupe_hash,
-        trade_id: None,
         import_batch_id: None,
     })
 }

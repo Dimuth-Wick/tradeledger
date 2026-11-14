@@ -166,7 +166,6 @@ fn parse_row(cols: &Columns, r: &csv::StringRecord, deduper: &mut Deduper) -> Re
         realized_pnl: None,
         time,
         dedupe_hash,
-        trade_id: None,
         import_batch_id: None,
     })
 }
