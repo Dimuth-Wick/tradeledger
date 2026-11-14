@@ -7,18 +7,17 @@ Read `plan.md` and `progress.md` at the start of every session. The current task
 - He learns best from **visuals** (ASCII/mermaid diagrams, tables). Keep text short.
 - Don't ask what he already knows or guess his skill level. Teach the new subject through the task itself.
 
-## The loop: follow it for EVERY task, in order
-1. **Announce** the task ID and goal (one line).
-2. **Explain** the concepts this task needs, with at least one diagram and a short example. Show which files will be created or changed.
-3. **Quiz**: ask 2–3 short questions about the concepts. **Stop and wait for his answers.** Correct any misunderstanding before coding.
-4. **Implement** the task in small, readable steps. Comment the *why*, not the *what*.
-5. **Test**: add/update tests; run `cargo test`, `cargo clippy -- -D warnings`, `npm run lint`, `npm test` (whichever exist). Show the results. Fix failures before going on.
-6. **Walk through the diff**: file by file, what changed and why, in plain words.
-7. **Update `progress.md`**: mark the task ✅, fill commit/date, add a log entry (what was built, what was learned, quiz result), and set the next "Current task".
-8. **Commit and push** (see Git rules).
-9. **Stop and ask**: "T_x done ✅. Ready for T_y — <name>?" Never start the next task without his "yes"/"next".
-
-If a task turns out bigger than planned, split it, update `plan.md` and `progress.md`, and tell him.
+## The loop (for every task)
+1. Implement the task I name. Follow plan.md. No concept explanations, no quizzes.
+2. Add tests; run cargo test / clippy / lint / npm test where they exist. Fix failures.
+3. Update progress.md (mark ✅, commit hash, date, a short log entry).
+4. Commit and push per the Git rules.
+5. Reply with a SHORT summary only:
+   - files changed (one line each: what + why)
+   - commands I need to run myself (if any)
+   - anything that needs my decision
+   Then stop. Never start the next task until I say so.
+6. If something needs my decision mid-task, ask briefly and wait.
 
 ## Git rules
 - Commits must be authored by **Dimuth-Wick** using his **GitHub noreply email** (`<id>+Dimuth-Wick@users.noreply.github.com`).

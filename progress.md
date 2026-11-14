@@ -2,12 +2,12 @@
 
 Status: ⬜ todo · 🟨 in progress · ✅ done
 
-**Current task:** T0.1 — Install & verify toolchain
+**Current task:** T0.2 — Git identity + GitHub repo + first push
 
 | Task | Description | Status | Commit | Date |
 |---|---|---|---|---|
 | — | Requirements grilling + plan, README, progress, CLAUDE.md | ✅ | — | 2026-11-14 |
-| T0.1 | Install & verify toolchain | ⬜ | | |
+| T0.1 | Install & verify toolchain | ✅ | — | 2026-11-14 |
 | T0.2 | Git identity + GitHub repo + first push | ⬜ | | |
 | T1.1 | Scaffold Tauri 2 + React + TS | ⬜ | | |
 | T1.2 | First `invoke()` command + lint/format | ⬜ | | |
@@ -41,6 +41,13 @@ Status: ⬜ todo · 🟨 in progress · ✅ done
 
 ## Log
 <!-- Newest first. One entry per finished task: what was built, what was learned, quiz result, any follow-ups. -->
+
+### 2026-11-14 — T0.1 Install & verify toolchain
+- Already present: Node 24.11.0 (LTS), npm 11.6.1, git 2.55.0, WebView2 157.0.4341.57, VS Code 1.145.1.
+- Installed: rustup 1.29.1 with rustc/cargo 1.100.0 (`stable-x86_64-pc-windows-msvc`), Visual Studio Build Tools 2022 (C++ workload) + Windows SDK 10.0.26100.0, VS Code extensions rust-analyzer and Tauri.
+- Verified: a test Rust program compiled, linked and ran.
+- No repo code changed; commit column is "—" (docs go in with the T0.2 commit).
+- Next: T0.2.
 
 ### 2026-11-14 — Planning
 - Requirements settled through a grilling session (see plan.md §1).
