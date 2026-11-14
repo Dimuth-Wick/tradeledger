@@ -145,3 +145,17 @@ Used by the importer tests (T4.2/T4.3) and the grouping tests (T4.4).
 | SOLUSDT | +0.095                     | F3         | −0.095 (received)    |
 
 Skipped rows: 1 `TRANSFER`, 1 `COMMISSION`, 1 `REALIZED_PNL`.
+
+### Expected trade values (checked by `src-tauri/src/grouping/tests.rs`)
+
+| #        | Dir   | Status | Qty   | Avg entry | Avg exit | Gross     | Fees                           | Funding | Net      |
+| -------- | ----- | ------ | ----- | --------- | -------- | --------- | ------------------------------ | ------- | -------- |
+| S1       | long  | closed | 0.5   | 2000.35   | 2100     | 49.775175 | 2.049125                       | 0       | 47.72605 |
+| S2       | long  | closed | 2.5   | 95.12     | 92.4     | −6.8      | 0 (+0.0006125 BNB unconverted) | 0       | −6.8     |
+| S3       | long  | open   | 0.001 | 60500     | —        | 0         | 0.0605                         | 0       | −0.0605  |
+| F1       | long  | closed | 0.01  | 61000     | 61850.5  | 8.505     | 0.491402                       | 0.05185 | 7.961748 |
+| F2 short | short | closed | 0.5   | 2050      | 2010     | 20        | 0.812                          | −0.1025 | 19.2905  |
+| F2 long  | long  | closed | 0.3   | 2010      | 2030     | 6         | 0.4848                         | 0.03015 | 5.48505  |
+| F3       | short | closed | 10    | 95        | 97.2     | −22       | 0.7688                         | −0.095  | −22.6738 |
+
+Funding column = cost (positive = paid). Net = gross − fees − funding.
