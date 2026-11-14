@@ -77,6 +77,13 @@ Header: `Date(UTC),Symbol,Side,Price,Quantity,Amount,Fee,Fee Coin,Realized Profi
 
 Fixed values: `exchange = "binance"`, `market = usdm`.
 
+Accepted variations:
+
+- No `Fee Coin` column → the fee is read as number + asset glued together (`0.1464USDT`).
+- No `Realized Profit` column → `realized_pnl = None` (the file is then detected only if the importer is picked by hand, since that column is what tells futures apart from spot).
+- Negative fees are allowed: maker rebates on some fee tiers are paid to you.
+- Aliases: `Qty` = Quantity, `Commission` = Fee, `Commission Asset` = Fee Coin, `Realized PnL` = Realized Profit.
+
 ## 3. USDⓈ-M transaction history (funding)
 
 Header: `Date(UTC),Type,Amount,Asset,Symbol`

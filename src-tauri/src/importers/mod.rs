@@ -1,13 +1,14 @@
 //! Exchange CSV importers.
 //!
-//! Flow:  CSV bytes ──parse()──► ParseReport (fills + row errors, nothing saved)
-//!                     └──store_fills()──► DB (one import batch, duplicates skipped)
+//! Flow:  CSV bytes ──parse()──► ParseReport (fills/funding + row errors, nothing saved)
+//!                     └──store()──► DB (one import batch, duplicates skipped)
 //!
 //! Parsing and saving are separate so the UI can show a preview first (T4.5).
 //! Each exchange/file type implements `ExchangeImporter`; adding Bybit later
 //! means adding one more implementation, nothing else changes.
 
 pub mod binance_spot;
+pub mod binance_usdm;
 mod common;
 
 use rusqlite::Connection;
@@ -18,6 +19,7 @@ use crate::db::{self, DbError, InsertOutcome};
 use crate::models::{Fill, FundingEvent, ImportBatch, Market, TimestampMs};
 
 pub use binance_spot::BinanceSpot;
+pub use binance_usdm::{BinanceUsdmTrades, BinanceUsdmTransactions};
 
 #[derive(Debug, Error)]
 pub enum ImportError {
@@ -77,7 +79,7 @@ pub trait ExchangeImporter: Sync {
 
 /// Every importer the app knows, in detection order.
 pub fn all() -> &'static [&'static dyn ExchangeImporter] {
-    &[&BinanceSpot]
+    &[&BinanceSpot, &BinanceUsdmTrades, &BinanceUsdmTransactions]
 }
 
 /// Picks the importer whose header pattern matches the file.
@@ -100,18 +102,26 @@ pub struct ImportSummary {
     pub duplicates: u32,
 }
 
-/// Saves fills as one import batch. All-or-nothing: if anything fails, the
-/// transaction rolls back and the DB is unchanged. Rows already imported
-/// (same dedupe hash) are counted as duplicates, not inserted again.
-pub fn store_fills(
+fn count(outcome: InsertOutcome, inserted: &mut u32, duplicates: &mut u32) {
+    match outcome {
+        InsertOutcome::Inserted(_) => *inserted += 1,
+        InsertOutcome::Duplicate => *duplicates += 1,
+    }
+}
+
+/// Saves a parsed file (its fills and funding events) as one import batch.
+/// All-or-nothing: if anything fails, the transaction rolls back and the DB
+/// is unchanged. Rows already imported (same dedupe hash) are counted as
+/// duplicates, not inserted again. Row errors in the report are not saved.
+pub fn store(
     conn: &Connection,
     importer: &dyn ExchangeImporter,
     file_name: &str,
     imported_at: TimestampMs,
-    fills: &[Fill],
+    report: &ParseReport,
 ) -> Result<ImportSummary, ImportError> {
     let tx = conn.unchecked_transaction()?;
-    let rows_total = u32::try_from(fills.len()).unwrap_or(u32::MAX);
+    let rows_total = u32::try_from(report.fills.len() + report.funding.len()).unwrap_or(u32::MAX);
     let batch_id = db::import_batches::insert(
         &tx,
         &ImportBatch {
@@ -126,15 +136,27 @@ pub fn store_fills(
     )?;
 
     let (mut inserted, mut duplicates) = (0u32, 0u32);
-    for fill in fills {
+    for fill in &report.fills {
         let fill = Fill {
             import_batch_id: Some(batch_id),
             ..fill.clone()
         };
-        match db::fills::insert(&tx, &fill)? {
-            InsertOutcome::Inserted(_) => inserted += 1,
-            InsertOutcome::Duplicate => duplicates += 1,
-        }
+        count(
+            db::fills::insert(&tx, &fill)?,
+            &mut inserted,
+            &mut duplicates,
+        );
+    }
+    for event in &report.funding {
+        let event = FundingEvent {
+            import_batch_id: Some(batch_id),
+            ..event.clone()
+        };
+        count(
+            db::funding::insert(&tx, &event)?,
+            &mut inserted,
+            &mut duplicates,
+        );
     }
     db::import_batches::set_counts(&tx, batch_id, inserted, duplicates)?;
     tx.commit()?;
@@ -154,11 +176,19 @@ mod tests {
 
     const SPOT: &[u8] = include_bytes!("../../../tests/fixtures/binance-spot-trades.csv");
     const FUTURES: &[u8] = include_bytes!("../../../tests/fixtures/binance-futures-trades.csv");
+    const TRANSACTIONS: &[u8] =
+        include_bytes!("../../../tests/fixtures/binance-futures-transactions.csv");
+
+    fn count_rows(conn: &Connection, table: &str) -> i64 {
+        conn.query_row(&format!("SELECT COUNT(*) FROM {table}"), [], |r| r.get(0))
+            .unwrap()
+    }
 
     #[test]
-    fn detects_spot_file_and_rejects_others() {
+    fn detects_each_file_type_and_rejects_others() {
         assert_eq!(detect(SPOT).unwrap().kind(), "binance-spot");
-        assert!(matches!(detect(FUTURES), Err(ImportError::UnknownFormat)));
+        assert_eq!(detect(FUTURES).unwrap().kind(), "binance-usdm");
+        assert_eq!(detect(TRANSACTIONS).unwrap().kind(), "binance-usdm-tx");
         assert!(matches!(
             detect(b"foo,bar\n1,2\n"),
             Err(ImportError::UnknownFormat)
@@ -166,11 +196,20 @@ mod tests {
     }
 
     #[test]
+    fn each_fixture_matches_exactly_one_importer() {
+        for data in [SPOT, FUTURES, TRANSACTIONS] {
+            let headers = common::read_headers(data).unwrap();
+            let matching = all().iter().filter(|i| i.matches_headers(&headers)).count();
+            assert_eq!(matching, 1, "{headers:?}");
+        }
+    }
+
+    #[test]
     fn importing_the_same_file_twice_adds_nothing_the_second_time() {
         let conn = open_in_memory().unwrap();
         let report = BinanceSpot.parse(SPOT).unwrap();
 
-        let first = store_fills(&conn, &BinanceSpot, "spot.csv", 1, &report.fills).unwrap();
+        let first = store(&conn, &BinanceSpot, "spot.csv", 1, &report).unwrap();
         assert_eq!(
             (first.rows_total, first.inserted, first.duplicates),
             (8, 8, 0)
@@ -178,7 +217,7 @@ mod tests {
 
         // Parse again from scratch, as a real re-import would.
         let again = BinanceSpot.parse(SPOT).unwrap();
-        let second = store_fills(&conn, &BinanceSpot, "spot.csv", 2, &again.fills).unwrap();
+        let second = store(&conn, &BinanceSpot, "spot.csv", 2, &again).unwrap();
         assert_eq!(
             (second.rows_total, second.inserted, second.duplicates),
             (8, 0, 8)
@@ -191,21 +230,57 @@ mod tests {
             (batch.item.rows_inserted, batch.item.rows_duplicate),
             (0, 8)
         );
-
-        let count: i64 = conn
-            .query_row("SELECT COUNT(*) FROM fills", [], |r| r.get(0))
-            .unwrap();
         assert_eq!(
-            count, 8,
+            count_rows(&conn, "fills"),
+            8,
             "identical twin rows are both kept, nothing doubled"
         );
     }
 
     #[test]
-    fn stored_fills_point_to_their_batch() {
+    fn funding_file_is_stored_and_deduplicated() {
+        let conn = open_in_memory().unwrap();
+        let report = BinanceUsdmTransactions.parse(TRANSACTIONS).unwrap();
+
+        let first = store(&conn, &BinanceUsdmTransactions, "tx.csv", 1, &report).unwrap();
+        assert_eq!(
+            (first.rows_total, first.inserted, first.duplicates),
+            (6, 6, 0)
+        );
+        let second = store(&conn, &BinanceUsdmTransactions, "tx.csv", 2, &report).unwrap();
+        assert_eq!((second.inserted, second.duplicates), (0, 6));
+
+        assert_eq!(count_rows(&conn, "funding_events"), 6);
+        let batch = db::import_batches::get(&conn, first.batch_id)
+            .unwrap()
+            .unwrap();
+        assert_eq!(batch.item.market, Market::Usdm);
+    }
+
+    #[test]
+    fn spot_and_futures_with_same_values_do_not_collide() {
+        // Different file kinds are part of the hash, so importing both files
+        // never treats a futures fill as a duplicate of a spot fill.
+        let conn = open_in_memory().unwrap();
+        store(
+            &conn,
+            &BinanceSpot,
+            "s.csv",
+            1,
+            &BinanceSpot.parse(SPOT).unwrap(),
+        )
+        .unwrap();
+        let futures = BinanceUsdmTrades.parse(FUTURES).unwrap();
+        let summary = store(&conn, &BinanceUsdmTrades, "f.csv", 2, &futures).unwrap();
+        assert_eq!((summary.inserted, summary.duplicates), (8, 0));
+        assert_eq!(count_rows(&conn, "fills"), 16);
+    }
+
+    #[test]
+    fn stored_rows_point_to_their_batch() {
         let conn = open_in_memory().unwrap();
         let report = BinanceSpot.parse(SPOT).unwrap();
-        let summary = store_fills(&conn, &BinanceSpot, "spot.csv", 1, &report.fills).unwrap();
+        let summary = store(&conn, &BinanceSpot, "spot.csv", 1, &report).unwrap();
         let fills =
             db::fills::list_for_instrument(&conn, "binance", Market::Spot, "ETHUSDT").unwrap();
         assert_eq!(fills.len(), 3);
@@ -219,18 +294,12 @@ mod tests {
     #[test]
     fn failed_store_leaves_db_unchanged() {
         let conn = open_in_memory().unwrap();
-        let mut fills = BinanceSpot.parse(SPOT).unwrap().fills;
+        let mut report = BinanceSpot.parse(SPOT).unwrap();
         // Points at a trade that doesn't exist → foreign key error mid-way.
-        fills[3].trade_id = Some(999);
-        assert!(store_fills(&conn, &BinanceSpot, "spot.csv", 1, &fills).is_err());
+        report.fills[3].trade_id = Some(999);
+        assert!(store(&conn, &BinanceSpot, "spot.csv", 1, &report).is_err());
 
-        let (fill_count, batch_count): (i64, i64) = conn
-            .query_row(
-                "SELECT (SELECT COUNT(*) FROM fills), (SELECT COUNT(*) FROM import_batches)",
-                [],
-                |r| Ok((r.get(0)?, r.get(1)?)),
-            )
-            .unwrap();
-        assert_eq!((fill_count, batch_count), (0, 0));
+        assert_eq!(count_rows(&conn, "fills"), 0);
+        assert_eq!(count_rows(&conn, "import_batches"), 0);
     }
 }
