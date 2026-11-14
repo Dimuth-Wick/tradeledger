@@ -2,7 +2,7 @@
 
 Status: ⬜ todo · 🟨 in progress · ✅ done
 
-**Current task:** T2.1 — SQLite in app-data + migrations
+**Current task:** T2.2 — Schema v1 + structs + repository + tests
 
 | Task  | Description                                               | Status | Commit  | Date       |
 | ----- | --------------------------------------------------------- | ------ | ------- | ---------- |
@@ -11,7 +11,7 @@ Status: ⬜ todo · 🟨 in progress · ✅ done
 | T0.2  | Git identity + GitHub repo + first push                   | ✅     | b236bc7 | 2026-11-14 |
 | T1.1  | Scaffold Tauri 2 + React + TS                             | ✅     | 383b82f | 2026-11-14 |
 | T1.2  | First `invoke()` command + lint/format                    | ✅     | 1e70ec4 | 2026-11-14 |
-| T2.1  | SQLite in app-data + migrations                           | ⬜     |         |            |
+| T2.1  | SQLite in app-data + migrations                           | ✅     | 2a706ba | 2026-11-14 |
 | T2.2  | Schema v1 + structs + repository + tests                  | ⬜     |         |            |
 | T3.1  | Trade CRUD + R:R / R-multiple calculator                  | ⬜     |         |            |
 | T3.2  | Trade entry form + live R:R preview                       | ⬜     |         |            |
@@ -42,6 +42,16 @@ Status: ⬜ todo · 🟨 in progress · ✅ done
 ## Log
 
 <!-- Newest first. One entry per finished task: what was built, what was learned, quiz result, any follow-ups. -->
+
+### 2026-11-14 — T2.1 SQLite in app-data + migrations
+
+- New deps: `rusqlite` 0.41 (`bundled`), `rusqlite_migration` 2.7, `thiserror` 2.
+- `db` module: DB at `%APPDATA%\TradeLedger\tradeledger.db` (OS data dir + fixed folder name, not the bundle id); folder auto-created; `foreign_keys=ON`, WAL journal; migrations run on every startup via `PRAGMA user_version`.
+- Migration v1 = `settings` table (key → JSON). Trading tables come as v2 in T2.2.
+- Connection held in Tauri state behind a `Mutex`; new `db_info` command (path + schema version, camelCase JSON), shown on the home page.
+- Tests: Rust 9 (path, migrations valid, version, foreign keys, WAL, reopen keeps data), TS 3.
+- Verified in the real app: file created in `%APPDATA%\TradeLedger`, UI shows "schema v1"; no DB files in the repo.
+- Next: T2.2.
 
 ### 2026-11-14 — T1.2 First `invoke()` command + lint/format
 
