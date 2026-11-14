@@ -12,9 +12,11 @@ backups/
 .env
 .env.*
 
-# --- Private planning notes (kept locally, not published) ---
+# --- Private notes and AI assistant files (kept locally, not published) ---
 /plan.md
 /progress.md
+/CLAUDE.md
+.claude/
 
 # --- Rust / Tauri ---
 /src-tauri/target/

@@ -38,10 +38,6 @@ npm install
 npm run tauri dev   # first run compiles the Rust core and takes a few minutes
 ```
 
-## Project docs
-
-- [CLAUDE.md](CLAUDE.md): how the AI coding assistant works on this repo
-
 ## Disclaimer
 
 TradeLedger is a journaling and analysis tool, not financial advice.
