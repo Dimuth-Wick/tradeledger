@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { ping } from "../lib/api";
+import { useEffect, useState } from "react";
+import { dbInfo, ping, type DbInfo } from "../lib/api";
 
 type Status =
   | { kind: "idle" }
@@ -8,6 +8,15 @@ type Status =
 
 export default function HomePage() {
   const [status, setStatus] = useState<Status>({ kind: "idle" });
+  const [db, setDb] = useState<DbInfo | null>(null);
+  const [dbError, setDbError] = useState<string | null>(null);
+
+  // Load once on start so the user can see where their data is stored.
+  useEffect(() => {
+    dbInfo()
+      .then(setDb)
+      .catch((err) => setDbError(String(err)));
+  }, []);
 
   async function checkCore() {
     try {
@@ -30,6 +39,13 @@ export default function HomePage() {
       {status.kind === "error" && (
         <p className="status error">Error: {status.message}</p>
       )}
+
+      {db && (
+        <p className="db-info">
+          Database: {db.path} (schema v{db.schemaVersion})
+        </p>
+      )}
+      {dbError && <p className="status error">Database error: {dbError}</p>}
     </main>
   );
 }
