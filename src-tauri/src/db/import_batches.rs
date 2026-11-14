@@ -23,6 +23,20 @@ pub fn insert(conn: &Connection, b: &ImportBatch) -> Result<i64, DbError> {
     Ok(conn.last_insert_rowid())
 }
 
+/// Records how many rows were new vs. already imported, once saving is done.
+pub fn set_counts(
+    conn: &Connection,
+    id: i64,
+    rows_inserted: u32,
+    rows_duplicate: u32,
+) -> Result<(), DbError> {
+    conn.execute(
+        "UPDATE import_batches SET rows_inserted = ?1, rows_duplicate = ?2 WHERE id = ?3",
+        params![rows_inserted, rows_duplicate, id],
+    )?;
+    Ok(())
+}
+
 pub fn get(conn: &Connection, id: i64) -> Result<Option<WithId<ImportBatch>>, DbError> {
     Ok(conn
         .query_row("SELECT * FROM import_batches WHERE id = ?1", [id], from_row)

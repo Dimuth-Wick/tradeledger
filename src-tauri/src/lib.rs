@@ -3,6 +3,7 @@ mod commands;
 // the Tauri commands; also keeps not-yet-used repository functions from being
 // flagged as dead code before the commands that call them exist.
 pub mod db;
+pub mod importers;
 pub mod models;
 pub mod risk;
 pub mod trade_entry;

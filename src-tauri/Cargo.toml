@@ -33,6 +33,13 @@ thiserror = "2.0.21"
 # Exact decimal money math (never f64). "serde" sends values to the UI as
 # strings, so JavaScript can't round them.
 rust_decimal = { version = "1.43.0", features = ["serde"] }
+# Reads exchange CSV exports (handles quoting, BOM, line numbers).
+csv = "1.4.0"
+# SHA-256 fingerprint of each imported row (dedupe_hash).
+sha2 = "0.11.1"
+# Parses "2026-01-05 09:15:02" (UTC) export timestamps. No default features:
+# we only parse, we never read the system clock or time zone database here.
+chrono = { version = "0.4.45", default-features = false, features = ["std"] }
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
