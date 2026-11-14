@@ -77,6 +77,57 @@ export interface TradeInput {
   playbookId?: number | null;
 }
 
+/** Mirrors Rust `importers::RowError`. */
+export interface RowError {
+  /** Line in the file (header = 1). */
+  line: number;
+  message: string;
+}
+
+/** Mirrors Rust `import_flow::InstrumentPreview`. */
+export interface InstrumentPreview {
+  exchange: string;
+  market: Market;
+  symbol: string;
+  newRows: number;
+  tradesAfter: number;
+  openAfter: number;
+  orphanFills: number;
+  unassignedFunding: number;
+  /** Asset → amount, e.g. { BNB: "0.0006125" }. */
+  unconvertedFees: Record<string, Decimal>;
+}
+
+/** Mirrors Rust `import_flow::ImportPreview`. */
+export interface ImportPreview {
+  kind: string;
+  label: string;
+  fileName: string;
+  fills: number;
+  funding: number;
+  skipped: number;
+  alreadyImported: number;
+  errors: RowError[];
+  instruments: InstrumentPreview[];
+}
+
+/** Mirrors Rust `import_flow::ImportResult`. */
+export interface ImportResult {
+  import: {
+    batchId: number;
+    rowsTotal: number;
+    inserted: number;
+    duplicates: number;
+  };
+  regroup: {
+    tradesCreated: number;
+    tradesUpdated: number;
+    tradesRemoved: number;
+    orphanFills: number;
+    unassignedFunding: number;
+  };
+}
+
 export function ping(): Promise<string> {
   return invoke<string>("ping");
 }
@@ -111,4 +162,20 @@ export function getTrade(id: number): Promise<WithId<Trade> | null> {
 
 export function listTrades(): Promise<WithId<Trade>[]> {
   return invoke<WithId<Trade>[]>("list_trades");
+}
+
+/** Parses the CSV text and shows what importing would do. Saves nothing. */
+export function previewImport(
+  fileName: string,
+  content: string,
+): Promise<ImportPreview> {
+  return invoke<ImportPreview>("preview_import", { fileName, content });
+}
+
+/** Saves the file's valid rows and regroups the affected trades. */
+export function confirmImport(
+  fileName: string,
+  content: string,
+): Promise<ImportResult> {
+  return invoke<ImportResult>("confirm_import", { fileName, content });
 }

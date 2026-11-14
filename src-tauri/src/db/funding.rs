@@ -29,6 +29,15 @@ pub fn insert(conn: &Connection, e: &FundingEvent) -> Result<InsertOutcome, DbEr
     })
 }
 
+/// True if a funding event with this dedupe hash is already stored.
+pub fn hash_exists(conn: &Connection, hash: &str) -> Result<bool, DbError> {
+    Ok(conn.query_row(
+        "SELECT EXISTS(SELECT 1 FROM funding_events WHERE dedupe_hash = ?1)",
+        [hash],
+        |r| r.get(0),
+    )?)
+}
+
 /// All funding of one futures symbol, in time order (input for grouping).
 pub fn list_for_symbol(
     conn: &Connection,

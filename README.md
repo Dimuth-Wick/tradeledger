@@ -70,6 +70,12 @@ cd src-tauri && cargo fmt --check && cargo clippy --all-targets -- -D warnings &
 
 Your data lives in `%APPDATA%\TradeLedger` (Windows), outside the repo.
 
+To try imports with the fake files in `tests/fixtures/` without touching your real journal, point the app at a throwaway database:
+
+```powershell
+$env:TRADELEDGER_DB_PATH = "$env:TEMP\tradeledger-test.db"; npm run tauri dev
+```
+
 ## Disclaimer
 
 TradeLedger is a journaling and analysis tool, not financial advice.

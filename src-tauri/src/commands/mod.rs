@@ -4,6 +4,7 @@
 //! (db, importers, grouping, stats) and turn errors into `String` so the UI
 //! gets a plain message instead of a Rust type it can't understand.
 
+pub mod import;
 pub mod trades;
 
 use serde::Serialize;

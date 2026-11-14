@@ -1,12 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { invoke } from "@tauri-apps/api/core";
 import {
+  confirmImport,
   createTrade,
   dbInfo,
   deleteTrade,
   getTrade,
   listTrades,
   ping,
+  previewImport,
   previewTrade,
   updateTrade,
   type TradeInput,
@@ -80,6 +82,16 @@ describe("trade commands", () => {
     ["update_trade", () => updateTrade(7, input), { id: 7, input }],
     ["delete_trade", () => deleteTrade(7), { id: 7 }],
     ["get_trade", () => getTrade(7), { id: 7 }],
+    [
+      "preview_import",
+      () => previewImport("a.csv", "x"),
+      { fileName: "a.csv", content: "x" },
+    ],
+    [
+      "confirm_import",
+      () => confirmImport("a.csv", "x"),
+      { fileName: "a.csv", content: "x" },
+    ],
   ] as const)("%s sends the right arguments", async (name, call, args) => {
     await call();
     expect(invokeMock).toHaveBeenCalledWith(name, args);

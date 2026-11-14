@@ -4,6 +4,7 @@ mod commands;
 // flagged as dead code before the commands that call them exist.
 pub mod db;
 pub mod grouping;
+pub mod import_flow;
 pub mod importers;
 pub mod models;
 pub mod risk;
@@ -20,7 +21,13 @@ pub fn run() {
         .setup(|app| {
             // data_dir() = %APPDATA% on Windows. We add our own "TradeLedger"
             // folder instead of app_data_dir(), which would use the bundle id.
-            let path = db::db_path(&app.path().data_dir()?);
+            // TRADELEDGER_DB_PATH lets developers run the app against a
+            // throwaway database (e.g. to test imports with fake data)
+            // without touching their real journal.
+            let path = match std::env::var_os("TRADELEDGER_DB_PATH") {
+                Some(custom) => std::path::PathBuf::from(custom),
+                None => db::db_path(&app.path().data_dir()?),
+            };
             // Failing here stops startup with a clear error rather than
             // letting every later command fail on a missing DB.
             let conn = db::open(&path)?;
@@ -41,6 +48,8 @@ pub fn run() {
             commands::trades::delete_trade,
             commands::trades::get_trade,
             commands::trades::list_trades,
+            commands::import::preview_import,
+            commands::import::confirm_import,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

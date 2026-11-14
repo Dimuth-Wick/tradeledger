@@ -40,6 +40,15 @@ pub fn insert(conn: &Connection, f: &Fill) -> Result<InsertOutcome, DbError> {
     })
 }
 
+/// True if a fill with this dedupe hash is already stored (import preview).
+pub fn hash_exists(conn: &Connection, hash: &str) -> Result<bool, DbError> {
+    Ok(conn.query_row(
+        "SELECT EXISTS(SELECT 1 FROM fills WHERE dedupe_hash = ?1)",
+        [hash],
+        |r| r.get(0),
+    )?)
+}
+
 /// All fills of one instrument in time order: the input of the grouping engine.
 /// `id` breaks ties so fills with the same timestamp keep import order.
 pub fn list_for_instrument(
