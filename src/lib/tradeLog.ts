@@ -20,9 +20,12 @@ export interface LogFilters {
   direction: Direction | "";
   status: TradeStatus | "";
   outcome: Outcome | "";
+  /** Tag id as text ("" = any tag). */
+  tag: string;
 }
 
 export const EMPTY_FILTERS: LogFilters = {
+  tag: "",
   from: "",
   to: "",
   symbol: "",
@@ -72,6 +75,7 @@ export function buildQuery(
     direction: orNull(f.direction),
     status: orNull(f.status),
     outcome: orNull(f.outcome),
+    tagIds: f.tag === "" ? [] : [Number(f.tag)],
     sort: sort.field,
     descending: sort.descending,
     page,

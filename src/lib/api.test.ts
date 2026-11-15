@@ -2,7 +2,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { invoke } from "@tauri-apps/api/core";
 import {
   confirmImport,
+  createTag,
+  createTagGroup,
   createTrade,
+  deleteTagGroup,
+  setTradeTags,
   dbInfo,
   deleteTrade,
   getTrade,
@@ -113,6 +117,22 @@ describe("trade commands", () => {
       () => previewJournal(7, journal),
       { id: 7, input: journal },
     ],
+    [
+      "create_tag_group",
+      () => createTagGroup("Setup", "#396cd8"),
+      { name: "Setup", color: "#396cd8" },
+    ],
+    [
+      "create_tag",
+      () => createTag(1, "Breakout", ""),
+      { groupId: 1, name: "Breakout", color: "" },
+    ],
+    [
+      "set_trade_tags",
+      () => setTradeTags(7, [1, 2]),
+      { tradeId: 7, tagIds: [1, 2] },
+    ],
+    ["delete_tag_group", () => deleteTagGroup(3), { id: 3 }],
     ["list_trade_fills", () => listTradeFills(7), { tradeId: 7 }],
     ["merge_trade_with_previous", () => mergeTradeWithPrevious(7), { id: 7 }],
     [

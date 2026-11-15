@@ -9,6 +9,7 @@ pub mod importers;
 pub mod journal;
 pub mod models;
 pub mod risk;
+pub mod tags;
 pub mod trade_entry;
 pub mod trade_query;
 
@@ -33,6 +34,7 @@ pub fn run() {
             // Failing here stops startup with a clear error rather than
             // letting every later command fail on a missing DB.
             let conn = db::open(&path)?;
+            tags::seed_defaults(&conn)?;
             app.manage(db::Db {
                 conn: Mutex::new(conn),
                 path,
@@ -60,6 +62,15 @@ pub fn run() {
             commands::grouping::merge_trade_with_previous,
             commands::grouping::split_trade_at_fill,
             commands::grouping::reset_grouping,
+            commands::tags::list_tag_groups,
+            commands::tags::create_tag_group,
+            commands::tags::update_tag_group,
+            commands::tags::delete_tag_group,
+            commands::tags::create_tag,
+            commands::tags::update_tag,
+            commands::tags::delete_tag,
+            commands::tags::get_trade_tags,
+            commands::tags::set_trade_tags,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

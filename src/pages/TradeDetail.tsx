@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import Notes from "../components/Notes";
+import TradeTags from "../components/TradeTags";
 import { FillsPanel } from "../components/TradeList";
 import {
   getTrade,
@@ -211,6 +212,11 @@ function Detail({
           </label>
         </div>
         {planError && <p className="status error">{planError}</p>}
+      </section>
+
+      <section className="card">
+        <h2>Tags</h2>
+        <TradeTags tradeId={t.id} />
       </section>
 
       <section className="card">

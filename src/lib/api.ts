@@ -122,6 +122,26 @@ export interface TradePage {
   closedNetPnl: Decimal;
   wins: number;
   losses: number;
+  /** Trade id → tag ids, for trades on this page that have tags. */
+  tags: Record<string, number[]>;
+}
+
+/** Mirrors Rust `db::tags::Tag`. */
+export interface Tag {
+  id: number;
+  groupId: number;
+  name: string;
+  /** "#rrggbb" or "" (use the group's color). */
+  color: string;
+}
+
+/** Mirrors Rust `db::tags::TagGroup`. */
+export interface TagGroup {
+  id: number;
+  name: string;
+  color: string;
+  position: number;
+  tags: Tag[];
 }
 
 /** Mirrors Rust `importers::RowError`. */
@@ -248,6 +268,59 @@ export function updateJournal(
 /** Trade log: filtered, sorted, paginated in Rust. */
 export function queryTrades(query: TradeQuery): Promise<TradePage> {
   return invoke<TradePage>("query_trades", { query });
+}
+
+export function listTagGroups(): Promise<TagGroup[]> {
+  return invoke<TagGroup[]>("list_tag_groups");
+}
+
+export function createTagGroup(name: string, color: string): Promise<number> {
+  return invoke<number>("create_tag_group", { name, color });
+}
+
+export function updateTagGroup(
+  id: number,
+  name: string,
+  color: string,
+): Promise<void> {
+  return invoke<void>("update_tag_group", { id, name, color });
+}
+
+/** Also removes its tags from every trade. */
+export function deleteTagGroup(id: number): Promise<void> {
+  return invoke<void>("delete_tag_group", { id });
+}
+
+export function createTag(
+  groupId: number,
+  name: string,
+  color: string,
+): Promise<number> {
+  return invoke<number>("create_tag", { groupId, name, color });
+}
+
+export function updateTag(
+  id: number,
+  name: string,
+  color: string,
+): Promise<void> {
+  return invoke<void>("update_tag", { id, name, color });
+}
+
+export function deleteTag(id: number): Promise<void> {
+  return invoke<void>("delete_tag", { id });
+}
+
+export function getTradeTags(tradeId: number): Promise<number[]> {
+  return invoke<number[]>("get_trade_tags", { tradeId });
+}
+
+/** Replaces the trade's tags; returns the saved tag ids. */
+export function setTradeTags(
+  tradeId: number,
+  tagIds: number[],
+): Promise<number[]> {
+  return invoke<number[]>("set_trade_tags", { tradeId, tagIds });
 }
 
 export function listSymbols(): Promise<string[]> {

@@ -3,9 +3,10 @@ import UnsavedProvider from "./components/UnsavedProvider";
 import { useGuard } from "./lib/unsaved";
 import HomePage from "./pages/HomePage";
 import ImportPage from "./pages/ImportPage";
+import TagsPage from "./pages/TagsPage";
 import "./App.css";
 
-type Page = "trades" | "import";
+type Page = "trades" | "import" | "tags";
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function Shell() {
           [
             ["trades", "Trades"],
             ["import", "Import"],
+            ["tags", "Tags"],
           ] as const
         ).map(([id, label]) => (
           <button
@@ -42,11 +44,15 @@ function Shell() {
           </button>
         ))}
       </nav>
-      {page === "trades" ? (
-        <HomePage />
-      ) : (
+      {page === "trades" && <HomePage />}
+      {page === "import" && (
         <main className="page">
           <ImportPage />
+        </main>
+      )}
+      {page === "tags" && (
+        <main className="page">
+          <TagsPage />
         </main>
       )}
     </>

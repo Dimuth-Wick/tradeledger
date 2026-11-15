@@ -6,6 +6,7 @@
 //! "10" before "9" (or need floats, which round).
 
 use std::cmp::Ordering;
+use std::collections::BTreeMap;
 
 use rusqlite::Connection;
 use rusqlite::types::Value;
@@ -111,6 +112,9 @@ pub struct TradePage {
     pub closed_net_pnl: Decimal,
     pub wins: u32,
     pub losses: u32,
+    /// Tag ids of the trades on this page (trade id → tag ids). Trades
+    /// without tags are left out.
+    pub tags: BTreeMap<i64, Vec<i64>>,
 }
 
 fn outcome_of(t: &Trade) -> Option<Outcome> {
@@ -231,8 +235,11 @@ pub fn query(conn: &Connection, q: &TradeQuery) -> Result<TradePage, DbError> {
         .skip(start)
         .take(page_size as usize)
         .collect();
+    let ids: Vec<i64> = items.iter().map(|t| t.id).collect();
+    let tags = db::tags::ids_for_trades(conn, &ids)?;
 
     Ok(TradePage {
+        tags,
         items,
         total,
         page,

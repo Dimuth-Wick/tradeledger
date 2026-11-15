@@ -7,6 +7,8 @@ import {
   type WithId,
 } from "../lib/api";
 import { formatDateTime, formatR, pnlClass, signed } from "../lib/format";
+import type { TagInfo } from "../lib/tagIndex";
+import TagChip from "./TagChip";
 
 interface Props {
   trades: WithId<Trade>[];
@@ -16,6 +18,9 @@ interface Props {
   onReset: (tradeId: number) => void;
   /** Opens the trade detail page. */
   onOpen?: (id: number) => void;
+  /** Trade id → tag ids, and tag lookup, to show chips under the symbol. */
+  tradeTags?: Record<string, number[]>;
+  tagInfo?: Map<number, TagInfo>;
   /** Current sort; when given with `onSort`, headers become clickable. */
   sort?: { field: SortField; descending: boolean };
   onSort?: (field: SortField) => void;
@@ -73,6 +78,8 @@ export default function TradeList({
   onSplit,
   onReset,
   onOpen,
+  tradeTags,
+  tagInfo,
   sort,
   onSort,
   emptyText = "No trades yet.",
@@ -131,6 +138,20 @@ export default function TradeList({
                   {t.market === "usdm" ? "Futures" : "Spot"}
                   {t.isManual ? " · manual" : ""}
                 </span>
+                {tagInfo && tradeTags?.[String(t.id)] && (
+                  <div className="row-tags">
+                    {tradeTags[String(t.id)].map((id) => {
+                      const info = tagInfo.get(id);
+                      return info ? (
+                        <TagChip
+                          key={id}
+                          name={info.tag.name}
+                          color={info.color}
+                        />
+                      ) : null;
+                    })}
+                  </div>
+                )}
               </td>
               <td className={t.direction}>
                 {t.direction === "long" ? "Long" : "Short"}

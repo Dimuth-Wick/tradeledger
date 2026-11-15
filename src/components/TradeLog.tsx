@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
-import { listSymbols, queryTrades, type TradePage } from "../lib/api";
+import {
+  listSymbols,
+  listTagGroups,
+  queryTrades,
+  type TagGroup,
+  type TradePage,
+} from "../lib/api";
 import { pnlClass, signed } from "../lib/format";
+import { indexTags } from "../lib/tagIndex";
 import {
   DEFAULT_SORT,
   EMPTY_FILTERS,
@@ -32,6 +39,8 @@ export default function TradeLog({ version, ...actions }: Props) {
   const [result, setResult] = useState<TradePage | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [symbols, setSymbols] = useState<string[]>([]);
+  const [tagGroups, setTagGroups] = useState<TagGroup[]>([]);
+  const tagInfo = useMemo(() => indexTags(tagGroups), [tagGroups]);
 
   const query = useMemo(
     () => buildQuery(filters, sort, page, pageSize),
@@ -55,6 +64,7 @@ export default function TradeLog({ version, ...actions }: Props) {
 
   useEffect(() => {
     listSymbols().then(setSymbols, () => setSymbols([]));
+    listTagGroups().then(setTagGroups, () => setTagGroups([]));
   }, [version]);
 
   // Any filter change starts again from the first page.
@@ -149,6 +159,26 @@ export default function TradeLog({ version, ...actions }: Props) {
             <option value="breakeven">Breakeven</option>
           </select>
         </label>
+        <label>
+          Tag
+          <select
+            value={filters.tag}
+            onChange={(e) => setFilter("tag", e.target.value)}
+          >
+            <option value="">Any</option>
+            {tagGroups
+              .filter((g) => g.tags.length > 0)
+              .map((g) => (
+                <optgroup key={g.id} label={g.name}>
+                  {g.tags.map((t) => (
+                    <option key={t.id} value={String(t.id)}>
+                      {t.name}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+          </select>
+        </label>
         <button
           type="button"
           disabled={!hasFilters(filters)}
@@ -176,6 +206,8 @@ export default function TradeLog({ version, ...actions }: Props) {
 
           <TradeList
             trades={result.items}
+            tradeTags={result.tags}
+            tagInfo={tagInfo}
             sort={sort}
             onSort={(field) => {
               setSort((s) => nextSort(s, field));

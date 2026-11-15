@@ -15,6 +15,7 @@ pub mod funding;
 pub mod import_batches;
 pub mod overrides;
 pub mod settings;
+pub mod tags;
 pub mod trades;
 
 #[cfg(test)]

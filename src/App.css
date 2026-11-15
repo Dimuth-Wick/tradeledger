@@ -234,6 +234,99 @@ label textarea {
   font-size: 0.85em;
 }
 
+/* --- Tags --- */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 8px;
+  margin: 2px 4px 2px 0;
+  border-radius: 999px;
+  font-size: 0.8em;
+  border: 1px solid var(--chip);
+  color: var(--text);
+  background: color-mix(in srgb, var(--chip) 18%, transparent);
+}
+
+button.chip {
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.85em;
+}
+
+button.chip.off {
+  background: transparent;
+  color: var(--muted);
+  border-style: dashed;
+}
+
+button.chip.on {
+  background: var(--chip);
+  color: #fff;
+}
+
+.row-tags {
+  margin-top: 2px;
+}
+
+.tag-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  margin: 4px 0;
+}
+
+.tag-group-name {
+  min-width: 80px;
+  color: var(--muted);
+  font-size: 0.85em;
+}
+
+.tag-add,
+.tag-edit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0;
+}
+
+.tag-edit.heading input:not([type="color"]) {
+  font-weight: 600;
+  font-size: 1.05em;
+}
+
+input[type="color"] {
+  width: 36px;
+  height: 30px;
+  padding: 2px;
+}
+
+.tag-rows {
+  list-style: none;
+  padding-left: 16px;
+  margin: 4px 0;
+}
+
+.confirm-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--neg);
+  font-size: 0.9em;
+}
+
+button.danger-link {
+  color: var(--neg);
+}
+
+button.small {
+  width: auto;
+  padding: 4px 10px;
+}
+
 /* --- Confirm popup --- */
 
 .modal-backdrop {
