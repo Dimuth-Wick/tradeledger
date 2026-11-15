@@ -73,6 +73,10 @@ text_enum!(Side { Buy => "buy", Sell => "sell" });
 text_enum!(Direction { Long => "long", Short => "short" });
 text_enum!(TradeStatus { Open => "open", Closed => "closed" });
 text_enum!(
+    /// Kind of a user-defined trade field.
+    FieldType { Text => "text", Number => "number", Select => "select", Checkbox => "checkbox" }
+);
+text_enum!(
     /// A manual grouping rule: join a fill to the previous trade, or start a new trade at it.
     OverrideKind { Merge => "merge", Split => "split" }
 );

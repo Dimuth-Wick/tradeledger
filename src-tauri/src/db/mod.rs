@@ -10,6 +10,7 @@ mod sql;
 // Repositories: one module per table group. Each takes a `&Connection`, so
 // tests can pass an in-memory DB and commands can pass the shared one.
 pub mod allocations;
+pub mod custom_fields;
 pub mod fills;
 pub mod funding;
 pub mod import_batches;

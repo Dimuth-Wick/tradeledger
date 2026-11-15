@@ -3,7 +3,9 @@ import { invoke } from "@tauri-apps/api/core";
 import {
   addScreenshot,
   confirmImport,
+  createCustomField,
   createTag,
+  setCustomValues,
   createTagGroup,
   createTrade,
   deleteTagGroup,
@@ -134,6 +136,16 @@ describe("trade commands", () => {
       { tradeId: 7, tagIds: [1, 2] },
     ],
     ["delete_tag_group", () => deleteTagGroup(3), { id: 3 }],
+    [
+      "create_custom_field",
+      () => createCustomField("Session", "select", ["Asia", "NY"]),
+      { name: "Session", fieldType: "select", options: ["Asia", "NY"] },
+    ],
+    [
+      "set_custom_values",
+      () => setCustomValues(7, [{ fieldId: 1, value: null }]),
+      { tradeId: 7, values: [{ fieldId: 1, value: null }] },
+    ],
     ["list_trade_fills", () => listTradeFills(7), { tradeId: 7 }],
     ["merge_trade_with_previous", () => mergeTradeWithPrevious(7), { id: 7 }],
     [

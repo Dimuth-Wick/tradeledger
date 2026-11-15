@@ -1,4 +1,5 @@
 mod commands;
+pub mod custom_fields;
 // Public so the core can be used (and tested) as a library, not only through
 // the Tauri commands; also keeps not-yet-used repository functions from being
 // flagged as dead code before the commands that call them exist.
@@ -82,6 +83,12 @@ pub fn run() {
             commands::screenshots::screenshot_image,
             commands::screenshots::set_screenshot_caption,
             commands::screenshots::delete_screenshot,
+            commands::custom_fields::list_custom_fields,
+            commands::custom_fields::create_custom_field,
+            commands::custom_fields::update_custom_field,
+            commands::custom_fields::delete_custom_field,
+            commands::custom_fields::get_custom_values,
+            commands::custom_fields::set_custom_values,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

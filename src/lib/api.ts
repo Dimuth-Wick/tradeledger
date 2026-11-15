@@ -323,6 +323,69 @@ export function setTradeTags(
   return invoke<number[]>("set_trade_tags", { tradeId, tagIds });
 }
 
+export type FieldType = "text" | "number" | "select" | "checkbox";
+
+/** Mirrors Rust `db::custom_fields::CustomField`. */
+export interface CustomField {
+  id: number;
+  name: string;
+  fieldType: FieldType;
+  /** Choices of a select field. */
+  options: string[];
+  position: number;
+  /** Trades that have a value for it. */
+  usedBy: number;
+}
+
+/** Mirrors Rust `db::custom_fields::FieldValue`. */
+export interface FieldValue {
+  fieldId: number;
+  value: string;
+}
+
+/** Mirrors Rust `custom_fields::ValueInput`. null/"" clears the value. */
+export interface ValueInput {
+  fieldId: number;
+  value: string | null;
+}
+
+export function listCustomFields(): Promise<CustomField[]> {
+  return invoke<CustomField[]>("list_custom_fields");
+}
+
+export function createCustomField(
+  name: string,
+  fieldType: FieldType,
+  options: string[],
+): Promise<number> {
+  return invoke<number>("create_custom_field", { name, fieldType, options });
+}
+
+export function updateCustomField(
+  id: number,
+  name: string,
+  options: string[],
+): Promise<void> {
+  return invoke<void>("update_custom_field", { id, name, options });
+}
+
+/** Also removes its values from every trade. */
+export function deleteCustomField(id: number): Promise<void> {
+  return invoke<void>("delete_custom_field", { id });
+}
+
+export function getCustomValues(tradeId: number): Promise<FieldValue[]> {
+  return invoke<FieldValue[]>("get_custom_values", { tradeId });
+}
+
+/** Saves several values at once; one bad value saves nothing. */
+export function setCustomValues(
+  tradeId: number,
+  values: ValueInput[],
+): Promise<FieldValue[]> {
+  return invoke<FieldValue[]>("set_custom_values", { tradeId, values });
+}
+
 /** Mirrors Rust `db::screenshots::Screenshot`. */
 export interface Screenshot {
   id: number;

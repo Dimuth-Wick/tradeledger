@@ -1,12 +1,13 @@
 import { useState } from "react";
 import UnsavedProvider from "./components/UnsavedProvider";
 import { useGuard } from "./lib/unsaved";
+import FieldsPage from "./pages/FieldsPage";
 import HomePage from "./pages/HomePage";
 import ImportPage from "./pages/ImportPage";
 import TagsPage from "./pages/TagsPage";
 import "./App.css";
 
-type Page = "trades" | "import" | "tags";
+type Page = "trades" | "import" | "tags" | "fields";
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function Shell() {
             ["trades", "Trades"],
             ["import", "Import"],
             ["tags", "Tags"],
+            ["fields", "Fields"],
           ] as const
         ).map(([id, label]) => (
           <button
@@ -53,6 +55,11 @@ function Shell() {
       {page === "tags" && (
         <main className="page">
           <TagsPage />
+        </main>
+      )}
+      {page === "fields" && (
+        <main className="page">
+          <FieldsPage />
         </main>
       )}
     </>

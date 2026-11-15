@@ -4,12 +4,22 @@ import Screenshots from "../components/Screenshots";
 import TradeTags from "../components/TradeTags";
 import { FillsPanel } from "../components/TradeList";
 import {
+  getCustomValues,
   getTrade,
+  listCustomFields,
   previewJournal,
+  setCustomValues,
   updateJournal,
+  type CustomField,
+  type FieldValue,
   type Trade,
   type WithId,
 } from "../lib/api";
+import {
+  changedValues,
+  draftsFrom,
+  type FieldDrafts,
+} from "../lib/customFields";
 import {
   formatDateTime,
   formatR,
@@ -85,14 +95,38 @@ function Detail({
     null,
   );
 
+  // Custom fields: definitions, what's saved, and what's typed.
+  const [fields, setFields] = useState<CustomField[]>([]);
+  const [savedValues, setSavedValues] = useState<FieldValue[]>([]);
+  const [drafts, setDrafts] = useState<FieldDrafts>({});
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([listCustomFields(), getCustomValues(t.id)]).then(
+      ([f, v]) => {
+        if (cancelled) return;
+        setFields(f);
+        setSavedValues(v);
+        setDrafts(draftsFrom(f, v));
+      },
+      (err) => !cancelled && setMessage({ ok: false, text: String(err) }),
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [t.id]);
+
   const parsed = useMemo(() => toJournalInput(form), [form]);
   const inputKey = parsed.ok ? JSON.stringify(parsed.input) : null;
-  const dirty = isDirty(form, t);
+  const journalDirty = isDirty(form, t);
+  const changed = changedValues(fields, savedValues, drafts);
+  const customDirty = changed.length > 0;
+  const dirty = journalDirty || customDirty;
   useUnsavedChanges(dirty);
 
   // Live R:R / R from Rust while editing the plan (same rules as saving).
   useEffect(() => {
-    if (!parsed.ok || !dirty) return;
+    if (!parsed.ok || !journalDirty) return;
     const key = JSON.stringify(parsed.input);
     let cancelled = false;
     const timer = setTimeout(() => {
@@ -105,12 +139,14 @@ function Detail({
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [parsed, dirty, t.id]);
+  }, [parsed, journalDirty, t.id]);
 
-  const current = dirty && preview?.key === inputKey ? preview : null;
+  const current = journalDirty && preview?.key === inputKey ? preview : null;
   const shown = current?.trade ?? t;
   const planError = !parsed.ok ? parsed.error : (current?.error ?? null);
-  const canSave = dirty && parsed.ok && !planError && !saving;
+  // A broken plan only blocks saving if the plan was actually edited.
+  const canSave =
+    dirty && !saving && (!journalDirty || (parsed.ok && !planError));
 
   function set<K extends keyof JournalForm>(key: K, value: string) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -118,12 +154,18 @@ function Detail({
   }
 
   async function save() {
-    if (!parsed.ok) return;
     setSaving(true);
     try {
-      const saved = await updateJournal(t.id, parsed.input);
-      onSaved(saved);
-      setForm(formFromTrade(saved));
+      if (journalDirty && parsed.ok) {
+        const saved = await updateJournal(t.id, parsed.input);
+        onSaved(saved);
+        setForm(formFromTrade(saved));
+      }
+      if (customDirty) {
+        const values = await setCustomValues(t.id, changed);
+        setSavedValues(values);
+        setDrafts(draftsFrom(fields, values));
+      }
       setMessage({ ok: true, text: "Saved" });
     } catch (err) {
       setMessage({ ok: false, text: String(err) });
@@ -215,6 +257,25 @@ function Detail({
         {planError && <p className="status error">{planError}</p>}
       </section>
 
+      {fields.length > 0 && (
+        <section className="card">
+          <h2>Custom fields</h2>
+          <div className="custom-fields">
+            {fields.map((f) => (
+              <CustomFieldInput
+                key={f.id}
+                field={f}
+                value={drafts[f.id] ?? ""}
+                onChange={(v) => {
+                  setDrafts((d) => ({ ...d, [f.id]: v }));
+                  setMessage(null);
+                }}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
       <section className="card">
         <h2>Tags</h2>
         <TradeTags tradeId={t.id} />
@@ -271,6 +332,7 @@ function Detail({
           disabled={!dirty || saving}
           onClick={() => {
             setForm(formFromTrade(t));
+            setDrafts(draftsFrom(fields, savedValues));
             setMessage(null);
           }}
         >
@@ -293,6 +355,56 @@ function Detail({
         </section>
       )}
     </>
+  );
+}
+
+/** One custom field, shown as the input that fits its type. */
+function CustomFieldInput({
+  field,
+  value,
+  onChange,
+}: {
+  field: CustomField;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  if (field.fieldType === "checkbox") {
+    return (
+      <label className="check">
+        <input
+          type="checkbox"
+          checked={value === "true"}
+          onChange={(e) => onChange(e.target.checked ? "true" : "")}
+        />
+        {field.name}
+      </label>
+    );
+  }
+  if (field.fieldType === "select") {
+    return (
+      <label>
+        {field.name}
+        <select value={value} onChange={(e) => onChange(e.target.value)}>
+          <option value="">—</option>
+          {field.options.map((o) => (
+            <option key={o} value={o}>
+              {o}
+            </option>
+          ))}
+        </select>
+      </label>
+    );
+  }
+  return (
+    <label>
+      {field.name}
+      <input
+        inputMode={field.fieldType === "number" ? "decimal" : undefined}
+        value={value}
+        maxLength={500}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    </label>
   );
 }
 
