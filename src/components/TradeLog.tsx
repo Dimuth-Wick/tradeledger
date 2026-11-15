@@ -20,6 +20,7 @@ interface Props {
   onMerge: (id: number) => void;
   onSplit: (tradeId: number, fillId: number) => void;
   onReset: (tradeId: number) => void;
+  onOpen: (id: number) => void;
 }
 
 /** Filter bar + sortable trade table + pagination. All querying is in Rust. */

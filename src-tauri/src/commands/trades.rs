@@ -7,6 +7,7 @@ use rusqlite::Connection;
 use tauri::State;
 
 use crate::db::{self, Db};
+use crate::journal::{self, JournalInput};
 use crate::models::{Trade, WithId};
 use crate::trade_entry::{self, TradeInput};
 use crate::trade_query::{self, TradePage, TradeQuery};
@@ -55,6 +56,22 @@ pub fn get_trade(db: State<'_, Db>, id: i64) -> Result<Option<WithId<Trade>>, St
 #[tauri::command]
 pub fn list_trades(db: State<'_, Db>) -> Result<Vec<WithId<Trade>>, String> {
     with_conn(&db, db::trades::list)
+}
+
+/// Trade detail: R values for the edited plan, without saving.
+#[tauri::command]
+pub fn preview_journal(db: State<'_, Db>, id: i64, input: JournalInput) -> Result<Trade, String> {
+    with_conn(&db, |c| journal::preview(c, id, &input))
+}
+
+/// Trade detail: save plan, leverage and notes.
+#[tauri::command]
+pub fn update_journal(
+    db: State<'_, Db>,
+    id: i64,
+    input: JournalInput,
+) -> Result<WithId<Trade>, String> {
+    with_conn(&db, |c| journal::update(c, id, &input))
 }
 
 /// Trade log: filtered, sorted, paginated, with totals.

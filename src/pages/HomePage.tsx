@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import TradeForm from "../components/TradeForm";
 import TradeLog from "../components/TradeLog";
+import TradeDetail from "./TradeDetail";
 import {
   dbInfo,
   deleteTrade,
@@ -19,6 +20,8 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [db, setDb] = useState<DbInfo | null>(null);
+  // Trade shown on the detail page; null = form + log.
+  const [openId, setOpenId] = useState<number | null>(null);
 
   useEffect(() => {
     dbInfo()
@@ -51,6 +54,18 @@ export default function HomePage() {
     }
   }
 
+  if (openId !== null) {
+    return (
+      <TradeDetail
+        tradeId={openId}
+        onBack={() => {
+          setOpenId(null);
+          refresh(); // journal edits change R values shown in the log
+        }}
+      />
+    );
+  }
+
   return (
     <main className="page">
       <header>
@@ -68,6 +83,7 @@ export default function HomePage() {
         {notice && <p className="status ok">{notice}</p>}
         <TradeLog
           version={version}
+          onOpen={setOpenId}
           onDelete={remove}
           onMerge={(id) =>
             regroupAction("Merged", () => mergeTradeWithPrevious(id))

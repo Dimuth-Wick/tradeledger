@@ -6,6 +6,7 @@ pub mod db;
 pub mod grouping;
 pub mod import_flow;
 pub mod importers;
+pub mod journal;
 pub mod models;
 pub mod risk;
 pub mod trade_entry;
@@ -50,6 +51,8 @@ pub fn run() {
             commands::trades::get_trade,
             commands::trades::list_trades,
             commands::trades::query_trades,
+            commands::trades::preview_journal,
+            commands::trades::update_journal,
             commands::trades::list_symbols,
             commands::import::preview_import,
             commands::import::confirm_import,

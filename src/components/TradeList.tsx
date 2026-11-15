@@ -14,6 +14,8 @@ interface Props {
   onMerge: (id: number) => void;
   onSplit: (tradeId: number, fillId: number) => void;
   onReset: (tradeId: number) => void;
+  /** Opens the trade detail page. */
+  onOpen?: (id: number) => void;
   /** Current sort; when given with `onSort`, headers become clickable. */
   sort?: { field: SortField; descending: boolean };
   onSort?: (field: SortField) => void;
@@ -70,6 +72,7 @@ export default function TradeList({
   onMerge,
   onSplit,
   onReset,
+  onOpen,
   sort,
   onSort,
   emptyText = "No trades yet.",
@@ -111,7 +114,18 @@ export default function TradeList({
             <tr>
               <td>{formatDateTime(t.openTime)}</td>
               <td>
-                {t.symbol}
+                {onOpen ? (
+                  <button
+                    type="button"
+                    className="link symbol-link"
+                    title="Open trade details"
+                    onClick={() => onOpen(t.id)}
+                  >
+                    {t.symbol}
+                  </button>
+                ) : (
+                  t.symbol
+                )}
                 <span className="market">
                   {" "}
                   {t.market === "usdm" ? "Futures" : "Spot"}
@@ -190,14 +204,15 @@ export default function TradeList({
   );
 }
 
-function FillsPanel({
+/** A trade's fills. Without `onSplit`/`onReset` it's read-only (detail page). */
+export function FillsPanel({
   tradeId,
   onSplit,
   onReset,
 }: {
   tradeId: number;
-  onSplit: (fillId: number) => void;
-  onReset: () => void;
+  onSplit?: (fillId: number) => void;
+  onReset?: () => void;
 }) {
   const [fills, setFills] = useState<TradeFill[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -251,7 +266,7 @@ function FillsPanel({
                 {f.fee} {f.feeAsset}
               </td>
               <td className="num">
-                {i > 0 && (
+                {i > 0 && onSplit && (
                   <button
                     type="button"
                     title="Start a new trade at this fill"
@@ -265,9 +280,11 @@ function FillsPanel({
           ))}
         </tbody>
       </table>
-      <button type="button" className="link" onClick={onReset}>
-        Reset grouping for this coin
-      </button>
+      {onReset && (
+        <button type="button" className="link" onClick={onReset}>
+          Reset grouping for this coin
+        </button>
+      )}
     </div>
   );
 }

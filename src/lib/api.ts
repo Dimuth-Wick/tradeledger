@@ -77,6 +77,15 @@ export interface TradeInput {
   playbookId?: number | null;
 }
 
+/** Mirrors Rust `journal::JournalInput`: what the trade detail page edits. */
+export interface JournalInput {
+  plannedEntry: Decimal | null;
+  stopLoss: Decimal | null;
+  takeProfit: Decimal | null;
+  leverage: number | null;
+  notes: string;
+}
+
 export type Outcome = "win" | "loss" | "breakeven";
 export type SortField =
   "openTime" | "closeTime" | "symbol" | "netPnl" | "rMultiple";
@@ -218,6 +227,22 @@ export function getTrade(id: number): Promise<WithId<Trade> | null> {
 
 export function listTrades(): Promise<WithId<Trade>[]> {
   return invoke<WithId<Trade>[]>("list_trades");
+}
+
+/** R values for an edited plan, without saving. */
+export function previewJournal(
+  id: number,
+  input: JournalInput,
+): Promise<Trade> {
+  return invoke<Trade>("preview_journal", { id, input });
+}
+
+/** Saves plan, leverage and notes. Fill-based numbers are never changed. */
+export function updateJournal(
+  id: number,
+  input: JournalInput,
+): Promise<WithId<Trade>> {
+  return invoke<WithId<Trade>>("update_journal", { id, input });
 }
 
 /** Trade log: filtered, sorted, paginated in Rust. */

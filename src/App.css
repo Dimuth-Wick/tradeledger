@@ -234,6 +234,71 @@ label textarea {
   font-size: 0.85em;
 }
 
+/* --- Trade detail --- */
+
+.trade-detail h1 {
+  margin-top: 8px;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.stats > div {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.stats dt {
+  font-size: 0.8em;
+  color: var(--muted);
+}
+
+.stats dd {
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.trade-detail .row {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.notes-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.notes-head .direction {
+  margin-top: 0;
+}
+
+.notes-input {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+}
+
+.notes-view {
+  line-height: 1.55;
+}
+
+.notes-view :is(h1, h2, h3) {
+  font-size: 1.05em;
+}
+
+.symbol-link {
+  padding: 0;
+  margin: 0;
+  font-weight: 600;
+}
+
 /* --- Trade log: filters, sort, pager --- */
 
 .filters {

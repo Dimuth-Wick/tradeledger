@@ -13,8 +13,11 @@ import {
   splitTradeAtFill,
   ping,
   previewImport,
+  previewJournal,
   previewTrade,
   queryTrades,
+  updateJournal,
+  type JournalInput,
   updateTrade,
   type TradeInput,
 } from "./api";
@@ -74,6 +77,14 @@ describe("trade commands", () => {
     stopLoss: "36000",
   };
 
+  const journal: JournalInput = {
+    plannedEntry: null,
+    stopLoss: "36000",
+    takeProfit: null,
+    leverage: 10,
+    notes: "fake note",
+  };
+
   beforeEach(() => {
     invokeMock.mockReset();
     invokeMock.mockResolvedValue(undefined);
@@ -91,6 +102,16 @@ describe("trade commands", () => {
       "query_trades",
       () => queryTrades({ symbol: "btc" }),
       { query: { symbol: "btc" } },
+    ],
+    [
+      "update_journal",
+      () => updateJournal(7, journal),
+      { id: 7, input: journal },
+    ],
+    [
+      "preview_journal",
+      () => previewJournal(7, journal),
+      { id: 7, input: journal },
     ],
     ["list_trade_fills", () => listTradeFills(7), { tradeId: 7 }],
     ["merge_trade_with_previous", () => mergeTradeWithPrevious(7), { id: 7 }],
