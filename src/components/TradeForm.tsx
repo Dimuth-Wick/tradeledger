@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { createTrade, previewTrade, type Trade } from "../lib/api";
 import { formatR, formatRr, pnlClass, signed } from "../lib/format";
-import { emptyForm, toTradeInput, type TradeFormState } from "../lib/tradeForm";
+import {
+  emptyForm,
+  hasInput,
+  toTradeInput,
+  type TradeFormState,
+} from "../lib/tradeForm";
+import { useUnsavedChanges } from "../lib/unsaved";
 
 /** Wait this long after the last keystroke before asking Rust for a preview. */
 const PREVIEW_DELAY_MS = 250;
@@ -22,6 +28,7 @@ export default function TradeForm({ onSaved }: Props) {
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
 
   const parsed = useMemo(() => toTradeInput(form), [form]);
+  useUnsavedChanges(hasInput(form));
   // Identifies the exact input a preview was computed for, so a slow reply
   // for old values is never shown next to newer values.
   const inputKey = parsed.ok ? JSON.stringify(parsed.input) : null;

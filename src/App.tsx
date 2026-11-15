@@ -1,14 +1,25 @@
 import { useState } from "react";
+import UnsavedProvider from "./components/UnsavedProvider";
+import { useGuard } from "./lib/unsaved";
 import HomePage from "./pages/HomePage";
 import ImportPage from "./pages/ImportPage";
 import "./App.css";
 
 type Page = "trades" | "import";
 
+function App() {
+  return (
+    <UnsavedProvider>
+      <Shell />
+    </UnsavedProvider>
+  );
+}
+
 // Simple tab switch; a router can come later if pages need URLs.
 // Switching tabs remounts the page, so the trade list reloads after an import.
-function App() {
+function Shell() {
   const [page, setPage] = useState<Page>("trades");
+  const guard = useGuard();
 
   return (
     <>
@@ -24,7 +35,8 @@ function App() {
             type="button"
             className={page === id ? "active" : ""}
             aria-current={page === id ? "page" : undefined}
-            onClick={() => setPage(id)}
+            // Leaving a page drops what's typed on it, so ask first.
+            onClick={() => page !== id && guard(() => setPage(id))}
           >
             {label}
           </button>

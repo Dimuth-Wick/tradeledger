@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   emptyForm,
+  hasInput,
   toLocalInputValue,
   toTradeInput,
   type TradeFormState,
@@ -16,6 +17,22 @@ function filled(overrides: Partial<TradeFormState> = {}): TradeFormState {
     ...overrides,
   };
 }
+
+describe("hasInput", () => {
+  it("ignores the prefilled boxes", () => {
+    const form = emptyForm();
+    expect(hasInput(form)).toBe(false);
+    expect(hasInput({ ...form, market: "spot", direction: "short" })).toBe(
+      false,
+    );
+  });
+
+  it("counts anything the user typed", () => {
+    expect(hasInput({ ...emptyForm(), symbol: "btc" })).toBe(true);
+    expect(hasInput({ ...emptyForm(), notes: "idea" })).toBe(true);
+    expect(hasInput({ ...emptyForm(), qty: "  " })).toBe(false);
+  });
+});
 
 describe("toLocalInputValue", () => {
   it("formats a local date for datetime-local inputs", () => {

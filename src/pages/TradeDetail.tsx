@@ -21,6 +21,7 @@ import {
   toJournalInput,
   type JournalForm,
 } from "../lib/journalForm";
+import { useUnsavedChanges } from "../lib/unsaved";
 
 const PREVIEW_DELAY_MS = 250;
 
@@ -85,6 +86,7 @@ function Detail({
   const parsed = useMemo(() => toJournalInput(form), [form]);
   const inputKey = parsed.ok ? JSON.stringify(parsed.input) : null;
   const dirty = isDirty(form, t);
+  useUnsavedChanges(dirty);
 
   // Live R:R / R from Rust while editing the plan (same rules as saving).
   useEffect(() => {

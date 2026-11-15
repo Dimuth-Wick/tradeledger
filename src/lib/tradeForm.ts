@@ -61,6 +61,26 @@ export function emptyForm(now: Date = new Date()): TradeFormState {
   };
 }
 
+/** True once the user typed something worth keeping. The prefilled boxes
+ *  (exchange, market, side, open time) don't count. */
+export function hasInput(form: TradeFormState): boolean {
+  const typed: (keyof TradeFormState)[] = [
+    "symbol",
+    "closeTime",
+    "qty",
+    "avgEntry",
+    "avgExit",
+    "leverage",
+    "fees",
+    "funding",
+    "plannedEntry",
+    "stopLoss",
+    "takeProfit",
+    "notes",
+  ];
+  return typed.some((k) => String(form[k]).trim() !== "");
+}
+
 const UNSIGNED = /^(\d+\.?\d*|\.\d+)$/;
 const SIGNED = /^-?(\d+\.?\d*|\.\d+)$/;
 const INTEGER = /^\d+$/;
