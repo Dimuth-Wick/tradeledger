@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { invoke } from "@tauri-apps/api/core";
 import {
+  addScreenshot,
   confirmImport,
   createTag,
   createTagGroup,
@@ -154,6 +155,14 @@ describe("trade commands", () => {
   ] as const)("%s sends the right arguments", async (name, call, args) => {
     await call();
     expect(invokeMock).toHaveBeenCalledWith(name, args);
+  });
+
+  it("add_screenshot sends raw bytes with id and encoded caption headers", async () => {
+    const bytes = new Uint8Array([0x89, 0x50]);
+    await addScreenshot(7, bytes, "entry ✓");
+    expect(invokeMock).toHaveBeenCalledWith("add_screenshot", bytes, {
+      headers: { "x-trade-id": "7", "x-caption": "entry%20%E2%9C%93" },
+    });
   });
 
   it("list_trades takes no arguments", async () => {

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import Notes from "../components/Notes";
+import Screenshots from "../components/Screenshots";
 import TradeTags from "../components/TradeTags";
 import { FillsPanel } from "../components/TradeList";
 import {
@@ -217,6 +218,11 @@ function Detail({
       <section className="card">
         <h2>Tags</h2>
         <TradeTags tradeId={t.id} />
+      </section>
+
+      <section className="card">
+        <h2>Screenshots</h2>
+        <Screenshots tradeId={t.id} />
       </section>
 
       <section className="card">

@@ -327,6 +327,98 @@ button.small {
   padding: 4px 10px;
 }
 
+/* --- Screenshots --- */
+
+.shots {
+  border: 2px dashed transparent;
+  border-radius: 8px;
+  padding: 4px;
+}
+
+.shots.dragging {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.shots-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.shots-grid figure {
+  margin: 0;
+}
+
+.shots-grid figcaption {
+  font-size: 0.8em;
+  color: var(--muted);
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+button.thumb {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  padding: 0;
+  overflow: hidden;
+}
+
+button.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.shots-add {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.viewer-backdrop {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.viewer {
+  background: var(--surface);
+  border-radius: 10px;
+  padding: 10px;
+  width: min(1100px, 94vw);
+  max-height: 94vh;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.viewer-img {
+  max-width: 100%;
+  max-height: 72vh;
+  object-fit: contain;
+  align-self: center;
+}
+
+.viewer-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.viewer-bar button {
+  margin-left: 4px;
+}
+
+.viewer-caption {
+  flex: 1;
+  min-width: 240px;
+}
+
 /* --- Confirm popup --- */
 
 .modal-backdrop {

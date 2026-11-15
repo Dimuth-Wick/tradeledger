@@ -6,6 +6,7 @@
 
 pub mod grouping;
 pub mod import;
+pub mod screenshots;
 pub mod tags;
 pub mod trades;
 

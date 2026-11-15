@@ -323,6 +323,52 @@ export function setTradeTags(
   return invoke<number[]>("set_trade_tags", { tradeId, tagIds });
 }
 
+/** Mirrors Rust `db::screenshots::Screenshot`. */
+export interface Screenshot {
+  id: number;
+  tradeId: number;
+  fileName: string;
+  caption: string;
+  createdAt: TimestampMs;
+}
+
+/**
+ * Sends the image as raw bytes (no base64). Trade id and caption go in
+ * headers; the caption is URI-encoded because headers must be ASCII.
+ */
+export function addScreenshot(
+  tradeId: number,
+  bytes: Uint8Array,
+  caption = "",
+): Promise<Screenshot> {
+  return invoke<Screenshot>("add_screenshot", bytes, {
+    headers: {
+      "x-trade-id": String(tradeId),
+      "x-caption": encodeURIComponent(caption),
+    },
+  });
+}
+
+export function listScreenshots(tradeId: number): Promise<Screenshot[]> {
+  return invoke<Screenshot[]>("list_screenshots", { tradeId });
+}
+
+/** Raw image bytes, for a Blob URL. */
+export function screenshotImage(id: number): Promise<ArrayBuffer> {
+  return invoke<ArrayBuffer>("screenshot_image", { id });
+}
+
+export function setScreenshotCaption(
+  id: number,
+  caption: string,
+): Promise<void> {
+  return invoke<void>("set_screenshot_caption", { id, caption });
+}
+
+export function deleteScreenshot(id: number): Promise<void> {
+  return invoke<void>("delete_screenshot", { id });
+}
+
 export function listSymbols(): Promise<string[]> {
   return invoke<string[]>("list_symbols");
 }

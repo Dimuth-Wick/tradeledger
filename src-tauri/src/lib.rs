@@ -9,6 +9,7 @@ pub mod importers;
 pub mod journal;
 pub mod models;
 pub mod risk;
+pub mod screenshots;
 pub mod tags;
 pub mod trade_entry;
 pub mod trade_query;
@@ -35,6 +36,11 @@ pub fn run() {
             // letting every later command fail on a missing DB.
             let conn = db::open(&path)?;
             tags::seed_defaults(&conn)?;
+            // Deleted trades leave their image files behind; tidy up. Never
+            // block startup over it.
+            if let Err(e) = screenshots::prune_orphans(&conn, &screenshots::dir_for(&path)) {
+                eprintln!("screenshot cleanup skipped: {e}");
+            }
             app.manage(db::Db {
                 conn: Mutex::new(conn),
                 path,
@@ -71,6 +77,11 @@ pub fn run() {
             commands::tags::delete_tag,
             commands::tags::get_trade_tags,
             commands::tags::set_trade_tags,
+            commands::screenshots::add_screenshot,
+            commands::screenshots::list_screenshots,
+            commands::screenshots::screenshot_image,
+            commands::screenshots::set_screenshot_caption,
+            commands::screenshots::delete_screenshot,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
