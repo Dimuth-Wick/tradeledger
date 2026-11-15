@@ -11,6 +11,7 @@ pub mod journal;
 pub mod models;
 pub mod risk;
 pub mod screenshots;
+pub mod stats;
 pub mod tags;
 pub mod trade_entry;
 pub mod trade_query;
@@ -60,6 +61,7 @@ pub fn run() {
             commands::trades::get_trade,
             commands::trades::list_trades,
             commands::trades::query_trades,
+            commands::trades::get_stats,
             commands::trades::preview_journal,
             commands::trades::update_journal,
             commands::trades::list_symbols,

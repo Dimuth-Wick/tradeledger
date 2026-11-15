@@ -323,6 +323,56 @@ export function setTradeTags(
   return invoke<number[]>("set_trade_tags", { tradeId, tagIds });
 }
 
+/** Mirrors Rust `stats::EquityPoint`. */
+export interface EquityPoint {
+  time: TimestampMs;
+  equity: Decimal;
+  tradeId: number;
+}
+
+/** Mirrors Rust `stats::RBucket` (from inclusive, to exclusive, null = open). */
+export interface RBucket {
+  label: string;
+  from: number | null;
+  to: number | null;
+  count: number;
+}
+
+/** Mirrors Rust `stats::Stats`. PnL figures use closed trades only. */
+export interface Stats {
+  trades: number;
+  open: number;
+  closed: number;
+  wins: number;
+  losses: number;
+  breakeven: number;
+  /** Percent 0–100; null without closed trades. */
+  winRate: Decimal | null;
+  grossPnl: Decimal;
+  fees: Decimal;
+  funding: Decimal;
+  netPnl: Decimal;
+  avgWin: Decimal | null;
+  avgLoss: Decimal | null;
+  largestWin: Decimal | null;
+  largestLoss: Decimal | null;
+  payoffRatio: Decimal | null;
+  /** null when there are no losses (∞ if wins > 0). */
+  profitFactor: Decimal | null;
+  /** Net PnL per closed trade. */
+  expectancy: Decimal | null;
+  avgR: Decimal | null;
+  tradesWithR: number;
+  maxDrawdown: Decimal;
+  maxDrawdownStart: TimestampMs | null;
+  maxDrawdownEnd: TimestampMs | null;
+  maxWinStreak: number;
+  maxLossStreak: number;
+  avgHoldMs: number | null;
+  equityCurve: EquityPoint[];
+  rBuckets: RBucket[];
+}
+
 export type FieldType = "text" | "number" | "select" | "checkbox";
 
 /** Mirrors Rust `db::custom_fields::CustomField`. */
@@ -430,6 +480,11 @@ export function setScreenshotCaption(
 
 export function deleteScreenshot(id: number): Promise<void> {
   return invoke<void>("delete_screenshot", { id });
+}
+
+/** Dashboard stats for the same filters as the trade log. */
+export function getStats(query: TradeQuery): Promise<Stats> {
+  return invoke<Stats>("get_stats", { query });
 }
 
 export function listSymbols(): Promise<string[]> {

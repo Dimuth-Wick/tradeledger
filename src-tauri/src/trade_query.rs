@@ -204,12 +204,19 @@ fn sort(items: &mut [WithId<Trade>], field: SortField, descending: bool) {
     });
 }
 
-pub fn query(conn: &Connection, q: &TradeQuery) -> Result<TradePage, DbError> {
+/// Every trade matching the filters (no sorting or paging). Shared with the
+/// stats engine, so dashboard numbers always match the trade log.
+pub fn filtered(conn: &Connection, q: &TradeQuery) -> Result<Vec<WithId<Trade>>, DbError> {
     let (where_sql, params) = where_clause(q);
     let mut items = db::trades::list_where(conn, &where_sql, &params)?;
     if let Some(wanted) = q.outcome {
         items.retain(|t| outcome_of(&t.item) == Some(wanted));
     }
+    Ok(items)
+}
+
+pub fn query(conn: &Connection, q: &TradeQuery) -> Result<TradePage, DbError> {
+    let mut items = filtered(conn, q)?;
 
     let (mut closed_net_pnl, mut wins, mut losses) = (Decimal::ZERO, 0u32, 0u32);
     for t in &items {

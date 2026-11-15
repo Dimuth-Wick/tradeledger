@@ -9,6 +9,7 @@ import {
   createTagGroup,
   createTrade,
   deleteTagGroup,
+  getStats,
   setTradeTags,
   dbInfo,
   deleteTrade,
@@ -136,6 +137,11 @@ describe("trade commands", () => {
       { tradeId: 7, tagIds: [1, 2] },
     ],
     ["delete_tag_group", () => deleteTagGroup(3), { id: 3 }],
+    [
+      "get_stats",
+      () => getStats({ from: 1, to: 2 }),
+      { query: { from: 1, to: 2 } },
+    ],
     [
       "create_custom_field",
       () => createCustomField("Session", "select", ["Asia", "NY"]),

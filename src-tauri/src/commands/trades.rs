@@ -9,6 +9,7 @@ use tauri::State;
 use crate::db::{self, Db};
 use crate::journal::{self, JournalInput};
 use crate::models::{Trade, WithId};
+use crate::stats::{self, Stats};
 use crate::trade_entry::{self, TradeInput};
 use crate::trade_query::{self, TradePage, TradeQuery};
 
@@ -78,6 +79,12 @@ pub fn update_journal(
 #[tauri::command]
 pub fn query_trades(db: State<'_, Db>, query: TradeQuery) -> Result<TradePage, String> {
     with_conn(&db, |c| trade_query::query(c, &query))
+}
+
+/// Dashboard stats for the same filters as the trade log.
+#[tauri::command]
+pub fn get_stats(db: State<'_, Db>, query: TradeQuery) -> Result<Stats, String> {
+    with_conn(&db, |c| stats::query(c, &query))
 }
 
 #[tauri::command]
