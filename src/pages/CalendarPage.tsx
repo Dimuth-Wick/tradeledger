@@ -35,6 +35,8 @@ export default function CalendarPage({ onOpenTrade }: Props) {
     month: now.getMonth() + 1,
   });
   const [data, setData] = useState<CalendarMonth | null>(null);
+  // Which way the month grid slides in after ‹ or ›.
+  const [slide, setSlide] = useState<"next" | "prev" | "none">("none");
   const [zones, setZones] = useState<ZoneInfo[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [dayTrades, setDayTrades] = useState<WithId<Trade>[]>([]);
@@ -74,6 +76,7 @@ export default function CalendarPage({ onOpenTrade }: Props) {
   }, []);
 
   function go(delta: number) {
+    setSlide(delta > 0 ? "next" : "prev");
     setYm((c) => shiftMonth(c.year, c.month, delta));
     setSelected(null);
   }
@@ -159,7 +162,10 @@ export default function CalendarPage({ onOpenTrade }: Props) {
             )}
           </p>
 
-          <table className="calendar">
+          <table
+            className={`calendar slide-${slide}`}
+            key={`${data.year}-${data.month}`}
+          >
             <thead>
               <tr>
                 {WEEKDAYS.map((d) => (

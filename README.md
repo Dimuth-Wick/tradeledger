@@ -76,6 +76,13 @@ To try imports with the fake files in `tests/fixtures/` without touching your re
 $env:TRADELEDGER_DB_PATH = "$env:TEMP\tradeledger-test.db"; npm run tauri dev
 ```
 
+To see every screen with plenty of data, create a demo database of about 70 made-up trades (three months, tags, playbooks), then open the app on it. The tool only creates new files, so it can't touch your journal:
+
+```powershell
+cd src-tauri; cargo run --example seed_demo -- "$env:TEMP\tradeledger-demo.db"; cd ..
+$env:TRADELEDGER_DB_PATH = "$env:TEMP\tradeledger-demo.db"; npm run tauri dev
+```
+
 ## Disclaimer
 
 TradeLedger is a journaling and analysis tool, not financial advice.

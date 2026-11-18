@@ -48,22 +48,22 @@ struct Widget {
 const WIDGETS: [Widget; 4] = [
     Widget {
         id: "kpis",
-        place: [0, 0, 12, 5],
+        place: [0, 0, 12, 6],
         min: [3, 3],
     },
     Widget {
         id: "equity",
-        place: [0, 5, 12, 7],
+        place: [0, 6, 12, 7],
         min: [3, 4],
     },
     Widget {
         id: "pnl-bars",
-        place: [0, 12, 6, 7],
+        place: [0, 13, 6, 7],
         min: [3, 4],
     },
     Widget {
         id: "r-dist",
-        place: [6, 12, 6, 7],
+        place: [6, 13, 6, 7],
         min: [3, 4],
     },
 ];

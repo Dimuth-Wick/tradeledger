@@ -9,6 +9,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { chartMotion } from "../../lib/motion";
 import type { CurveRow } from "../../lib/dashboard";
 import { formatDateTime, pnlClass, signed } from "../../lib/format";
 
@@ -54,12 +55,7 @@ export default function PnlBars({ rows }: { rows: CurveRow[] }) {
               );
             }}
           />
-          <Bar
-            dataKey="pnl"
-            maxBarSize={24}
-            radius={2}
-            isAnimationActive={false}
-          >
+          <Bar dataKey="pnl" maxBarSize={24} radius={2} {...chartMotion(650)}>
             {trades.map((r) => (
               <Cell key={r.n} className={r.pnl < 0 ? "bar-neg" : "bar-pos"} />
             ))}

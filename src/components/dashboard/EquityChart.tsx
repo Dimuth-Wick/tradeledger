@@ -8,6 +8,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { chartMotion } from "../../lib/motion";
 import type { CurveRow } from "../../lib/dashboard";
 import { formatDateTime, pnlClass, signed } from "../../lib/format";
 
@@ -72,7 +73,7 @@ export default function EquityChart({ rows }: { rows: CurveRow[] }) {
             strokeWidth={2}
             dot={false}
             activeDot={{ r: 4, className: "equity-dot" }}
-            isAnimationActive={false}
+            {...chartMotion(900)}
           />
         </LineChart>
       </ResponsiveContainer>

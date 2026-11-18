@@ -1698,3 +1698,143 @@ main.page {
     transition: none;
   }
 }
+
+/* --- More motion: entrances and press feedback --- */
+
+/* Buttons answer a press with a small squeeze. */
+button {
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    box-shadow 0.15s ease,
+    color 0.15s ease,
+    transform 0.1s ease;
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* Dashboard tiles arrive one after another (35ms apart) on first load.
+   `translate` is used, not `transform`, so it never fights a layout
+   transform (the dashboard grid positions widgets with transform). */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    translate: 0 10px;
+  }
+}
+
+.kpis > div {
+  animation: rise-in 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) both;
+  animation-delay: calc(var(--i, 0) * 35ms);
+}
+
+.widget {
+  animation: rise-in 0.45s cubic-bezier(0.25, 0.8, 0.25, 1) both;
+}
+
+.react-grid-item:nth-child(2) {
+  animation-delay: 70ms;
+}
+
+.react-grid-item:nth-child(3) {
+  animation-delay: 140ms;
+}
+
+.react-grid-item:nth-child(4) {
+  animation-delay: 210ms;
+}
+
+/* Table rows ease in top to bottom when a list loads or a filter changes
+   (only the first rows wait; the rest come with the 12th). */
+.trade-list tbody tr {
+  animation: rise-in 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) both;
+}
+
+.trade-list tbody tr:nth-child(2) {
+  animation-delay: 20ms;
+}
+.trade-list tbody tr:nth-child(3) {
+  animation-delay: 40ms;
+}
+.trade-list tbody tr:nth-child(4) {
+  animation-delay: 60ms;
+}
+.trade-list tbody tr:nth-child(5) {
+  animation-delay: 80ms;
+}
+.trade-list tbody tr:nth-child(6) {
+  animation-delay: 100ms;
+}
+.trade-list tbody tr:nth-child(7) {
+  animation-delay: 120ms;
+}
+.trade-list tbody tr:nth-child(8) {
+  animation-delay: 140ms;
+}
+.trade-list tbody tr:nth-child(9) {
+  animation-delay: 160ms;
+}
+.trade-list tbody tr:nth-child(10) {
+  animation-delay: 180ms;
+}
+.trade-list tbody tr:nth-child(11) {
+  animation-delay: 200ms;
+}
+.trade-list tbody tr:nth-child(n + 12) {
+  animation-delay: 220ms;
+}
+
+/* Calendar: the new month slides in from the side you moved to. */
+@keyframes month-from-right {
+  from {
+    opacity: 0;
+    translate: 24px 0;
+  }
+}
+
+@keyframes month-from-left {
+  from {
+    opacity: 0;
+    translate: -24px 0;
+  }
+}
+
+.calendar.slide-next {
+  animation: month-from-right 0.32s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.calendar.slide-prev {
+  animation: month-from-left 0.32s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* A day you can open lifts a little under the pointer. */
+.calendar td {
+  transition:
+    translate 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.calendar td:has(button):hover {
+  translate: 0 -2px;
+  box-shadow: var(--shadow-2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button:active:not(:disabled) {
+    transform: none;
+  }
+
+  .kpis > div,
+  .widget,
+  .trade-list tbody tr,
+  .calendar.slide-next,
+  .calendar.slide-prev {
+    animation: none;
+  }
+
+  .calendar td:has(button):hover {
+    translate: none;
+  }
+}

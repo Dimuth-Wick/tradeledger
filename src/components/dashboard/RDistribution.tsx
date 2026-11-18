@@ -9,6 +9,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { chartMotion } from "../../lib/motion";
 import type { RRow } from "../../lib/dashboard";
 
 /** How many closed trades ended in each R-multiple range. */
@@ -60,7 +61,7 @@ export default function RDistribution({
               dataKey="count"
               maxBarSize={48}
               radius={2}
-              isAnimationActive={false}
+              {...chartMotion(650)}
             >
               {rows.map((r) => (
                 <Cell key={r.label} className={`bar-${r.tone}`} />
