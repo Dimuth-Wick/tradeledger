@@ -19,6 +19,22 @@ export function signed(d: Decimal): string {
   return `+${d}`;
 }
 
+/**
+ * Rounds to 2 decimals for display, working on the text (no floats):
+ * "10.90559933" → "10.91", "-22.7688" → "-22.77", "2.50" → "2.5".
+ * Halves round away from zero, like the Rust side.
+ */
+export function round2(d: Decimal): string {
+  const m = /^(-?)(\d+)\.(\d{3,})$/.exec(d);
+  if (!m) return d; // already 2 decimals or fewer
+  const [, sign, int, frac] = m;
+  let cents = BigInt(int + frac.slice(0, 2));
+  if (Number(frac[2]) >= 5) cents += BigInt(1);
+  if (cents === BigInt(0)) return "0";
+  const s = cents.toString().padStart(3, "0");
+  return sign + `${s.slice(0, -2)}.${s.slice(-2)}`.replace(/\.?0+$/, "");
+}
+
 /** R-multiple: "2" → "+2R", null → "—". */
 export function formatR(d: Decimal | null): string {
   return d === null ? "—" : `${signed(d)}R`;

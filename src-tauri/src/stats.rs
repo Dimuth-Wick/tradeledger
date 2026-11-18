@@ -32,6 +32,8 @@ pub struct EquityPoint {
     pub time: TimestampMs,
     /// Cumulative closed net PnL after that trade.
     pub equity: Decimal,
+    /// Net PnL of that trade alone (for the win/loss bars).
+    pub pnl: Decimal,
     pub trade_id: i64,
 }
 
@@ -212,6 +214,7 @@ pub fn compute(trades: &[(i64, &Trade)]) -> Stats {
         curve.push(EquityPoint {
             time,
             equity: money(equity),
+            pnl: money(t.net_pnl),
             trade_id: id,
         });
         if equity > peak {

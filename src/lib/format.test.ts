@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatR, formatRr, isZero, pnlClass, signed } from "./format";
+import { formatR, formatRr, isZero, pnlClass, round2, signed } from "./format";
 
 describe("format helpers", () => {
   it("detects zero in any spelling", () => {
@@ -27,5 +27,23 @@ describe("format helpers", () => {
     expect(pnlClass("-0.5")).toBe("neg");
     expect(pnlClass("0.00")).toBe("");
     expect(pnlClass(null)).toBe("");
+  });
+});
+
+describe("round2", () => {
+  it.each([
+    ["10.90559933", "10.91"],
+    ["-22.7688", "-22.77"],
+    ["2.555", "2.56"], // half rounds away from zero
+    ["-2.555", "-2.56"],
+    ["9.999", "10"],
+    ["0.004", "0"],
+    ["-0.004", "0"],
+    ["2.501", "2.5"],
+    ["4", "4"],
+    ["4.1", "4.1"],
+    ["12.75", "12.75"],
+  ])("%s → %s", (d, out) => {
+    expect(round2(d)).toBe(out);
   });
 });

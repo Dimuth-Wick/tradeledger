@@ -327,6 +327,8 @@ export function setTradeTags(
 export interface EquityPoint {
   time: TimestampMs;
   equity: Decimal;
+  /** Net PnL of that trade alone. */
+  pnl: Decimal;
   tradeId: number;
 }
 

@@ -90,6 +90,8 @@ fn equity_curve_and_max_drawdown() {
     let s = run(&sample());
     let equity: Vec<Decimal> = s.equity_curve.iter().map(|p| p.equity).collect();
     assert_eq!(equity, [dec!(9), dec!(5), dec!(15), dec!(15), dec!(12.75)]);
+    let pnl: Vec<Decimal> = s.equity_curve.iter().map(|p| p.pnl).collect();
+    assert_eq!(pnl, [dec!(9), dec!(-4), dec!(10), dec!(0), dec!(-2.25)]);
     assert_eq!(s.equity_curve[0].time, 2_000); // close time of the first trade
     // Peaks 9 → 9 → 15 → 15 → 15; drops 0, 4, 0, 0, 2.25 → max 4.
     assert_eq!(s.max_drawdown, dec!(4));

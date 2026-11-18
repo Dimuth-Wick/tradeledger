@@ -1,13 +1,14 @@
 import { useState } from "react";
 import UnsavedProvider from "./components/UnsavedProvider";
 import { useGuard } from "./lib/unsaved";
+import DashboardPage from "./pages/DashboardPage";
 import FieldsPage from "./pages/FieldsPage";
 import HomePage from "./pages/HomePage";
 import ImportPage from "./pages/ImportPage";
 import TagsPage from "./pages/TagsPage";
 import "./App.css";
 
-type Page = "trades" | "import" | "tags" | "fields";
+type Page = "dashboard" | "trades" | "import" | "tags" | "fields";
 
 function App() {
   return (
@@ -20,7 +21,7 @@ function App() {
 // Simple tab switch; a router can come later if pages need URLs.
 // Switching tabs remounts the page, so the trade list reloads after an import.
 function Shell() {
-  const [page, setPage] = useState<Page>("trades");
+  const [page, setPage] = useState<Page>("dashboard");
   const guard = useGuard();
 
   return (
@@ -28,6 +29,7 @@ function Shell() {
       <nav className="tabs" aria-label="Pages">
         {(
           [
+            ["dashboard", "Dashboard"],
             ["trades", "Trades"],
             ["import", "Import"],
             ["tags", "Tags"],
@@ -46,6 +48,7 @@ function Shell() {
           </button>
         ))}
       </nav>
+      {page === "dashboard" && <DashboardPage />}
       {page === "trades" && <HomePage />}
       {page === "import" && (
         <main className="page">
