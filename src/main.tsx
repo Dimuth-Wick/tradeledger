@@ -1,6 +1,9 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
+// Inter, bundled with the app (works offline): a font made for screens,
+// with clear, same-width digits for prices and PnL.
+import "@fontsource-variable/inter";
 import { getTheme } from "./lib/api";
 import { applyCachedTheme, rememberTheme } from "./lib/theme";
 

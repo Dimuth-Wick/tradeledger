@@ -7,7 +7,7 @@ import {
   type Theme,
   type ThemeMode,
 } from "../lib/api";
-import { THEME_EVENT, rememberTheme } from "../lib/theme";
+import { THEME_EVENT, switchTheme } from "../lib/theme";
 
 const MODES: [ThemeMode, string][] = [
   ["system", "Follow Windows"],
@@ -39,7 +39,7 @@ export default function SettingsPage() {
       (t) => {
         if (id !== latest.current) return;
         setThemeState(t);
-        rememberTheme(t);
+        switchTheme(t);
         setError(null);
       },
       (err) => id === latest.current && setError(String(err)),

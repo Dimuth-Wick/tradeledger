@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { getTheme, setTheme, type Theme } from "../lib/api";
 import {
   THEME_EVENT,
-  rememberTheme,
+  switchTheme,
   shownMode,
   systemPrefersDark,
   toggledMode,
@@ -41,20 +41,28 @@ export default function ThemeToggle() {
       title={label}
       onClick={() =>
         setTheme(toggledMode(theme.mode, systemDark), theme.accent).then(
-          rememberTheme,
+          switchTheme,
           () => {},
         )
       }
     >
-      {/* Shows what you switch TO: a sun in dark mode, a moon in light mode. */}
-      {dark ? <SunIcon /> : <MoonIcon />}
+      {/* Shows what you switch TO: a sun in dark mode, a moon in light
+          mode. Both stay rendered so CSS can animate between them. */}
+      <SunIcon hidden={!dark} />
+      <MoonIcon hidden={dark} />
     </button>
   );
 }
 
-function SunIcon() {
+function SunIcon({ hidden }: { hidden: boolean }) {
   return (
-    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+    <svg
+      className={`icon sun${hidden ? " hidden" : ""}`}
+      viewBox="0 0 24 24"
+      width="18"
+      height="18"
+      aria-hidden="true"
+    >
       <circle cx="12" cy="12" r="4.5" fill="currentColor" />
       <g stroke="currentColor" strokeWidth="2" strokeLinecap="round">
         <line x1="12" y1="2" x2="12" y2="4.5" />
@@ -70,9 +78,15 @@ function SunIcon() {
   );
 }
 
-function MoonIcon() {
+function MoonIcon({ hidden }: { hidden: boolean }) {
   return (
-    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+    <svg
+      className={`icon moon${hidden ? " hidden" : ""}`}
+      viewBox="0 0 24 24"
+      width="18"
+      height="18"
+      aria-hidden="true"
+    >
       <path
         fill="currentColor"
         d="M20.5 14.4A8.5 8.5 0 0 1 9.6 3.5a8.5 8.5 0 1 0 10.9 10.9Z"

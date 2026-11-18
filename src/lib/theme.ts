@@ -71,6 +71,23 @@ export function systemPrefersDark(): boolean {
   return window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
 }
 
+const FADE_MS = 400;
+let fadeTimer: ReturnType<typeof setTimeout> | undefined;
+
+/** Turns on the CSS color fade for a moment (see `html.theme-fade`). */
+function fadeColors(): void {
+  const root = document.documentElement;
+  root.classList.add("theme-fade");
+  clearTimeout(fadeTimer);
+  fadeTimer = setTimeout(() => root.classList.remove("theme-fade"), FADE_MS);
+}
+
+/** Apply (with a short color fade) and remember for the next start. */
+export function switchTheme(t: Theme): void {
+  fadeColors();
+  rememberTheme(t);
+}
+
 /** Apply and remember for the next start. */
 export function rememberTheme(t: Theme): void {
   applyTheme(t, document.documentElement);

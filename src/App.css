@@ -13,7 +13,11 @@
   --handle-filter: none;
   color-scheme: light;
 
-  font-family: Inter, "Segoe UI", Helvetica, Arial, sans-serif;
+  font-family:
+    "Inter Variable", Inter, "Segoe UI", system-ui, Helvetica, Arial, sans-serif;
+  /* Inter's friendlier shapes: open digits, single-storey a, clear l/I. */
+  font-feature-settings: "cv11", "ss01";
+  letter-spacing: -0.005em;
   font-size: 15px;
   line-height: 1.5;
   color: var(--text);
@@ -660,6 +664,8 @@ button.link {
 
 .tabs {
   display: flex;
+  flex-wrap: wrap; /* narrow window: tabs wrap instead of pushing the page sideways */
+  align-items: flex-end;
   gap: 4px;
   max-width: 1100px;
   margin: 0 auto;
@@ -674,24 +680,74 @@ button.link {
   color: var(--muted);
 }
 
-/* Sun/moon toggle at the right end of the tab bar. */
+/* Sun/moon toggle at the right end of the tab bar. Both icons sit on top
+   of each other; the one not in use is spun away and faded out. */
 .tabs button.theme-toggle {
+  position: relative;
   margin-left: auto;
   align-self: center;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   padding: 0;
   border: 1px solid var(--border);
   border-radius: 50%;
   color: var(--text);
+  overflow: hidden;
+  transition:
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.15s ease;
 }
 
 .tabs button.theme-toggle:hover {
   border-color: var(--accent);
   color: var(--accent);
+}
+
+.tabs button.theme-toggle:active {
+  transform: scale(0.92);
+}
+
+.theme-toggle .icon {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  transition:
+    transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity 0.3s ease;
+}
+
+.theme-toggle .icon.hidden {
+  opacity: 0;
+}
+
+.theme-toggle .sun.hidden {
+  transform: rotate(-90deg) scale(0.4);
+}
+
+.theme-toggle .moon.hidden {
+  transform: rotate(90deg) scale(0.4);
+}
+
+/* While the theme changes, colors fade instead of snapping (~0.35 s). */
+html.theme-fade,
+html.theme-fade *,
+html.theme-fade *::before,
+html.theme-fade *::after {
+  transition:
+    background-color 0.35s ease,
+    border-color 0.35s ease,
+    color 0.35s ease,
+    fill 0.35s ease,
+    stroke 0.35s ease !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-toggle .icon,
+  html.theme-fade,
+  html.theme-fade * {
+    transition: none !important;
+  }
 }
 
 .tabs button.active {
