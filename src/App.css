@@ -6,7 +6,7 @@
   --text: #16233a;
   --muted: #5d6a7e;
   --border: #dde4ee;
-  --accent: #396cd8;
+  --accent: #f76707;
   --pos: #0f8a5f;
   --neg: #d2414d;
   --warn: #9a6700;
@@ -15,8 +15,13 @@
     0 1px 2px rgba(22, 35, 58, 0.06), 0 1px 3px rgba(22, 35, 58, 0.04);
   --shadow-2: 0 10px 30px rgba(22, 35, 58, 0.14);
   --radius: 12px;
+  /* Energy: the brand's orange gradient (amber → orange → coral). Fixed,
+     unlike --accent, so the app keeps its character with any accent. */
+  --energy: linear-gradient(135deg, #ffb020 0%, #ff7a18 48%, #ff4d4d 100%);
+  --energy-glow: rgba(255, 122, 24, 0.13);
+  --energy-shadow: 0 10px 28px rgba(255, 106, 0, 0.28);
   /* Text on accent-colored buttons; set from Rust with the accent. */
-  --on-accent: #ffffff;
+  --on-accent: #000000;
   --handle-filter: none;
   color-scheme: light;
 
@@ -48,8 +53,16 @@
     --warn: #d29922;
     --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.35);
     --shadow-2: 0 12px 32px rgba(0, 0, 0, 0.5);
+    --energy-glow: rgba(255, 122, 24, 0.09);
+    --energy-shadow: 0 10px 28px rgba(255, 106, 0, 0.18);
+    --energy-glow: rgba(255, 122, 24, 0.09);
+    --energy-shadow: 0 10px 28px rgba(255, 106, 0, 0.18);
     --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.35);
     --shadow-2: 0 12px 32px rgba(0, 0, 0, 0.5);
+    --energy-glow: rgba(255, 122, 24, 0.09);
+    --energy-shadow: 0 10px 28px rgba(255, 106, 0, 0.18);
+    --energy-glow: rgba(255, 122, 24, 0.09);
+    --energy-shadow: 0 10px 28px rgba(255, 106, 0, 0.18);
     --handle-filter: invert(1);
     color-scheme: dark;
   }
@@ -67,22 +80,39 @@
   --warn: #d29922;
   --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.35);
   --shadow-2: 0 12px 32px rgba(0, 0, 0, 0.5);
+  --energy-glow: rgba(255, 122, 24, 0.09);
+  --energy-shadow: 0 10px 28px rgba(255, 106, 0, 0.18);
   --handle-filter: invert(1);
   color-scheme: dark;
 }
 
 body {
   margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(
+      1100px 420px at 100% -120px,
+      var(--energy-glow),
+      transparent 70%
+    ),
+    radial-gradient(
+      900px 360px at 0% -160px,
+      color-mix(in srgb, var(--energy-glow) 70%, transparent),
+      transparent 70%
+    ),
+    var(--bg);
+  background-attachment: fixed;
 }
 
 a {
   color: var(--accent);
 }
 
+/* Pages use the whole window; padding grows a little on wide screens. */
 .page {
-  max-width: 1180px;
+  max-width: 1920px;
   margin: 0 auto;
-  padding: 20px 24px 40px;
+  padding: 20px clamp(16px, 2.2vw, 40px) 40px;
 }
 
 h1 {
@@ -162,7 +192,12 @@ button:disabled {
 }
 
 button.primary {
-  background: var(--accent);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--accent) 78%, #ffd23f),
+    var(--accent) 55%,
+    color-mix(in srgb, var(--accent) 85%, #e0003c)
+  );
   border-color: var(--accent);
   color: var(--on-accent);
   font-weight: 600;
@@ -172,7 +207,7 @@ button.primary {
 }
 
 button.primary:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--accent) 88%, black);
+  filter: brightness(0.94);
   border-color: color-mix(in srgb, var(--accent) 88%, black);
 }
 
@@ -745,6 +780,17 @@ button.link {
 /* --- App bar --- */
 
 /* White bar across the top: logo + name, page tabs, theme toggle. */
+.appbar::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--energy);
+  opacity: 0.9;
+}
+
 .appbar {
   position: sticky;
   top: 0;
@@ -758,9 +804,9 @@ button.link {
   display: flex;
   align-items: center;
   gap: 20px;
-  max-width: 1180px;
+  max-width: 1920px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 clamp(16px, 2.2vw, 40px);
   min-height: 56px;
 }
 
@@ -1182,8 +1228,10 @@ html.theme-fade *::after {
 }
 
 .chart .equity-line .recharts-line-curve,
+.chart .equity-line .recharts-area-curve,
 .chart path.equity-line {
   stroke: var(--accent);
+  stroke-width: 2.5px;
 }
 
 .chart .equity-dot {
@@ -1837,4 +1885,26 @@ button:active:not(:disabled) {
   .calendar td:has(button):hover {
     translate: none;
   }
+}
+
+/* --- Energy accents --- */
+
+/* Net PnL is the one feature tile: the brand gradient, white type. */
+.kpis > div:first-child {
+  background: var(--energy);
+  border-color: transparent;
+  box-shadow: var(--energy-shadow);
+}
+
+.kpis > div:first-child dt,
+.kpis > div:first-child dd,
+.kpis > div:first-child dd.pos,
+.kpis > div:first-child dd.neg,
+.kpis > div:first-child dd.kpi-detail {
+  color: #ffffff;
+}
+
+.kpis > div:first-child dd.kpi-detail,
+.kpis > div:first-child dt {
+  opacity: 0.88;
 }

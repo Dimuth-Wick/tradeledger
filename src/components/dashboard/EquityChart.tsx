@@ -1,7 +1,7 @@
 import {
   CartesianGrid,
-  Line,
-  LineChart,
+  Area,
+  AreaChart,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -25,10 +25,24 @@ export default function EquityChart({ rows }: { rows: CurveRow[] }) {
       aria-label={`Equity curve over ${rows.length - 1} closed trades, ending at ${signed(last.equityText)}`}
     >
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart
+        <AreaChart
           data={rows}
           margin={{ top: 8, right: 16, bottom: 4, left: 0 }}
         >
+          <defs>
+            <linearGradient id="equity-fill" x1="0" y1="0" x2="0" y2="1">
+              <stop
+                offset="0%"
+                style={{ stopColor: "var(--accent)" }}
+                stopOpacity={0.28}
+              />
+              <stop
+                offset="100%"
+                style={{ stopColor: "var(--accent)" }}
+                stopOpacity={0}
+              />
+            </linearGradient>
+          </defs>
           <CartesianGrid vertical={false} />
           <XAxis
             dataKey="n"
@@ -66,16 +80,17 @@ export default function EquityChart({ rows }: { rows: CurveRow[] }) {
               );
             }}
           />
-          <Line
+          <Area
             type="linear"
             dataKey="equity"
             className="equity-line"
             strokeWidth={2}
             dot={false}
+            fill="url(#equity-fill)"
             activeDot={{ r: 4, className: "equity-dot" }}
             {...chartMotion(900)}
           />
-        </LineChart>
+        </AreaChart>
       </ResponsiveContainer>
     </div>
   );

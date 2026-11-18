@@ -9,7 +9,7 @@ use thiserror::Error;
 use crate::db::{DbError, settings};
 
 const KEY: &str = "theme";
-pub const DEFAULT_ACCENT: &str = "#396cd8";
+pub const DEFAULT_ACCENT: &str = "#f76707";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -39,6 +39,10 @@ pub struct AccentPreset {
 /// Ready-made accents shown as swatches.
 pub const PRESETS: [AccentPreset; 8] = [
     AccentPreset {
+        name: "Orange",
+        hex: "#f76707",
+    },
+    AccentPreset {
         name: "Blue",
         hex: "#396cd8",
     },
@@ -53,10 +57,6 @@ pub const PRESETS: [AccentPreset; 8] = [
     AccentPreset {
         name: "Amber",
         hex: "#d99a00",
-    },
-    AccentPreset {
-        name: "Orange",
-        hex: "#e8590c",
     },
     AccentPreset {
         name: "Rose",
@@ -151,8 +151,8 @@ mod tests {
     fn default_until_saved() {
         let conn = open_in_memory().unwrap();
         let t = load(&conn).unwrap();
-        assert_eq!((t.mode, t.accent.as_str()), (Mode::System, "#396cd8"));
-        assert_eq!(t.on_accent, "#ffffff");
+        assert_eq!((t.mode, t.accent.as_str()), (Mode::System, "#f76707"));
+        assert_eq!(t.on_accent, "#000000"); // orange: dark text reads best
     }
 
     #[test]

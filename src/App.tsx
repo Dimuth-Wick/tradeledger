@@ -141,23 +141,37 @@ export default App;
 function BrandMark() {
   return (
     <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+      <defs>
+        <linearGradient id="brand-energy" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#ffb020" />
+          <stop offset="0.5" stopColor="#ff7a18" />
+          <stop offset="1" stopColor="#ff4d4d" />
+        </linearGradient>
+      </defs>
       <rect
         x="4"
         y="3"
         width="2"
         height="18"
         rx="1"
-        fill="currentColor"
+        fill="url(#brand-energy)"
         opacity="0.45"
       />
-      <rect x="2.5" y="7" width="5" height="9" rx="1.5" fill="currentColor" />
+      <rect
+        x="2.5"
+        y="7"
+        width="5"
+        height="9"
+        rx="1.5"
+        fill="url(#brand-energy)"
+      />
       <rect
         x="15"
         y="2"
         width="2"
         height="17"
         rx="1"
-        fill="currentColor"
+        fill="url(#brand-energy)"
         opacity="0.45"
       />
       <rect
@@ -166,7 +180,7 @@ function BrandMark() {
         width="5"
         height="7"
         rx="1.5"
-        fill="currentColor"
+        fill="url(#brand-energy)"
         opacity="0.7"
       />
     </svg>
