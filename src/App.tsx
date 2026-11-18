@@ -64,8 +64,8 @@ function Shell() {
               [
                 ["dashboard", "Dashboard"],
                 ["calendar", "Calendar"],
-                ["reports", "Reports"],
                 ["trades", "Trades"],
+                ["reports", "Reports"],
                 ["import", "Import"],
                 ["playbooks", "Playbooks"],
                 ["tags", "Tags"],

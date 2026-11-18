@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { createTrade, previewTrade, type Trade } from "../lib/api";
+import PendingShots, { type PendingShot } from "./PendingShots";
+import {
+  addScreenshot,
+  createTrade,
+  previewTrade,
+  type Trade,
+} from "../lib/api";
 import { formatR, formatRr, pnlClass, usd } from "../lib/format";
 import {
   emptyForm,
@@ -26,9 +32,11 @@ export default function TradeForm({ onSaved }: Props) {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
+  // Screenshots chosen before the trade exists; attached after saving.
+  const [shots, setShots] = useState<PendingShot[]>([]);
 
   const parsed = useMemo(() => toTradeInput(form), [form]);
-  useUnsavedChanges(hasInput(form));
+  useUnsavedChanges(hasInput(form) || shots.length > 0);
   // Identifies the exact input a preview was computed for, so a slow reply
   // for old values is never shown next to newer values.
   const inputKey = parsed.ok ? JSON.stringify(parsed.input) : null;
@@ -69,6 +77,21 @@ export default function TradeForm({ onSaved }: Props) {
     setSaveError(null);
     try {
       const saved = await createTrade(parsed.input);
+      // Then attach the screenshots, one by one. A failed image doesn't undo
+      // the trade; the message says which ones to add again.
+      let added = 0;
+      const failed: string[] = [];
+      for (const shot of shots) {
+        try {
+          const bytes = new Uint8Array(await shot.file.arrayBuffer());
+          await addScreenshot(saved.id, bytes);
+          added += 1;
+        } catch (err) {
+          failed.push(`${shot.file.name || "pasted image"} (${String(err)})`);
+        }
+      }
+      shots.forEach((s) => URL.revokeObjectURL(s.url));
+      setShots([]);
       // Keep the choices people repeat (exchange, market, direction).
       setForm({
         ...emptyForm(),
@@ -76,7 +99,14 @@ export default function TradeForm({ onSaved }: Props) {
         market: form.market,
         direction: form.direction,
       });
-      setSavedMsg(`Saved trade #${saved.id} (${saved.symbol})`);
+      const withShots =
+        added > 0 ? ` with ${added} screenshot${added === 1 ? "" : "s"}` : "";
+      setSavedMsg(`Saved trade #${saved.id} (${saved.symbol})${withShots}`);
+      if (failed.length > 0) {
+        setSaveError(
+          `Trade saved, but these images weren't added (open the trade to add them again): ${failed.join("; ")}`,
+        );
+      }
       onSaved();
     } catch (err) {
       setSaveError(String(err));
@@ -248,6 +278,18 @@ export default function TradeForm({ onSaved }: Props) {
               />
             </label>
           </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Screenshots</legend>
+          <PendingShots
+            shots={shots}
+            onChange={(next) => {
+              setShots(next);
+              setSavedMsg(null);
+            }}
+            disabled={saving}
+          />
         </fieldset>
 
         <label className="notes">
