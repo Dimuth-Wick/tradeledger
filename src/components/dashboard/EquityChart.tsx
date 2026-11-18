@@ -23,7 +23,7 @@ export default function EquityChart({ rows }: { rows: CurveRow[] }) {
       role="img"
       aria-label={`Equity curve over ${rows.length - 1} closed trades, ending at ${signed(last.equityText)}`}
     >
-      <ResponsiveContainer width="100%" height={240}>
+      <ResponsiveContainer width="100%" height="100%">
         <LineChart
           data={rows}
           margin={{ top: 8, right: 16, bottom: 4, left: 0 }}

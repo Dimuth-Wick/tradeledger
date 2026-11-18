@@ -35,7 +35,7 @@ export default function RDistribution({
         role="img"
         aria-label={rows.map((r) => `${r.label}: ${r.count}`).join(", ")}
       >
-        <ResponsiveContainer width="100%" height={240}>
+        <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={rows}
             margin={{ top: 20, right: 16, bottom: 4, left: 0 }}

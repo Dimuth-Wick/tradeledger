@@ -1,4 +1,4 @@
-import type { Decimal, RBucket, Stats, TradeQuery } from "./api";
+import type { Decimal, LayoutItem, RBucket, Stats, TradeQuery } from "./api";
 import { formatR, pnlClass, round2, signed } from "./format";
 import {
   DEFAULT_SORT,
@@ -205,6 +205,36 @@ export function curveRows(s: Stats): CurveRow[] {
       tradeId: p.tradeId,
     })),
   ];
+}
+
+/** What the grid reports after a drag/resize (it adds extra fields). */
+interface GridItem {
+  i: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+/**
+ * The grid's layout → our saved shape, in the order of `current` (minimum
+ * sizes come from Rust). Returns null when nothing moved, so we skip saving.
+ */
+export function changedLayout(
+  current: LayoutItem[],
+  grid: readonly GridItem[],
+): LayoutItem[] | null {
+  const byId = new Map(grid.map((g) => [g.i, g]));
+  let changed = false;
+  const next = current.map((item) => {
+    const g = byId.get(item.i);
+    if (!g) return item;
+    if (g.x !== item.x || g.y !== item.y || g.w !== item.w || g.h !== item.h) {
+      changed = true;
+    }
+    return { ...item, x: g.x, y: g.y, w: g.w, h: g.h };
+  });
+  return changed ? next : null;
 }
 
 export interface RRow {

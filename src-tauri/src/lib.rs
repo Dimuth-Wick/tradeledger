@@ -1,5 +1,6 @@
 mod commands;
 pub mod custom_fields;
+pub mod dashboard_layout;
 // Public so the core can be used (and tested) as a library, not only through
 // the Tauri commands; also keeps not-yet-used repository functions from being
 // flagged as dead code before the commands that call them exist.
@@ -91,6 +92,9 @@ pub fn run() {
             commands::custom_fields::delete_custom_field,
             commands::custom_fields::get_custom_values,
             commands::custom_fields::set_custom_values,
+            commands::dashboard::get_dashboard_layout,
+            commands::dashboard::save_dashboard_layout,
+            commands::dashboard::reset_dashboard_layout,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

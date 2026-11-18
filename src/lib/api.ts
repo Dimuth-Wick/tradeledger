@@ -489,6 +489,34 @@ export function getStats(query: TradeQuery): Promise<Stats> {
   return invoke<Stats>("get_stats", { query });
 }
 
+/** Mirrors Rust `dashboard_layout::LayoutItem` (grid units, 12 columns). */
+export interface LayoutItem {
+  /** Widget id, e.g. "equity". */
+  i: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  minW: number;
+  minH: number;
+}
+
+/** Saved layout, or the default. */
+export function getDashboardLayout(): Promise<LayoutItem[]> {
+  return invoke<LayoutItem[]>("get_dashboard_layout");
+}
+
+/** Rust checks and stores it; returns what was saved. */
+export function saveDashboardLayout(
+  items: LayoutItem[],
+): Promise<LayoutItem[]> {
+  return invoke<LayoutItem[]>("save_dashboard_layout", { items });
+}
+
+export function resetDashboardLayout(): Promise<LayoutItem[]> {
+  return invoke<LayoutItem[]>("reset_dashboard_layout");
+}
+
 export function listSymbols(): Promise<string[]> {
   return invoke<string[]>("list_symbols");
 }

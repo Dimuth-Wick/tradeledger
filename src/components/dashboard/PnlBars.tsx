@@ -25,7 +25,7 @@ export default function PnlBars({ rows }: { rows: CurveRow[] }) {
       role="img"
       aria-label={`Net PnL of each of ${trades.length} closed trades`}
     >
-      <ResponsiveContainer width="100%" height={240}>
+      <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={trades}
           margin={{ top: 8, right: 16, bottom: 4, left: 0 }}

@@ -1,17 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
-import EquityChart from "../components/dashboard/EquityChart";
-import KpiTiles from "../components/dashboard/KpiTiles";
-import PnlBars from "../components/dashboard/PnlBars";
-import RDistribution from "../components/dashboard/RDistribution";
-import { getStats, listSymbols, type Stats } from "../lib/api";
+import DashboardGrid from "../components/dashboard/DashboardGrid";
+import {
+  getDashboardLayout,
+  getStats,
+  listSymbols,
+  resetDashboardLayout,
+  saveDashboardLayout,
+  type LayoutItem,
+  type Stats,
+} from "../lib/api";
 import {
   EMPTY_DASH,
   PRESETS,
-  curveRows,
   dashQuery,
-  kpis,
   presetRange,
-  rRows,
   type DashFilters,
   type Preset,
 } from "../lib/dashboard";
@@ -22,6 +24,9 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [symbols, setSymbols] = useState<string[]>([]);
+  const [layout, setLayout] = useState<LayoutItem[] | null>(null);
+  const [layoutError, setLayoutError] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
 
   const query = useMemo(() => dashQuery(filters), [filters]);
 
@@ -44,7 +49,35 @@ export default function DashboardPage() {
     listSymbols().then(setSymbols, () => setSymbols([]));
   }, []);
 
-  const rows = useMemo(() => (stats ? curveRows(stats) : []), [stats]);
+  useEffect(() => {
+    getDashboardLayout().then(setLayout, (err) => setLayoutError(String(err)));
+  }, []);
+
+  // Show the move at once; Rust checks and stores it. On error, reload
+  // what is really saved.
+  function saveLayout(next: LayoutItem[]) {
+    setLayout(next);
+    saveDashboardLayout(next).then(
+      (saved) => {
+        setLayout(saved);
+        setLayoutError(null);
+      },
+      (err) => {
+        setLayoutError(`Layout not saved: ${String(err)}`);
+        getDashboardLayout().then(setLayout, () => {});
+      },
+    );
+  }
+
+  function resetLayout() {
+    resetDashboardLayout().then(
+      (l) => {
+        setLayout(l);
+        setLayoutError(null);
+      },
+      (err) => setLayoutError(String(err)),
+    );
+  }
 
   function set<K extends keyof DashFilters>(key: K, value: DashFilters[K]) {
     setFilters((f) => ({ ...f, [key]: value }));
@@ -135,32 +168,45 @@ export default function DashboardPage() {
         >
           Clear filters
         </button>
+        <span className="spacer" />
+        <button
+          type="button"
+          disabled={editing}
+          onClick={() => setEditing(true)}
+        >
+          Edit layout
+        </button>
       </div>
 
-      {error && <p className="status error">{error}</p>}
+      {editing && (
+        <div className="edit-bar" role="status">
+          <span>
+            Drag a widget by its title. Resize it from the bottom-right corner.
+            Changes save on their own.
+          </span>
+          <button type="button" onClick={resetLayout}>
+            Reset layout
+          </button>
+          <button
+            type="button"
+            className="primary"
+            onClick={() => setEditing(false)}
+          >
+            Done
+          </button>
+        </div>
+      )}
 
-      {stats && (
-        <>
-          <KpiTiles items={kpis(stats)} />
-          <div className="widgets">
-            <section className="widget wide">
-              <h2>Equity curve</h2>
-              <EquityChart rows={rows} />
-            </section>
-            <section className="widget">
-              <h2>Win / loss per trade</h2>
-              <PnlBars rows={rows} />
-            </section>
-            <section className="widget">
-              <h2>R distribution</h2>
-              <RDistribution
-                rows={rRows(stats.rBuckets)}
-                withR={stats.tradesWithR}
-                closed={stats.closed}
-              />
-            </section>
-          </div>
-        </>
+      {error && <p className="status error">{error}</p>}
+      {layoutError && <p className="status error">{layoutError}</p>}
+
+      {stats && layout && (
+        <DashboardGrid
+          stats={stats}
+          layout={layout}
+          editing={editing}
+          onLayout={saveLayout}
+        />
       )}
     </main>
   );

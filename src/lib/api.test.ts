@@ -10,6 +10,7 @@ import {
   createTrade,
   deleteTagGroup,
   getStats,
+  saveDashboardLayout,
   setTradeTags,
   dbInfo,
   deleteTrade,
@@ -141,6 +142,14 @@ describe("trade commands", () => {
       "get_stats",
       () => getStats({ from: 1, to: 2 }),
       { query: { from: 1, to: 2 } },
+    ],
+    [
+      "save_dashboard_layout",
+      () =>
+        saveDashboardLayout([
+          { i: "kpis", x: 0, y: 0, w: 12, h: 6, minW: 3, minH: 3 },
+        ]),
+      { items: [{ i: "kpis", x: 0, y: 0, w: 12, h: 6, minW: 3, minH: 3 }] },
     ],
     [
       "create_custom_field",

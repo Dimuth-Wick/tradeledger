@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
-import type { Stats } from "./api";
+import type { LayoutItem, Stats } from "./api";
 import {
   EMPTY_DASH,
+  changedLayout,
   curveRows,
   dashQuery,
   formatHold,
@@ -139,5 +140,28 @@ describe("dashQuery", () => {
     expect(q.to).toBeNull();
     expect(q.market).toBe("usdm");
     expect(q.outcome).toBeNull();
+  });
+});
+
+describe("changedLayout", () => {
+  const current: LayoutItem[] = [
+    { i: "kpis", x: 0, y: 0, w: 12, h: 6, minW: 3, minH: 3 },
+    { i: "equity", x: 0, y: 6, w: 12, h: 7, minW: 3, minH: 4 },
+  ];
+
+  it("returns null when nothing moved (grid may add extra fields)", () => {
+    const grid = current.map((c) => ({ ...c, moved: false, static: false }));
+    expect(changedLayout(current, grid)).toBeNull();
+  });
+
+  it("copies new positions and keeps Rust's minimum sizes and order", () => {
+    const grid = [
+      { i: "equity", x: 0, y: 0, w: 8, h: 7 },
+      { i: "kpis", x: 8, y: 0, w: 4, h: 10 },
+    ];
+    expect(changedLayout(current, grid)).toEqual([
+      { i: "kpis", x: 8, y: 0, w: 4, h: 10, minW: 3, minH: 3 },
+      { i: "equity", x: 0, y: 0, w: 8, h: 7, minW: 3, minH: 4 },
+    ]);
   });
 });

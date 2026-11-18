@@ -25,6 +25,12 @@ pub fn set(conn: &Connection, key: &str, value: &Value) -> Result<(), DbError> {
     Ok(())
 }
 
+/// Removes the key (no error if it wasn't set).
+pub fn delete(conn: &Connection, key: &str) -> Result<(), DbError> {
+    conn.execute("DELETE FROM settings WHERE key = ?1", [key])?;
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -34,6 +40,15 @@ mod tests {
     #[test]
     fn missing_key_is_none() {
         let conn = open_in_memory().unwrap();
+        assert_eq!(get(&conn, "theme").unwrap(), None);
+    }
+
+    #[test]
+    fn delete_removes_the_key() {
+        let conn = open_in_memory().unwrap();
+        set(&conn, "theme", &json!("dark")).unwrap();
+        delete(&conn, "theme").unwrap();
+        delete(&conn, "theme").unwrap(); // second time is a no-op
         assert_eq!(get(&conn, "theme").unwrap(), None);
     }
 

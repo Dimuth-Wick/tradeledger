@@ -5,6 +5,7 @@
 //! gets a plain message instead of a Rust type it can't understand.
 
 pub mod custom_fields;
+pub mod dashboard;
 pub mod grouping;
 pub mod import;
 pub mod screenshots;
