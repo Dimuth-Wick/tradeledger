@@ -12,7 +12,7 @@ function filled(overrides: Partial<TradeFormState> = {}): TradeFormState {
   return {
     ...emptyForm(new Date(2026, 10, 14, 9, 30)),
     symbol: "btcusdt",
-    qty: "0.015",
+    positionSize: "500",
     avgEntry: "36500.10",
     ...overrides,
   };
@@ -30,7 +30,7 @@ describe("hasInput", () => {
   it("counts anything the user typed", () => {
     expect(hasInput({ ...emptyForm(), symbol: "btc" })).toBe(true);
     expect(hasInput({ ...emptyForm(), notes: "idea" })).toBe(true);
-    expect(hasInput({ ...emptyForm(), qty: "  " })).toBe(false);
+    expect(hasInput({ ...emptyForm(), positionSize: "  " })).toBe(false);
   });
 });
 
@@ -48,7 +48,7 @@ describe("toTradeInput", () => {
     expect(result).toMatchObject({ ok: false, incomplete: true });
     if (!result.ok) {
       expect(result.error).toContain("symbol");
-      expect(result.error).toContain("quantity");
+      expect(result.error).toContain("position size");
       expect(result.error).toContain("entry price");
     }
   });
@@ -64,11 +64,12 @@ describe("toTradeInput", () => {
       direction: "long",
       openTime: new Date(2026, 10, 14, 9, 30).getTime(),
       closeTime: null,
-      qty: "0.015",
+      positionSize: "500",
       avgEntry: "36500.10",
       avgExit: null,
       leverage: null,
       fees: "0",
+      autoFees: true, // empty fees box = 0.1% of size, worked out in Rust
       funding: "0",
       stopLoss: null,
       takeProfit: null,
@@ -100,6 +101,8 @@ describe("toTradeInput", () => {
     );
     expect(result.input.leverage).toBe(10);
     expect(result.input.funding).toBe("-0.01");
+    // A typed fee is kept as typed.
+    expect(result.input).toMatchObject({ fees: "0.55", autoFees: false });
   });
 
   it("ignores leverage and funding on spot", () => {
@@ -111,7 +114,7 @@ describe("toTradeInput", () => {
   });
 
   it.each([
-    ["qty", "abc", "Quantity"],
+    ["positionSize", "abc", "Position size"],
     ["avgEntry", "1,5", "Entry price"],
     ["stopLoss", "-5", "Stop loss"],
     ["fees", "1.2.3", "Fees"],

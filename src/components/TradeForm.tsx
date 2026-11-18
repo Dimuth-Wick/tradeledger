@@ -136,12 +136,12 @@ export default function TradeForm({ onSaved }: Props) {
           </div>
           <div className="row">
             <label>
-              Quantity
+              Position size (USDT)
               <input
                 inputMode="decimal"
-                value={form.qty}
-                onChange={(e) => set("qty", e.target.value)}
-                placeholder="0.015"
+                value={form.positionSize}
+                onChange={(e) => set("positionSize", e.target.value)}
+                placeholder="e.g. 500"
               />
             </label>
             <label>
@@ -187,7 +187,11 @@ export default function TradeForm({ onSaved }: Props) {
                 inputMode="decimal"
                 value={form.fees}
                 onChange={(e) => set("fees", e.target.value)}
-                placeholder="0"
+                placeholder={
+                  current?.ok && form.fees.trim() === ""
+                    ? `auto ${usd(current.trade.fees, { sign: false })} (0.1%)`
+                    : "auto: 0.1% of size"
+                }
               />
             </label>
             {futures && (
@@ -270,6 +274,10 @@ export default function TradeForm({ onSaved }: Props) {
           <dl>
             <dt>Status</dt>
             <dd>{current.trade.status === "open" ? "Open" : "Closed"}</dd>
+            <dt>Quantity</dt>
+            <dd>{current.trade.qty}</dd>
+            <dt>Fees</dt>
+            <dd>{usd(current.trade.fees, { sign: false })}</dd>
             <dt>Planned R:R</dt>
             <dd>{formatRr(current.trade.plannedRr)}</dd>
             <dt>R-multiple</dt>

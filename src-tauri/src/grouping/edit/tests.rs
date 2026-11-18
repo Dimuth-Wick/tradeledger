@@ -246,6 +246,8 @@ fn invalid_requests_are_rejected_with_clear_errors() {
     let manual = trade_entry::create(
         &conn,
         &TradeInput {
+            position_size: None,
+            auto_fees: false,
             exchange: "binance".into(),
             market: Market::Usdm,
             symbol: "BTCUSDT".into(),

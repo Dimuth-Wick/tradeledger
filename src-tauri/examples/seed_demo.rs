@@ -210,6 +210,8 @@ fn main() {
                 None
             };
             let input = TradeInput {
+                position_size: None,
+                auto_fees: false,
                 exchange: "binance".into(),
                 market,
                 symbol: symbol.into(),

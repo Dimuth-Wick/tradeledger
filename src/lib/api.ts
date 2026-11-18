@@ -63,11 +63,16 @@ export interface TradeInput {
   direction: Direction;
   openTime: TimestampMs;
   closeTime?: TimestampMs | null;
-  qty: Decimal;
+  /** Coins; ignored when `positionSize` is given. */
+  qty?: Decimal;
+  /** Position size in USDT at entry; Rust works out qty = size ÷ entry. */
+  positionSize?: Decimal | null;
   avgEntry: Decimal;
   avgExit?: Decimal | null;
   leverage?: number | null;
   fees?: Decimal;
+  /** true = Rust sets fees to 0.1% of the position size. */
+  autoFees?: boolean;
   /** Positive = paid, negative = received. */
   funding?: Decimal;
   plannedEntry?: Decimal | null;

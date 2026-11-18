@@ -5,7 +5,7 @@
 //! numbers can't disagree with each other and the UI never does money math.
 
 use rusqlite::Connection;
-use rust_decimal::Decimal;
+use rust_decimal::{Decimal, RoundingStrategy};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -24,13 +24,22 @@ pub struct TradeInput {
     pub open_time: TimestampMs,
     /// Set together with `avg_exit` when the trade is closed.
     pub close_time: Option<TimestampMs>,
+    /// Coins bought or sold. Ignored when `position_size` is given.
+    #[serde(default)]
     pub qty: Decimal,
+    /// Position size in USDT at entry. When set, the quantity is worked out
+    /// from it: size ÷ entry price.
+    #[serde(default)]
+    pub position_size: Option<Decimal>,
     pub avg_entry: Decimal,
     pub avg_exit: Option<Decimal>,
     pub leverage: Option<u32>,
-    /// Total fees paid (≥ 0).
+    /// Total fees paid (≥ 0). Ignored when `auto_fees` is true.
     #[serde(default)]
     pub fees: Decimal,
+    /// Work the fees out as `FEE_RATE` of the position size.
+    #[serde(default)]
+    pub auto_fees: bool,
     /// Net funding cost: positive = paid, negative = received.
     #[serde(default)]
     pub funding: Decimal,
@@ -54,6 +63,39 @@ pub enum TradeError {
     Db(#[from] DbError),
 }
 
+/// Fee used when the trade form leaves fees empty: 0.1% of position size.
+pub const FEE_RATE: Decimal = Decimal::from_parts(1, 0, 0, false, 3);
+
+/// Quantity and fee precision (crypto amounts).
+const AMOUNT_DP: u32 = 8;
+
+fn round_amount(v: Decimal) -> Decimal {
+    v.round_dp_with_strategy(AMOUNT_DP, RoundingStrategy::MidpointAwayFromZero)
+        .normalize()
+}
+
+/// The quantity and fees to store: typed in, or worked out from the
+/// position size (call after `validate`).
+pub fn resolve_size(input: &TradeInput) -> Result<(Decimal, Decimal), TradeError> {
+    let qty = match input.position_size {
+        Some(size) => {
+            let qty = round_amount(size / input.avg_entry);
+            if qty <= Decimal::ZERO {
+                return Err(invalid("position size is too small for this price"));
+            }
+            qty
+        }
+        None => input.qty,
+    };
+    let size = input.position_size.unwrap_or(qty * input.avg_entry);
+    let fees = if input.auto_fees {
+        round_amount(size * FEE_RATE)
+    } else {
+        input.fees
+    };
+    Ok((qty, fees))
+}
+
 fn invalid(msg: &str) -> TradeError {
     TradeError::Invalid(msg.to_string())
 }
@@ -69,8 +111,14 @@ pub fn validate(input: &TradeInput) -> Result<(), TradeError> {
     if input.symbol.trim().is_empty() {
         return Err(invalid("symbol is required"));
     }
-    if !positive(input.qty) {
-        return Err(invalid("quantity must be greater than 0"));
+    match input.position_size {
+        Some(size) if !positive(size) => {
+            return Err(invalid("position size must be greater than 0"));
+        }
+        None if !positive(input.qty) => {
+            return Err(invalid("quantity must be greater than 0"));
+        }
+        _ => {}
     }
     if !positive(input.avg_entry) {
         return Err(invalid("entry price must be greater than 0"));
@@ -111,17 +159,18 @@ pub fn validate(input: &TradeInput) -> Result<(), TradeError> {
 /// Validates the input and computes every derived field.
 pub fn build_trade(input: &TradeInput, is_manual: bool) -> Result<Trade, TradeError> {
     validate(input)?;
+    let (qty, fees) = resolve_size(input)?;
     let dir = input.direction;
 
     let (status, gross_pnl) = match input.avg_exit {
         Some(exit) => (
             TradeStatus::Closed,
-            risk::favourable_move(dir, input.avg_entry, exit) * input.qty,
+            risk::favourable_move(dir, input.avg_entry, exit) * qty,
         ),
         // Unrealized PnL needs a live price; an open trade has none yet.
         None => (TradeStatus::Open, Decimal::ZERO),
     };
-    let net_pnl = gross_pnl - input.fees - input.funding;
+    let net_pnl = gross_pnl - fees - input.funding;
 
     // The plan is measured from the planned entry; if the user didn't give
     // one, their actual entry is the plan.
@@ -156,12 +205,12 @@ pub fn build_trade(input: &TradeInput, is_manual: bool) -> Result<Trade, TradeEr
         status,
         open_time: input.open_time,
         close_time: input.close_time,
-        qty: input.qty,
+        qty,
         avg_entry: input.avg_entry,
         avg_exit: input.avg_exit,
         leverage: input.leverage,
         gross_pnl,
-        fees: input.fees,
+        fees,
         funding: input.funding,
         net_pnl,
         planned_entry: input.planned_entry,
@@ -208,6 +257,8 @@ mod tests {
     /// Closed long: in 100 → out 110, qty 2, stop 95, target 115.
     fn closed_long() -> TradeInput {
         TradeInput {
+            position_size: None,
+            auto_fees: false,
             exchange: "Binance".into(),
             market: Market::Usdm,
             symbol: " btcusdt ".into(),
@@ -226,6 +277,69 @@ mod tests {
             notes: "test".into(),
             playbook_id: None,
         }
+    }
+
+    #[test]
+    fn position_size_sets_quantity_and_auto_fees() {
+        // 1,000 USDT at 100 → 10 coins; fee 0.1% of 1,000 = 1.
+        let input = TradeInput {
+            qty: Decimal::ZERO, // ignored when a size is given
+            position_size: Some(dec!(1000)),
+            fees: dec!(99), // ignored with auto fees
+            auto_fees: true,
+            ..closed_long()
+        };
+        let t = build_trade(&input, true).unwrap();
+        assert_eq!(t.qty, dec!(10));
+        assert_eq!(t.fees, dec!(1));
+        assert_eq!(t.gross_pnl, dec!(100)); // (110 − 100) × 10
+        assert_eq!(t.net_pnl, dec!(98.9)); // 100 − 1 − 0.1 funding
+
+        // Quantity keeps 8 decimals: 250 USDT at 64,123.45 BTC.
+        let btc = TradeInput {
+            avg_entry: dec!(64123.45),
+            avg_exit: None,
+            close_time: None,
+            stop_loss: None,
+            take_profit: None,
+            position_size: Some(dec!(250)),
+            ..input.clone()
+        };
+        let t = build_trade(&btc, true).unwrap();
+        assert_eq!(t.qty, dec!(0.00389873)); // 250 / 64123.45 = 0.003898728…
+        assert_eq!(t.fees, dec!(0.25));
+    }
+
+    #[test]
+    fn auto_fees_from_quantity_and_typed_fees_win_otherwise() {
+        // No size: fee = 0.1% of qty × entry = 0.1% of 200 = 0.2.
+        let auto = TradeInput {
+            auto_fees: true,
+            ..closed_long()
+        };
+        assert_eq!(build_trade(&auto, true).unwrap().fees, dec!(0.2));
+        // auto_fees false keeps the typed 0.4.
+        assert_eq!(build_trade(&closed_long(), true).unwrap().fees, dec!(0.4));
+    }
+
+    #[test]
+    fn position_size_must_be_positive_and_large_enough() {
+        let zero = TradeInput {
+            position_size: Some(Decimal::ZERO),
+            ..closed_long()
+        };
+        assert_eq!(
+            build_trade(&zero, true).unwrap_err().to_string(),
+            "position size must be greater than 0"
+        );
+        let tiny = TradeInput {
+            position_size: Some(dec!(0.000000001)),
+            ..closed_long()
+        };
+        assert_eq!(
+            build_trade(&tiny, true).unwrap_err().to_string(),
+            "position size is too small for this price"
+        );
     }
 
     #[test]

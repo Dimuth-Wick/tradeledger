@@ -272,6 +272,8 @@ fn manual_trades_are_never_touched() {
     let manual = trade_entry::create(
         &conn,
         &TradeInput {
+            position_size: None,
+            auto_fees: false,
             exchange: "binance".into(),
             market: Market::Usdm,
             symbol: "XRPUSDT".into(),

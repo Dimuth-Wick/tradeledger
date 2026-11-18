@@ -14,10 +14,12 @@ export interface TradeFormState {
   /** `<input type="datetime-local">` value, e.g. "2026-11-14T10:30" (local time). */
   openTime: string;
   closeTime: string;
-  qty: string;
+  /** Position size in USDT (quantity is worked out in Rust). */
+  positionSize: string;
   avgEntry: string;
   avgExit: string;
   leverage: string;
+  /** Empty = automatic, 0.1% of the position size. */
   fees: string;
   funding: string;
   plannedEntry: string;
@@ -48,7 +50,7 @@ export function emptyForm(now: Date = new Date()): TradeFormState {
     direction: "long",
     openTime: toLocalInputValue(now),
     closeTime: "",
-    qty: "",
+    positionSize: "",
     avgEntry: "",
     avgExit: "",
     leverage: "",
@@ -67,7 +69,7 @@ export function hasInput(form: TradeFormState): boolean {
   const typed: (keyof TradeFormState)[] = [
     "symbol",
     "closeTime",
-    "qty",
+    "positionSize",
     "avgEntry",
     "avgExit",
     "leverage",
@@ -113,7 +115,7 @@ export function toTradeInput(form: TradeFormState): FormResult {
   const missing = [
     form.symbol.trim() === "" && "symbol",
     form.openTime.trim() === "" && "open time",
-    form.qty.trim() === "" && "quantity",
+    form.positionSize.trim() === "" && "position size",
     form.avgEntry.trim() === "" && "entry price",
   ].filter(Boolean);
   if (missing.length > 0) {
@@ -140,11 +142,13 @@ export function toTradeInput(form: TradeFormState): FormResult {
       direction: form.direction,
       openTime: time("Open time", form.openTime)!,
       closeTime: time("Close time", form.closeTime),
-      qty: decimal("Quantity", form.qty)!,
+      positionSize: decimal("Position size", form.positionSize)!,
       avgEntry: decimal("Entry price", form.avgEntry)!,
       avgExit: decimal("Exit price", form.avgExit),
       leverage: futures && leverage !== "" ? Number(leverage) : null,
+      // Empty fees box = let Rust charge 0.1% of the position size.
       fees: decimal("Fees", form.fees) ?? "0",
+      autoFees: form.fees.trim() === "",
       funding: futures
         ? (decimal("Funding", form.funding, SIGNED) ?? "0")
         : "0",
