@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ThemeToggle from "./components/ThemeToggle";
 import UnsavedProvider from "./components/UnsavedProvider";
 import { useGuard } from "./lib/unsaved";
 import CalendarPage from "./pages/CalendarPage";
@@ -72,6 +73,7 @@ function Shell() {
             {label}
           </button>
         ))}
+        <ThemeToggle />
       </nav>
       {page === "dashboard" && <DashboardPage />}
       {page === "calendar" && (

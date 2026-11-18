@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { applyTheme, parseCached, type ThemeTarget } from "./theme";
+import {
+  applyTheme,
+  parseCached,
+  shownMode,
+  toggledMode,
+  type ThemeTarget,
+} from "./theme";
 
 function fakeRoot() {
   const attrs: Record<string, string> = {};
@@ -55,4 +61,19 @@ describe("parseCached", () => {
   ])("rejects %s", (text) => {
     expect(parseCached(text)).toBeNull();
   });
+});
+
+describe("toggle", () => {
+  it.each([
+    ["light", false, "light", "dark"],
+    ["dark", false, "dark", "light"],
+    ["system", true, "dark", "light"], // Windows dark → switch to light
+    ["system", false, "light", "dark"],
+  ] as const)(
+    "%s (OS dark: %s) shows %s, toggles to %s",
+    (mode, os, shown, next) => {
+      expect(shownMode(mode, os)).toBe(shown);
+      expect(toggledMode(mode, os)).toBe(next);
+    },
+  );
 });

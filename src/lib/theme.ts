@@ -1,4 +1,4 @@
-import type { Theme } from "./api";
+import type { Theme, ThemeMode } from "./api";
 
 // Puts the theme Rust returns onto the page: data-theme on <html> picks the
 // light or dark colors in App.css, and the accent goes into CSS variables.
@@ -45,9 +45,36 @@ export function parseCached(text: string | null): Theme | null {
   return null;
 }
 
+/** Fired on window whenever a new theme is applied, so every control
+ *  showing the theme (tab-bar toggle, Settings page) stays in sync. */
+export const THEME_EVENT = "tradeledger-theme";
+
+/** The colors actually on screen ("system" resolved with the OS setting). */
+export function shownMode(
+  mode: ThemeMode,
+  systemDark: boolean,
+): "light" | "dark" {
+  if (mode === "system") return systemDark ? "dark" : "light";
+  return mode;
+}
+
+/** What the toggle button switches to: the opposite of what's shown. */
+export function toggledMode(
+  mode: ThemeMode,
+  systemDark: boolean,
+): "light" | "dark" {
+  return shownMode(mode, systemDark) === "dark" ? "light" : "dark";
+}
+
+/** Does Windows currently ask for dark colors? */
+export function systemPrefersDark(): boolean {
+  return window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
+}
+
 /** Apply and remember for the next start. */
 export function rememberTheme(t: Theme): void {
   applyTheme(t, document.documentElement);
+  window.dispatchEvent(new CustomEvent<Theme>(THEME_EVENT, { detail: t }));
   try {
     localStorage.setItem(CACHE_KEY, JSON.stringify(t));
   } catch {

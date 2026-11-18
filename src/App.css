@@ -674,6 +674,26 @@ button.link {
   color: var(--muted);
 }
 
+/* Sun/moon toggle at the right end of the tab bar. */
+.tabs button.theme-toggle {
+  margin-left: auto;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--text);
+}
+
+.tabs button.theme-toggle:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .tabs button.active {
   color: var(--text);
   border-color: var(--accent);

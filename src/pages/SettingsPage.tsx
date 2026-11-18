@@ -7,7 +7,7 @@ import {
   type Theme,
   type ThemeMode,
 } from "../lib/api";
-import { rememberTheme } from "../lib/theme";
+import { THEME_EVENT, rememberTheme } from "../lib/theme";
 
 const MODES: [ThemeMode, string][] = [
   ["system", "Follow Windows"],
@@ -26,6 +26,11 @@ export default function SettingsPage() {
   useEffect(() => {
     getTheme().then(setThemeState, (err) => setError(String(err)));
     listAccentPresets().then(setPresets, () => setPresets([]));
+    // The tab-bar toggle can change the theme while this page is open.
+    const onTheme = (e: Event) =>
+      setThemeState((e as CustomEvent<Theme>).detail);
+    window.addEventListener(THEME_EVENT, onTheme);
+    return () => window.removeEventListener(THEME_EVENT, onTheme);
   }, []);
 
   function change(mode: ThemeMode, accent: string) {
