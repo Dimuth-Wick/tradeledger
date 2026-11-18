@@ -14,7 +14,12 @@ import {
 import { regroupSummary } from "../lib/importText";
 import { useGuard } from "../lib/unsaved";
 
-export default function HomePage() {
+export default function HomePage({
+  initialOpenId = null,
+}: {
+  /** Show this trade first (opened from another tab). */
+  initialOpenId?: number | null;
+}) {
   // Bumping this tells the trade log to fetch again (after save/merge/...).
   const [version, setVersion] = useState(0);
   const refresh = () => setVersion((v) => v + 1);
@@ -22,7 +27,7 @@ export default function HomePage() {
   const [notice, setNotice] = useState<string | null>(null);
   const [db, setDb] = useState<DbInfo | null>(null);
   // Trade shown on the detail page; null = form + log.
-  const [openId, setOpenId] = useState<number | null>(null);
+  const [openId, setOpenId] = useState<number | null>(initialOpenId);
   const guard = useGuard();
 
   useEffect(() => {

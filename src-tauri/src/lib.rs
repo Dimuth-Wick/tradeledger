@@ -1,3 +1,4 @@
+pub mod calendar;
 mod commands;
 pub mod custom_fields;
 pub mod dashboard_layout;
@@ -95,6 +96,11 @@ pub fn run() {
             commands::dashboard::get_dashboard_layout,
             commands::dashboard::save_dashboard_layout,
             commands::dashboard::reset_dashboard_layout,
+            commands::calendar::get_calendar_month,
+            commands::calendar::get_day_trades,
+            commands::calendar::get_time_zone,
+            commands::calendar::set_time_zone,
+            commands::calendar::list_time_zones,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

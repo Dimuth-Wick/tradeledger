@@ -9,8 +9,11 @@ import {
   createTagGroup,
   createTrade,
   deleteTagGroup,
+  getCalendarMonth,
+  getDayTrades,
   getStats,
   saveDashboardLayout,
+  setTimeZone,
   setTradeTags,
   dbInfo,
   deleteTrade,
@@ -143,6 +146,17 @@ describe("trade commands", () => {
       () => getStats({ from: 1, to: 2 }),
       { query: { from: 1, to: 2 } },
     ],
+    [
+      "get_calendar_month",
+      () => getCalendarMonth(2026, 3),
+      { year: 2026, month: 3 },
+    ],
+    [
+      "get_day_trades",
+      () => getDayTrades("2026-03-02"),
+      { date: "2026-03-02" },
+    ],
+    ["set_time_zone", () => setTimeZone("+05:30"), { value: "+05:30" }],
     [
       "save_dashboard_layout",
       () =>

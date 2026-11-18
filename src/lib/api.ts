@@ -517,6 +517,80 @@ export function resetDashboardLayout(): Promise<LayoutItem[]> {
   return invoke<LayoutItem[]>("reset_dashboard_layout");
 }
 
+/** Mirrors Rust `calendar::ZoneInfo`. value: "local", "utc" or "+05:30". */
+export interface ZoneInfo {
+  value: string;
+  label: string;
+}
+
+/** Mirrors Rust `calendar::Day`. */
+export interface CalendarDay {
+  /** "YYYY-MM-DD". */
+  date: string;
+  day: number;
+  /** False for neighbour-month days filling the first/last week. */
+  inMonth: boolean;
+  trades: number;
+  wins: number;
+  losses: number;
+  netPnl: Decimal;
+}
+
+/** Mirrors Rust `calendar::Week` (Monday → Sunday). */
+export interface CalendarWeek {
+  days: CalendarDay[];
+  trades: number;
+  netPnl: Decimal;
+}
+
+export interface DayRef {
+  date: string;
+  netPnl: Decimal;
+}
+
+/** Mirrors Rust `calendar::CalendarMonth`. Days come from close times. */
+export interface CalendarMonth {
+  year: number;
+  /** 1–12. */
+  month: number;
+  zone: ZoneInfo;
+  today: string;
+  weeks: CalendarWeek[];
+  trades: number;
+  netPnl: Decimal;
+  tradingDays: number;
+  greenDays: number;
+  redDays: number;
+  bestDay: DayRef | null;
+  worstDay: DayRef | null;
+  /** Largest |day net|, for scaling cell colors. */
+  maxAbsDay: Decimal;
+}
+
+export function getCalendarMonth(
+  year: number,
+  month: number,
+): Promise<CalendarMonth> {
+  return invoke<CalendarMonth>("get_calendar_month", { year, month });
+}
+
+/** Trades that closed on that day, in the saved time zone. */
+export function getDayTrades(date: string): Promise<WithId<Trade>[]> {
+  return invoke<WithId<Trade>[]>("get_day_trades", { date });
+}
+
+export function getTimeZone(): Promise<ZoneInfo> {
+  return invoke<ZoneInfo>("get_time_zone");
+}
+
+export function setTimeZone(value: string): Promise<ZoneInfo> {
+  return invoke<ZoneInfo>("set_time_zone", { value });
+}
+
+export function listTimeZones(): Promise<ZoneInfo[]> {
+  return invoke<ZoneInfo[]>("list_time_zones");
+}
+
 export function listSymbols(): Promise<string[]> {
   return invoke<string[]>("list_symbols");
 }

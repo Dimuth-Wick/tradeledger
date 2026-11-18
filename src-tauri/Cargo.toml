@@ -39,7 +39,7 @@ csv = "1.4.0"
 sha2 = "0.11.1"
 # Parses "2026-01-05 09:15:02" (UTC) export timestamps. No default features:
 # we only parse, we never read the system clock or time zone database here.
-chrono = { version = "0.4.45", default-features = false, features = ["std"] }
+chrono = { version = "0.4.45", default-features = false, features = ["std", "clock"] }
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration

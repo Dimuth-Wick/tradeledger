@@ -1,6 +1,7 @@
 import { useState } from "react";
 import UnsavedProvider from "./components/UnsavedProvider";
 import { useGuard } from "./lib/unsaved";
+import CalendarPage from "./pages/CalendarPage";
 import DashboardPage from "./pages/DashboardPage";
 import FieldsPage from "./pages/FieldsPage";
 import HomePage from "./pages/HomePage";
@@ -8,7 +9,7 @@ import ImportPage from "./pages/ImportPage";
 import TagsPage from "./pages/TagsPage";
 import "./App.css";
 
-type Page = "dashboard" | "trades" | "import" | "tags" | "fields";
+type Page = "dashboard" | "calendar" | "trades" | "import" | "tags" | "fields";
 
 function App() {
   return (
@@ -23,6 +24,8 @@ function App() {
 function Shell() {
   const [page, setPage] = useState<Page>("dashboard");
   const guard = useGuard();
+  // A trade to open when the Trades tab mounts (e.g. clicked in the calendar).
+  const [openTrade, setOpenTrade] = useState<number | null>(null);
 
   return (
     <>
@@ -30,6 +33,7 @@ function Shell() {
         {(
           [
             ["dashboard", "Dashboard"],
+            ["calendar", "Calendar"],
             ["trades", "Trades"],
             ["import", "Import"],
             ["tags", "Tags"],
@@ -42,14 +46,28 @@ function Shell() {
             className={page === id ? "active" : ""}
             aria-current={page === id ? "page" : undefined}
             // Leaving a page drops what's typed on it, so ask first.
-            onClick={() => page !== id && guard(() => setPage(id))}
+            onClick={() =>
+              page !== id &&
+              guard(() => {
+                setOpenTrade(null);
+                setPage(id);
+              })
+            }
           >
             {label}
           </button>
         ))}
       </nav>
       {page === "dashboard" && <DashboardPage />}
-      {page === "trades" && <HomePage />}
+      {page === "calendar" && (
+        <CalendarPage
+          onOpenTrade={(id) => {
+            setOpenTrade(id);
+            setPage("trades");
+          }}
+        />
+      )}
+      {page === "trades" && <HomePage initialOpenId={openTrade} />}
       {page === "import" && (
         <main className="page">
           <ImportPage />
