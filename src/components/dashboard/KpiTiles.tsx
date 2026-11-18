@@ -6,7 +6,7 @@ export default function KpiTiles({ items }: { items: Kpi[] }) {
       {items.map((k) => (
         <div key={k.label}>
           <dt>{k.label}</dt>
-          <dd className={k.tone} title={k.title}>
+          <dd key={k.value} className={`kpi-value ${k.tone}`} title={k.title}>
             {k.value}
           </dd>
           <dd className="kpi-detail">{k.detail}</dd>

@@ -17,6 +17,9 @@ backups/
 /progress.md
 /CLAUDE.md
 .claude/
+# agent skills installed locally (npx skills add)
+.agents/
+skills-lock.json
 
 # --- Rust / Tauri ---
 /src-tauri/target/

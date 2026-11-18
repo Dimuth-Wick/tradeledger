@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ThemeToggle from "./components/ThemeToggle";
 import UnsavedProvider from "./components/UnsavedProvider";
 import { useGuard } from "./lib/unsaved";
+import { useIndicator } from "./lib/useIndicator";
 import CalendarPage from "./pages/CalendarPage";
 import DashboardPage from "./pages/DashboardPage";
 import FieldsPage from "./pages/FieldsPage";
@@ -39,6 +40,15 @@ function Shell() {
   const guard = useGuard();
   // A trade to open when the Trades tab mounts (e.g. clicked in the calendar).
   const [openTrade, setOpenTrade] = useState<number | null>(null);
+  // The accent line slides to the open tab (and the tab scrolls into view
+  // when the bar is too narrow to show them all).
+  const tabsRef = useRef<HTMLElement>(null);
+  const indicator = useIndicator(tabsRef, page);
+  useEffect(() => {
+    tabsRef.current
+      ?.querySelector("[data-selected='true']")
+      ?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }, [page]);
 
   return (
     <>
@@ -48,7 +58,8 @@ function Shell() {
             <BrandMark />
             <span className="brand-name">TradeLedger</span>
           </div>
-          <nav className="tabs" aria-label="Pages">
+          <nav className="tabs" aria-label="Pages" ref={tabsRef}>
+            <span className="tab-indicator" style={indicator} aria-hidden />
             {(
               [
                 ["dashboard", "Dashboard"],
@@ -66,6 +77,7 @@ function Shell() {
                 key={id}
                 type="button"
                 className={page === id ? "active" : ""}
+                data-selected={page === id}
                 aria-current={page === id ? "page" : undefined}
                 // Leaving a page drops what's typed on it, so ask first.
                 onClick={() =>

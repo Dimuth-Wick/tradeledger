@@ -791,6 +791,7 @@ button.link {
 }
 
 .tabs {
+  position: relative;
   display: flex;
   flex: 1;
   min-width: 0;
@@ -822,27 +823,29 @@ button.link {
   color: var(--text);
 }
 
-/* Accent bar under the open page, sitting on the bar's bottom edge. */
-.tabs button::after {
-  content: "";
+/* Accent line under the open page; slides between tabs (useIndicator). */
+.tab-indicator {
   position: absolute;
-  left: 10px;
-  right: 10px;
-  bottom: -1px;
+  left: 0;
+  bottom: 0;
   height: 3px;
   border-radius: 3px 3px 0 0;
   background: var(--accent);
-  transform: scaleX(0);
-  transition: transform 0.2s ease;
+  pointer-events: none;
+  /* Inset from the tab's edges, like the text. */
+  clip-path: inset(0 10px);
+  transition:
+    transform 0.32s cubic-bezier(0.45, 0, 0.1, 1),
+    width 0.32s cubic-bezier(0.45, 0, 0.1, 1),
+    opacity 0.15s ease;
 }
 
 .tabs button.active {
   color: var(--text);
-  font-weight: 600;
 }
 
-.tabs button.active::after {
-  transform: scaleX(1);
+.tabs button {
+  transition: color 0.15s ease;
 }
 
 .tabs button:focus-visible {
@@ -1373,6 +1376,7 @@ html.theme-fade *::after {
 }
 
 .segmented {
+  position: relative;
   display: inline-flex;
   gap: 2px;
   padding: 3px;
@@ -1392,13 +1396,36 @@ html.theme-fade *::after {
   border-right: 0;
 }
 
-/* Selected option: a raised white chip with an accent dot of text color. */
+.segmented button {
+  position: relative; /* above the sliding chip */
+  z-index: 1;
+  transition: color 0.15s ease;
+}
+
+.segmented button:hover:not(:disabled) {
+  background: transparent;
+  color: var(--text);
+}
+
 .segmented button.active,
 .segmented button.active:hover:not(:disabled) {
-  background: var(--surface);
   color: var(--accent);
-  font-weight: 600;
+}
+
+/* The raised white chip that slides to the chosen option. */
+.segmented-indicator {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 0;
+  border-radius: 7px;
+  background: var(--surface);
   box-shadow: var(--shadow-1);
+  pointer-events: none;
+  transition:
+    transform 0.3s cubic-bezier(0.45, 0, 0.1, 1),
+    width 0.3s cubic-bezier(0.45, 0, 0.1, 1),
+    opacity 0.15s ease;
 }
 
 .report-table th[scope="row"] {
@@ -1418,6 +1445,16 @@ html.theme-fade *::after {
 
 .report-table .bar-col {
   width: 22%;
+}
+
+.trade-list thead th {
+  white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+  .report-table .bar-col {
+    display: none; /* the net PnL number stays; only the bar goes */
+  }
 }
 
 /* Diverging bar: profits grow right from the middle, losses grow left. */
@@ -1599,4 +1636,65 @@ html.theme-fade *::after {
 .theme-preview button.primary {
   width: auto;
   padding: 6px 16px;
+}
+
+/* --- Motion (rules borrowed from the stageshow skill) --- */
+
+/* A page swap keeps the top bar and eases only the page in: 8px rise. */
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+main.page {
+  animation: page-in 0.24s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* Things that appear arrive whole from just above, never pop. */
+@keyframes drop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+.status,
+.edit-bar,
+.day-panel,
+.confirm-inline,
+.playbook-editor,
+.fills-panel {
+  animation: drop-in 0.22s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* A KPI number that changes eases in instead of flickering. */
+@keyframes value-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+.kpis dd.kpi-value {
+  animation: value-in 0.26s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  main.page,
+  .status,
+  .edit-bar,
+  .day-panel,
+  .confirm-inline,
+  .playbook-editor,
+  .fills-panel,
+  .kpis dd.kpi-value {
+    animation: none;
+  }
+
+  .tab-indicator,
+  .segmented-indicator {
+    transition: none;
+  }
 }

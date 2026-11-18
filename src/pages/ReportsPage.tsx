@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import Segmented from "../components/Segmented";
 import StatsFilters from "../components/StatsFilters";
 import {
   getReport,
@@ -56,19 +57,12 @@ export default function ReportsPage() {
       <StatsFilters filters={filters} onChange={setFilters} />
 
       <div className="report-bar">
-        <div className="segmented" role="group" aria-label="Group by">
-          {GROUPS.map(([id, label]) => (
-            <button
-              key={id}
-              type="button"
-              aria-pressed={groupBy === id}
-              className={groupBy === id ? "active" : ""}
-              onClick={() => setGroupBy(id)}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        <Segmented
+          label="Group by"
+          options={GROUPS}
+          value={groupBy}
+          onChange={setGroupBy}
+        />
         {groupBy === "tag" && (
           <label className="inline">
             Tag group

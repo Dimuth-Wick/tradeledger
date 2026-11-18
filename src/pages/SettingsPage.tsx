@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import Segmented from "../components/Segmented";
 import {
   getTheme,
   listAccentPresets,
@@ -56,19 +57,12 @@ export default function SettingsPage() {
           <h3>Theme</h3>
           <div className="setting-row">
             <span className="setting-label">Colors</span>
-            <div className="segmented" role="group" aria-label="Color mode">
-              {MODES.map(([id, label]) => (
-                <button
-                  key={id}
-                  type="button"
-                  aria-pressed={theme.mode === id}
-                  className={theme.mode === id ? "active" : ""}
-                  onClick={() => change(id, theme.accent)}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+            <Segmented
+              label="Color mode"
+              options={MODES}
+              value={theme.mode}
+              onChange={(id) => change(id, theme.accent)}
+            />
           </div>
 
           <div className="setting-row">
