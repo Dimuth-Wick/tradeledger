@@ -171,6 +171,54 @@ export function kpis(s: Stats): Kpi[] {
   return tiles;
 }
 
+const MONTHS_SHORT = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
+/** "2026-09-05" → "Sep 5" (axis label). */
+export function shortDay(date: string): string {
+  const [, m, d] = date.split("-").map(Number);
+  return `${MONTHS_SHORT[m - 1]} ${d}`;
+}
+
+/** A day on the equity / win-rate charts. Numbers only position the marks. */
+export interface DailyRow {
+  date: string;
+  equity: number;
+  equityText: Decimal;
+  pnlText: Decimal;
+  trades: number;
+  wins: number;
+  closed: number;
+  winRate: number | null;
+  winRateText: Decimal | null;
+}
+
+export function dailyRows(s: Stats): DailyRow[] {
+  return s.daily.map((d) => ({
+    date: d.date,
+    equity: Number(d.equity),
+    equityText: d.equity,
+    pnlText: d.pnl,
+    trades: d.trades,
+    wins: d.wins,
+    closed: d.closed,
+    winRate: d.winRate === null ? null : Number(d.winRate),
+    winRateText: d.winRate,
+  }));
+}
+
 /** A chart row. Numbers are for drawing only; text keeps Rust's exact value. */
 export interface CurveRow {
   /** Trade number in close order; 0 = the starting point. */

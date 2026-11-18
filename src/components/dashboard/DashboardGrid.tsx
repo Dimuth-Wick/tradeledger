@@ -6,7 +6,13 @@ import ReactGridLayout, {
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 import type { LayoutItem, Stats } from "../../lib/api";
-import { changedLayout, curveRows, kpis, rRows } from "../../lib/dashboard";
+import {
+  changedLayout,
+  curveRows,
+  dailyRows,
+  kpis,
+  rRows,
+} from "../../lib/dashboard";
 import EquityChart from "./EquityChart";
 import KpiTiles from "./KpiTiles";
 import PnlBars from "./PnlBars";
@@ -14,7 +20,7 @@ import RDistribution from "./RDistribution";
 
 const TITLES: Record<string, string> = {
   kpis: "Key numbers",
-  equity: "Equity curve",
+  equity: "Equity and win rate",
   "pnl-bars": "Win / loss per trade",
   "r-dist": "R distribution",
 };
@@ -37,13 +43,14 @@ export default function DashboardGrid({
 }: Props) {
   const { width, containerRef, mounted } = useContainerWidth();
   const rows = useMemo(() => curveRows(stats), [stats]);
+  const days = useMemo(() => dailyRows(stats), [stats]);
 
   function body(id: string) {
     switch (id) {
       case "kpis":
         return <KpiTiles items={kpis(stats)} />;
       case "equity":
-        return <EquityChart rows={rows} />;
+        return <EquityChart rows={days} />;
       case "pnl-bars":
         return <PnlBars rows={rows} />;
       case "r-dist":

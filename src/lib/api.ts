@@ -373,6 +373,22 @@ export interface Stats {
   avgHoldMs: number | null;
   equityCurve: EquityPoint[];
   rBuckets: RBucket[];
+  /** Every day from first to last close (quiet days included). */
+  daily: DayPoint[];
+}
+
+/** Mirrors Rust `stats::DayPoint`: the account at the end of one day. */
+export interface DayPoint {
+  /** "YYYY-MM-DD" in the calendar's time zone. */
+  date: string;
+  equity: Decimal;
+  pnl: Decimal;
+  trades: number;
+  /** Running totals up to and including this day. */
+  wins: number;
+  closed: number;
+  /** Running win rate, percent; null before any closed trade. */
+  winRate: Decimal | null;
 }
 
 export type FieldType = "text" | "number" | "select" | "checkbox";

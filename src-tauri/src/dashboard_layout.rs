@@ -53,17 +53,17 @@ const WIDGETS: [Widget; 4] = [
     },
     Widget {
         id: "equity",
-        place: [0, 6, 12, 7],
+        place: [0, 6, 12, 10],
         min: [3, 4],
     },
     Widget {
         id: "pnl-bars",
-        place: [0, 13, 6, 7],
+        place: [0, 16, 6, 7],
         min: [3, 4],
     },
     Widget {
         id: "r-dist",
-        place: [6, 13, 6, 7],
+        place: [6, 16, 6, 7],
         min: [3, 4],
     },
 ];

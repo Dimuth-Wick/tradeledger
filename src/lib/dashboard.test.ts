@@ -4,6 +4,8 @@ import {
   EMPTY_DASH,
   changedLayout,
   curveRows,
+  dailyRows,
+  shortDay,
   dashQuery,
   formatHold,
   kpis,
@@ -43,6 +45,26 @@ const stats: Stats = {
   equityCurve: [
     { time: 2_000, equity: "9", pnl: "9", tradeId: 1 },
     { time: 3_000, equity: "5", pnl: "-4", tradeId: 2 },
+  ],
+  daily: [
+    {
+      date: "2026-03-02",
+      equity: "6",
+      pnl: "6",
+      trades: 2,
+      wins: 1,
+      closed: 2,
+      winRate: "50",
+    },
+    {
+      date: "2026-03-03",
+      equity: "6",
+      pnl: "0",
+      trades: 0,
+      wins: 1,
+      closed: 2,
+      winRate: "50",
+    },
   ],
   rBuckets: [
     { label: "< -2R", from: null, to: -2, count: 0 },
@@ -163,5 +185,25 @@ describe("changedLayout", () => {
       { i: "kpis", x: 8, y: 0, w: 4, h: 10, minW: 3, minH: 3 },
       { i: "equity", x: 0, y: 0, w: 8, h: 7, minW: 3, minH: 4 },
     ]);
+  });
+});
+
+describe("daily chart rows", () => {
+  it("keeps every day and Rust's exact text", () => {
+    const rows = dailyRows(stats);
+    expect(rows.map((r) => [r.date, r.equity, r.winRate])).toEqual([
+      ["2026-03-02", 6, 50],
+      ["2026-03-03", 6, 50],
+    ]);
+    expect(rows[1]).toMatchObject({
+      trades: 0,
+      pnlText: "0",
+      winRateText: "50",
+    });
+  });
+
+  it("short axis dates", () => {
+    expect(shortDay("2026-09-05")).toBe("Sep 5");
+    expect(shortDay("2026-12-31")).toBe("Dec 31");
   });
 });

@@ -8,11 +8,15 @@
 //! figures; open trades are counted but have no final result yet.
 
 use std::cmp::Ordering;
+use std::collections::BTreeMap;
+
+use chrono::{Duration, NaiveDate};
 
 use rusqlite::Connection;
 use rust_decimal::{Decimal, RoundingStrategy};
 use serde::Serialize;
 
+use crate::calendar::{self, Zone};
 use crate::db::DbError;
 use crate::models::{TimestampMs, Trade, TradeStatus};
 use crate::trade_query::{self, TradeQuery};
@@ -89,6 +93,28 @@ pub struct Stats {
     pub avg_hold_ms: Option<i64>,
     pub equity_curve: Vec<EquityPoint>,
     pub r_buckets: Vec<RBucket>,
+    /// One point per calendar day from the first close to the last (days
+    /// without trades included). Filled by `query`, which knows the zone.
+    pub daily: Vec<DayPoint>,
+}
+
+/// The account at the end of one day (in the calendar's time zone).
+#[derive(Debug, Clone, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DayPoint {
+    /// "YYYY-MM-DD".
+    pub date: String,
+    /// Cumulative closed net PnL at the end of the day.
+    pub equity: Decimal,
+    /// Net PnL of the trades that closed that day.
+    pub pnl: Decimal,
+    /// Trades that closed that day.
+    pub trades: u32,
+    /// Running totals up to and including this day.
+    pub wins: u32,
+    pub closed: u32,
+    /// Running win rate in percent (wins ÷ closed so far), 2 decimals.
+    pub win_rate: Option<Decimal>,
 }
 
 fn ratio(value: Decimal) -> Decimal {
@@ -271,14 +297,60 @@ pub fn compute(trades: &[(i64, &Trade)]) -> Stats {
             .then(|| i64::try_from(hold_sum / i128::from(hold_count)).unwrap_or(i64::MAX)),
         equity_curve: curve,
         r_buckets: buckets,
+        daily: Vec::new(),
     }
+}
+
+/// Daily equity and running win rate for closed trades, every day from the
+/// first close to the last; a day with no trades repeats the day before.
+pub fn daily_series(trades: &[(i64, &Trade)], zone: Zone) -> Vec<DayPoint> {
+    // date → (net, trades, wins)
+    let mut by_day: BTreeMap<NaiveDate, (Decimal, u32, u32)> = BTreeMap::new();
+    for (_, t) in trades {
+        let (TradeStatus::Closed, Some(close)) = (t.status, t.close_time) else {
+            continue;
+        };
+        let e = by_day.entry(zone.date_of(close)).or_default();
+        e.0 += t.net_pnl;
+        e.1 += 1;
+        if t.net_pnl > Decimal::ZERO {
+            e.2 += 1;
+        }
+    }
+    let (Some(&first), Some(&last)) = (by_day.keys().next(), by_day.keys().last()) else {
+        return Vec::new();
+    };
+
+    let mut out = Vec::new();
+    let (mut equity, mut wins, mut closed) = (Decimal::ZERO, 0u32, 0u32);
+    let mut day = first;
+    while day <= last {
+        let (pnl, count, day_wins) = by_day.get(&day).copied().unwrap_or_default();
+        equity += pnl;
+        wins += day_wins;
+        closed += count;
+        out.push(DayPoint {
+            date: day.to_string(),
+            equity: money(equity),
+            pnl: money(pnl),
+            trades: count,
+            wins,
+            closed,
+            win_rate: (closed > 0)
+                .then(|| ratio(Decimal::from(wins) * Decimal::ONE_HUNDRED / Decimal::from(closed))),
+        });
+        day += Duration::days(1);
+    }
+    out
 }
 
 /// Stats for the trades matching the trade log filters (sort/page ignored).
 pub fn query(conn: &Connection, q: &TradeQuery) -> Result<Stats, DbError> {
     let trades = trade_query::filtered(conn, q)?;
     let refs: Vec<(i64, &Trade)> = trades.iter().map(|t| (t.id, &t.item)).collect();
-    Ok(compute(&refs))
+    let mut stats = compute(&refs);
+    stats.daily = daily_series(&refs, calendar::zone(conn)?);
+    Ok(stats)
 }
 
 #[cfg(test)]

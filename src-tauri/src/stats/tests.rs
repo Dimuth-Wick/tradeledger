@@ -220,3 +220,50 @@ fn query_uses_the_trade_log_filters() {
     assert_eq!((part.closed, part.net_pnl), (2, dec!(6)));
     assert_eq!(part.equity_curve.len(), 2);
 }
+
+#[test]
+fn daily_series_fills_quiet_days_and_tracks_win_rate() {
+    // Closes in UTC: 2 Mar 10:00 +10, 2 Mar 15:00 −4, 4 Mar 09:00 +5; one open.
+    let at = |s: &str| {
+        chrono::NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M")
+            .unwrap()
+            .and_utc()
+            .timestamp_millis()
+    };
+    let trade = |close: &str, net: Decimal| Trade {
+        close_time: Some(at(close)),
+        open_time: at(close) - 3_600_000,
+        ..closed(0, net, None)
+    };
+    let trades = [
+        trade("2026-03-02 10:00", dec!(10)),
+        trade("2026-03-02 15:00", dec!(-4)),
+        trade("2026-03-04 09:00", dec!(5)),
+        open(at("2026-03-03 12:00"), dec!(99)),
+    ];
+    let refs: Vec<(i64, &Trade)> = trades
+        .iter()
+        .enumerate()
+        .map(|(i, t)| (i as i64, t))
+        .collect();
+    let d = daily_series(&refs, Zone::Fixed(0));
+
+    let rows: Vec<(&str, Decimal, Decimal, u32, Option<Decimal>)> = d
+        .iter()
+        .map(|p| (p.date.as_str(), p.equity, p.pnl, p.trades, p.win_rate))
+        .collect();
+    assert_eq!(
+        rows,
+        [
+            ("2026-03-02", dec!(6), dec!(6), 2, Some(dec!(50))), // 1 of 2
+            ("2026-03-03", dec!(6), dec!(0), 0, Some(dec!(50))), // quiet day repeats
+            ("2026-03-04", dec!(11), dec!(5), 1, Some(dec!(66.67))), // 2 of 3
+        ]
+    );
+    assert!(daily_series(&[], Zone::Fixed(0)).is_empty());
+
+    // The zone decides the day: 15:00 UTC on the 2nd is 3 Mar 00:30 in UTC+09:30.
+    let d930 = daily_series(&refs, Zone::Fixed(570));
+    assert_eq!(d930[0].pnl, dec!(10));
+    assert_eq!(d930[1].pnl, dec!(-4));
+}
