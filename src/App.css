@@ -7,6 +7,11 @@
   --accent: #396cd8;
   --pos: #1a7f37;
   --neg: #cf222e;
+  --warn: #9a6700;
+  /* Text on accent-colored buttons; set from Rust with the accent. */
+  --on-accent: #ffffff;
+  --handle-filter: none;
+  color-scheme: light;
 
   font-family: Inter, "Segoe UI", Helvetica, Arial, sans-serif;
   font-size: 15px;
@@ -16,8 +21,11 @@
   -webkit-font-smoothing: antialiased;
 }
 
+/* Theme (T9.1): <html data-theme="light|dark">, or no attribute = follow
+   Windows. Dark colors apply when Dark is picked, or when Windows is dark
+   and Light wasn't picked. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #1e1e1e;
     --surface: #2a2a2a;
     --text: #f0f0f0;
@@ -25,11 +33,31 @@
     --border: #444;
     --pos: #3fb950;
     --neg: #f85149;
+    --warn: #d29922;
+    --handle-filter: invert(1);
+    color-scheme: dark;
   }
+}
+
+:root[data-theme="dark"] {
+  --bg: #1e1e1e;
+  --surface: #2a2a2a;
+  --text: #f0f0f0;
+  --muted: #a0a0a0;
+  --border: #444;
+  --pos: #3fb950;
+  --neg: #f85149;
+  --warn: #d29922;
+  --handle-filter: invert(1);
+  color-scheme: dark;
 }
 
 body {
   margin: 0;
+}
+
+a {
+  color: var(--accent);
 }
 
 .page {
@@ -84,7 +112,7 @@ button:disabled {
 button.primary {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   font-weight: 600;
   width: 100%;
   padding: 8px;
@@ -699,7 +727,7 @@ button.link {
 .warnings {
   margin: 12px 0;
   padding-left: 20px;
-  color: #9a6700;
+  color: var(--warn);
 }
 
 .row-errors {
@@ -717,12 +745,6 @@ button.link {
 .actions button.primary {
   width: auto;
   padding: 6px 16px;
-}
-
-@media (prefers-color-scheme: dark) {
-  .warnings {
-    color: #d29922;
-  }
 }
 
 /* --- Status colors --- */
@@ -879,12 +901,6 @@ button.link {
 
 .grid .react-resizable-handle {
   filter: var(--handle-filter, none);
-}
-
-@media (prefers-color-scheme: dark) {
-  .grid {
-    --handle-filter: invert(1);
-  }
 }
 
 .chart-empty,
@@ -1131,7 +1147,7 @@ button.link {
 
 .segmented button.active {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   font-weight: 600;
 }
 
@@ -1277,4 +1293,60 @@ button.link {
   align-items: center;
   gap: 8px;
   flex-direction: row;
+}
+
+/* --- Settings --- */
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 12px 0;
+}
+
+.setting-label {
+  width: 90px;
+  color: var(--muted);
+}
+
+.swatches {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.swatch {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid var(--surface);
+  box-shadow: 0 0 0 1px var(--border);
+  cursor: pointer;
+}
+
+.swatch[aria-pressed="true"] {
+  box-shadow: 0 0 0 2px var(--text);
+}
+
+.custom-color input[type="color"] {
+  width: 40px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+}
+
+.theme-preview {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.theme-preview button.primary {
+  width: auto;
+  padding: 6px 16px;
 }

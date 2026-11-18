@@ -13,6 +13,7 @@ import {
   getDayTrades,
   getReport,
   createPlaybook,
+  setTheme,
   updatePlaybook,
   setTradePlaybook,
   getTradePlaybook,
@@ -150,6 +151,11 @@ describe("trade commands", () => {
       "get_stats",
       () => getStats({ from: 1, to: 2 }),
       { query: { from: 1, to: 2 } },
+    ],
+    [
+      "set_theme",
+      () => setTheme("dark", "#d99a00"),
+      { mode: "dark", accent: "#d99a00" },
     ],
     [
       "create_playbook",

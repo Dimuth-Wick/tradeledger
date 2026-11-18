@@ -17,6 +17,7 @@ pub mod risk;
 pub mod screenshots;
 pub mod stats;
 pub mod tags;
+pub mod theme;
 pub mod trade_entry;
 pub mod trade_query;
 
@@ -111,6 +112,9 @@ pub fn run() {
             commands::playbooks::get_trade_playbook,
             commands::playbooks::set_trade_playbook,
             commands::playbooks::playbook_stats,
+            commands::theme::get_theme,
+            commands::theme::set_theme,
+            commands::theme::list_accent_presets,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

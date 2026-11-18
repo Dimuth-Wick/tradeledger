@@ -13,6 +13,7 @@ pub mod playbooks;
 pub mod reports;
 pub mod screenshots;
 pub mod tags;
+pub mod theme;
 pub mod trades;
 
 use serde::Serialize;

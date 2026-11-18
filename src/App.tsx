@@ -8,6 +8,7 @@ import HomePage from "./pages/HomePage";
 import ImportPage from "./pages/ImportPage";
 import PlaybooksPage from "./pages/PlaybooksPage";
 import ReportsPage from "./pages/ReportsPage";
+import SettingsPage from "./pages/SettingsPage";
 import TagsPage from "./pages/TagsPage";
 import "./App.css";
 
@@ -19,7 +20,8 @@ type Page =
   | "import"
   | "playbooks"
   | "tags"
-  | "fields";
+  | "fields"
+  | "settings";
 
 function App() {
   return (
@@ -50,6 +52,7 @@ function Shell() {
             ["playbooks", "Playbooks"],
             ["tags", "Tags"],
             ["fields", "Fields"],
+            ["settings", "Settings"],
           ] as const
         ).map(([id, label]) => (
           <button
@@ -99,6 +102,11 @@ function Shell() {
       {page === "fields" && (
         <main className="page">
           <FieldsPage />
+        </main>
+      )}
+      {page === "settings" && (
+        <main className="page">
+          <SettingsPage />
         </main>
       )}
     </>

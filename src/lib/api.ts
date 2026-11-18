@@ -716,6 +716,35 @@ export function playbookStats(): Promise<PlaybookStats[]> {
   return invoke<PlaybookStats[]>("playbook_stats");
 }
 
+export type ThemeMode = "system" | "light" | "dark";
+
+/** Mirrors Rust `theme::Theme`. */
+export interface Theme {
+  mode: ThemeMode;
+  /** "#rrggbb". */
+  accent: string;
+  /** Text color on accent buttons (black or white). */
+  onAccent: string;
+}
+
+/** Mirrors Rust `theme::AccentPreset`. */
+export interface AccentPreset {
+  name: string;
+  hex: string;
+}
+
+export function getTheme(): Promise<Theme> {
+  return invoke<Theme>("get_theme");
+}
+
+export function setTheme(mode: ThemeMode, accent: string): Promise<Theme> {
+  return invoke<Theme>("set_theme", { mode, accent });
+}
+
+export function listAccentPresets(): Promise<AccentPreset[]> {
+  return invoke<AccentPreset[]>("list_accent_presets");
+}
+
 export function listSymbols(): Promise<string[]> {
   return invoke<string[]>("list_symbols");
 }
