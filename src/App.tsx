@@ -6,10 +6,18 @@ import DashboardPage from "./pages/DashboardPage";
 import FieldsPage from "./pages/FieldsPage";
 import HomePage from "./pages/HomePage";
 import ImportPage from "./pages/ImportPage";
+import ReportsPage from "./pages/ReportsPage";
 import TagsPage from "./pages/TagsPage";
 import "./App.css";
 
-type Page = "dashboard" | "calendar" | "trades" | "import" | "tags" | "fields";
+type Page =
+  | "dashboard"
+  | "calendar"
+  | "reports"
+  | "trades"
+  | "import"
+  | "tags"
+  | "fields";
 
 function App() {
   return (
@@ -34,6 +42,7 @@ function Shell() {
           [
             ["dashboard", "Dashboard"],
             ["calendar", "Calendar"],
+            ["reports", "Reports"],
             ["trades", "Trades"],
             ["import", "Import"],
             ["tags", "Tags"],
@@ -67,6 +76,7 @@ function Shell() {
           }}
         />
       )}
+      {page === "reports" && <ReportsPage />}
       {page === "trades" && <HomePage initialOpenId={openTrade} />}
       {page === "import" && (
         <main className="page">

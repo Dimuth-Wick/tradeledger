@@ -591,6 +591,43 @@ export function listTimeZones(): Promise<ZoneInfo[]> {
   return invoke<ZoneInfo[]>("list_time_zones");
 }
 
+export type GroupBy =
+  "tag" | "symbol" | "weekday" | "hour" | "market" | "direction";
+
+/** Mirrors Rust `reports::ReportRow` (closed trades only). */
+export interface ReportRow {
+  key: string;
+  label: string;
+  trades: number;
+  wins: number;
+  losses: number;
+  winRate: Decimal | null;
+  netPnl: Decimal;
+  /** Net PnL per trade. */
+  avgPnl: Decimal | null;
+  /** null when there are no losses (∞ if wins > 0). */
+  profitFactor: Decimal | null;
+  avgR: Decimal | null;
+  tradesWithR: number;
+}
+
+/** Mirrors Rust `reports::Report`. */
+export interface Report {
+  groupBy: GroupBy;
+  rows: ReportRow[];
+  total: ReportRow;
+  openTrades: number;
+}
+
+/** Stats per group for the same filters as the dashboard. */
+export function getReport(
+  query: TradeQuery,
+  groupBy: GroupBy,
+  tagGroup: number | null = null,
+): Promise<Report> {
+  return invoke<Report>("get_report", { query, groupBy, tagGroup });
+}
+
 export function listSymbols(): Promise<string[]> {
   return invoke<string[]>("list_symbols");
 }

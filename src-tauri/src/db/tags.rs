@@ -169,6 +169,19 @@ pub fn ids_for_trade(conn: &Connection, trade_id: i64) -> Result<Vec<i64>, DbErr
     Ok(rows.collect::<rusqlite::Result<_>>()?)
 }
 
+/// Tag ids of every tagged trade (for reports over many trades).
+pub fn all_trade_tags(conn: &Connection) -> Result<BTreeMap<i64, Vec<i64>>, DbError> {
+    let mut stmt =
+        conn.prepare("SELECT trade_id, tag_id FROM trade_tags ORDER BY trade_id, tag_id")?;
+    let rows = stmt.query_map([], |r| Ok((r.get::<_, i64>(0)?, r.get::<_, i64>(1)?)))?;
+    let mut map: BTreeMap<i64, Vec<i64>> = BTreeMap::new();
+    for row in rows {
+        let (trade, tag) = row?;
+        map.entry(trade).or_default().push(tag);
+    }
+    Ok(map)
+}
+
 /// Tag ids per trade, for a page of the trade log.
 pub fn ids_for_trades(
     conn: &Connection,

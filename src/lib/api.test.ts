@@ -11,6 +11,7 @@ import {
   deleteTagGroup,
   getCalendarMonth,
   getDayTrades,
+  getReport,
   getStats,
   saveDashboardLayout,
   setTimeZone,
@@ -145,6 +146,11 @@ describe("trade commands", () => {
       "get_stats",
       () => getStats({ from: 1, to: 2 }),
       { query: { from: 1, to: 2 } },
+    ],
+    [
+      "get_report",
+      () => getReport({ from: 1 }, "tag", 2),
+      { query: { from: 1 }, groupBy: "tag", tagGroup: 2 },
     ],
     [
       "get_calendar_month",

@@ -8,7 +8,8 @@ use std::collections::BTreeMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use chrono::{
-    DateTime, Datelike, Duration, FixedOffset, Local, LocalResult, NaiveDate, Offset, TimeZone,
+    DateTime, Datelike, Duration, FixedOffset, Local, LocalResult, NaiveDate, NaiveDateTime,
+    Offset, TimeZone,
 };
 use rusqlite::Connection;
 use rusqlite::types::Value;
@@ -82,13 +83,18 @@ impl Zone {
         }
     }
 
-    /// The calendar day of an instant.
-    pub fn date_of(self, ms: TimestampMs) -> NaiveDate {
+    /// Wall-clock date and time of an instant in this zone.
+    pub fn local_time(self, ms: TimestampMs) -> NaiveDateTime {
         let utc = DateTime::from_timestamp_millis(ms).unwrap_or_default();
         match self {
-            Zone::Local => utc.with_timezone(&Local).date_naive(),
-            Zone::Fixed(m) => utc.with_timezone(&fixed(m)).date_naive(),
+            Zone::Local => utc.with_timezone(&Local).naive_local(),
+            Zone::Fixed(m) => utc.with_timezone(&fixed(m)).naive_local(),
         }
+    }
+
+    /// The calendar day of an instant.
+    pub fn date_of(self, ms: TimestampMs) -> NaiveDate {
+        self.local_time(ms).date()
     }
 
     /// The instant a day starts (local midnight).

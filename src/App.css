@@ -1099,3 +1099,91 @@ button.link {
 .day-panel h2 {
   font-size: 1.05em;
 }
+
+/* --- Reports --- */
+
+.report-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin: 4px 0 12px;
+}
+
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.segmented button {
+  border: 0;
+  border-radius: 0;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  padding: 6px 14px;
+}
+
+.segmented button:last-child {
+  border-right: 0;
+}
+
+.segmented button.active {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.report-table th[scope="row"] {
+  text-align: left;
+  font-weight: 500;
+}
+
+.report-table tr.empty {
+  color: var(--muted);
+}
+
+.report-table tfoot th,
+.report-table tfoot td {
+  border-top: 2px solid var(--border);
+  font-weight: 600;
+}
+
+.report-table .bar-col {
+  width: 22%;
+}
+
+/* Diverging bar: profits grow right from the middle, losses grow left. */
+.pnl-bar {
+  position: relative;
+  height: 10px;
+  background: linear-gradient(var(--border), var(--border)) center / 1px 100%
+    no-repeat;
+}
+
+.pnl-bar span {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 2px;
+}
+
+.pnl-bar .pos-bar {
+  left: 50%;
+  background: var(--pos);
+}
+
+.pnl-bar .neg-bar {
+  right: 50%;
+  background: var(--neg);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

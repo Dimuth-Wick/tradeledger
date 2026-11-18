@@ -11,6 +11,7 @@ pub mod import_flow;
 pub mod importers;
 pub mod journal;
 pub mod models;
+pub mod reports;
 pub mod risk;
 pub mod screenshots;
 pub mod stats;
@@ -101,6 +102,7 @@ pub fn run() {
             commands::calendar::get_time_zone,
             commands::calendar::set_time_zone,
             commands::calendar::list_time_zones,
+            commands::reports::get_report,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
