@@ -10,7 +10,7 @@ import {
   type TagGroup,
 } from "../lib/api";
 import { EMPTY_DASH, dashQuery, type DashFilters } from "../lib/dashboard";
-import { formatR, isNegative, pnlClass, round2, signed } from "../lib/format";
+import { formatR, isNegative, pnlClass, usd } from "../lib/format";
 import {
   GROUPS,
   barPercent,
@@ -18,7 +18,8 @@ import {
   profitFactorText,
 } from "../lib/reports";
 
-const money = (d: string | null) => (d === null ? "—" : signed(round2(d)));
+const money = (d: string | null) =>
+  d === null ? "—" : usd(d, { round: true });
 
 /** Stats split by tag, symbol, weekday, hour, market or side. */
 export default function ReportsPage() {
@@ -155,7 +156,7 @@ function Row({ r, maxAbs }: { r: ReportRow; maxAbs: number }) {
       <th scope="row">{r.label}</th>
       <td className="num">{r.trades}</td>
       <td className="num">{r.winRate === null ? "—" : `${r.winRate}%`}</td>
-      <td className={`num ${pnlClass(r.netPnl)}`} title={signed(r.netPnl)}>
+      <td className={`num ${pnlClass(r.netPnl)}`} title={usd(r.netPnl)}>
         {empty ? "—" : money(r.netPnl)}
       </td>
       <td className="bar-col" aria-hidden="true">

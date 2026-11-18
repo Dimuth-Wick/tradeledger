@@ -30,7 +30,7 @@ import {
   formatR,
   formatRr,
   pnlClass,
-  signed,
+  usd,
 } from "../lib/format";
 import {
   formFromTrade,
@@ -237,16 +237,12 @@ function Detail({
         <Stat label="Avg exit" value={t.avgExit ?? "—"} />
         <Stat
           label="Gross PnL"
-          value={signed(t.grossPnl)}
+          value={usd(t.grossPnl)}
           cls={pnlClass(t.grossPnl)}
         />
-        <Stat label="Fees" value={t.fees} />
-        <Stat label="Funding" value={signed(t.funding)} />
-        <Stat
-          label="Net PnL"
-          value={signed(t.netPnl)}
-          cls={pnlClass(t.netPnl)}
-        />
+        <Stat label="Fees" value={usd(t.fees, { sign: false })} />
+        <Stat label="Funding" value={usd(t.funding)} />
+        <Stat label="Net PnL" value={usd(t.netPnl)} cls={pnlClass(t.netPnl)} />
         <Stat label="Planned R:R" value={formatRr(shown.plannedRr)} />
         <Stat
           label="R-multiple"

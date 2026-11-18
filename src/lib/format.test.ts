@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { formatR, formatRr, isZero, pnlClass, round2, signed } from "./format";
+import {
+  formatR,
+  formatRr,
+  isZero,
+  pnlClass,
+  round2,
+  signed,
+  usd,
+  usdTick,
+} from "./format";
 
 describe("format helpers", () => {
   it("detects zero in any spelling", () => {
@@ -45,5 +54,26 @@ describe("round2", () => {
     ["12.75", "12.75"],
   ])("%s → %s", (d, out) => {
     expect(round2(d)).toBe(out);
+  });
+});
+
+describe("usd", () => {
+  it.each([
+    ["65.67", {}, "+$65.67"],
+    ["-23.21", {}, "-$23.21"],
+    ["0", {}, "$0"],
+    ["-0.004", { round: true }, "$0"],
+    ["1234567.891", { round: true }, "+$1,234,567.89"],
+    ["-1500", {}, "-$1,500"],
+    ["71.51", { sign: false }, "$71.51"],
+    ["12.3456789", {}, "+$12.3456789"], // exact unless rounded
+  ] as const)("%s %o → %s", (d, opts, out) => {
+    expect(usd(d, opts)).toBe(out);
+  });
+
+  it("axis ticks", () => {
+    expect(usdTick(300)).toBe("$300");
+    expect(usdTick(-300)).toBe("-$300");
+    expect(usdTick(0)).toBe("$0");
   });
 });

@@ -10,7 +10,7 @@ import {
 } from "recharts";
 import { chartMotion } from "../../lib/motion";
 import type { CurveRow } from "../../lib/dashboard";
-import { formatDateTime, pnlClass, signed } from "../../lib/format";
+import { formatDateTime, pnlClass, usd, usdTick } from "../../lib/format";
 
 /** Cumulative closed net PnL, one point per closed trade (in close order). */
 export default function EquityChart({ rows }: { rows: CurveRow[] }) {
@@ -22,7 +22,7 @@ export default function EquityChart({ rows }: { rows: CurveRow[] }) {
     <div
       className="chart"
       role="img"
-      aria-label={`Equity curve over ${rows.length - 1} closed trades, ending at ${signed(last.equityText)}`}
+      aria-label={`Equity curve over ${rows.length - 1} closed trades, ending at ${usd(last.equityText)}`}
     >
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart
@@ -50,7 +50,7 @@ export default function EquityChart({ rows }: { rows: CurveRow[] }) {
             domain={[0, "dataMax"]}
             allowDecimals={false}
           />
-          <YAxis width={64} />
+          <YAxis width={64} tickFormatter={usdTick} />
           <ReferenceLine y={0} className="chart-zero" />
           <Tooltip
             content={({ active, payload }) => {
@@ -67,13 +67,13 @@ export default function EquityChart({ rows }: { rows: CurveRow[] }) {
                   <div>
                     Equity{" "}
                     <strong className={pnlClass(row.equityText)}>
-                      {signed(row.equityText)}
+                      {usd(row.equityText, { round: true })}
                     </strong>
                   </div>
                   <div>
                     This trade{" "}
                     <span className={pnlClass(row.pnlText)}>
-                      {signed(row.pnlText)}
+                      {usd(row.pnlText, { round: true })}
                     </span>
                   </div>
                 </div>

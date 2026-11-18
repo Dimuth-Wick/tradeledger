@@ -9,7 +9,7 @@ import {
   type PlaybookStats,
   type ReportRow,
 } from "../lib/api";
-import { formatR, pnlClass, round2, signed } from "../lib/format";
+import { formatR, pnlClass, usd } from "../lib/format";
 import {
   draftOf,
   moveRule,
@@ -335,7 +335,8 @@ function PlaybookCard({
 }
 
 function StatsRow({ label, r }: { label: string; r: ReportRow }) {
-  const money = (d: string | null) => (d === null ? "—" : signed(round2(d)));
+  const money = (d: string | null) =>
+    d === null ? "—" : usd(d, { round: true });
   const empty = r.trades === 0;
   return (
     <tr className={empty ? "empty" : ""}>

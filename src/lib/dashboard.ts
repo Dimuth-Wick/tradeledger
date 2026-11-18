@@ -1,5 +1,5 @@
 import type { Decimal, LayoutItem, RBucket, Stats, TradeQuery } from "./api";
-import { formatR, pnlClass, round2, signed } from "./format";
+import { formatR, pnlClass, usd } from "./format";
 import {
   DEFAULT_SORT,
   EMPTY_FILTERS,
@@ -91,8 +91,10 @@ export interface Kpi {
 }
 
 /** Tiles show 2 decimals; the exact value is in the tile's hover title. */
-const money = (d: Decimal | null) => (d === null ? "—" : signed(round2(d)));
-const exact = (d: Decimal | null) => (d === null ? "—" : signed(d));
+const money = (d: Decimal | null) =>
+  d === null ? "—" : usd(d, { round: true });
+const exact = (d: Decimal | null) => (d === null ? "—" : usd(d));
+const plain = (d: Decimal) => usd(d, { round: true, sign: false });
 
 /** The KPI tiles, in display order. */
 export function kpis(s: Stats): Kpi[] {
@@ -102,7 +104,7 @@ export function kpis(s: Stats): Kpi[] {
       label: "Net PnL",
       value: money(s.netPnl),
       title: exact(s.netPnl),
-      detail: `gross ${money(s.grossPnl)} · fees ${round2(s.fees)} · funding ${round2(s.funding)}`,
+      detail: `gross ${money(s.grossPnl)} · fees ${plain(s.fees)} · funding ${money(s.funding)}`,
       tone: pnlClass(s.netPnl),
     },
     {
@@ -139,8 +141,8 @@ export function kpis(s: Stats): Kpi[] {
     },
     {
       label: "Max drawdown",
-      value: s.maxDrawdown === "0" ? "0" : `-${round2(s.maxDrawdown)}`,
-      title: s.maxDrawdown === "0" ? "0" : `-${s.maxDrawdown}`,
+      value: money(`-${s.maxDrawdown}`),
+      title: exact(`-${s.maxDrawdown}`),
       detail:
         s.maxDrawdownStart !== null && s.maxDrawdownEnd !== null
           ? `${shortDate(s.maxDrawdownStart)} → ${shortDate(s.maxDrawdownEnd)}`

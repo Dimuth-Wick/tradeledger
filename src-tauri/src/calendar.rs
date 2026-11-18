@@ -237,6 +237,12 @@ pub struct CalendarMonth {
     pub worst_day: Option<DayRef>,
     /// Largest |day net| this month, for scaling cell colors.
     pub max_abs_day: Decimal,
+    /// Sum of the winning trades' net PnL this month (≥ 0).
+    pub profit: Decimal,
+    /// Sum of the losing trades' net PnL this month (≤ 0).
+    pub loss: Decimal,
+    pub wins: u32,
+    pub losses: u32,
 }
 
 #[derive(Default)]
@@ -293,6 +299,8 @@ pub fn month(
     let trades = closed_between(conn, zone.start_of(first), zone.start_of(next))?;
 
     let mut by_day: BTreeMap<NaiveDate, Agg> = BTreeMap::new();
+    // Month totals over trades: what the winners made, what the losers lost.
+    let (mut profit, mut loss) = (Decimal::ZERO, Decimal::ZERO);
     for t in &trades {
         let Some(close) = t.item.close_time else {
             continue;
@@ -301,8 +309,14 @@ pub fn month(
         a.trades += 1;
         a.net += t.item.net_pnl;
         match t.item.net_pnl.cmp(&Decimal::ZERO) {
-            std::cmp::Ordering::Greater => a.wins += 1,
-            std::cmp::Ordering::Less => a.losses += 1,
+            std::cmp::Ordering::Greater => {
+                a.wins += 1;
+                profit += t.item.net_pnl;
+            }
+            std::cmp::Ordering::Less => {
+                a.losses += 1;
+                loss += t.item.net_pnl;
+            }
             std::cmp::Ordering::Equal => {}
         }
     }
@@ -369,6 +383,10 @@ pub fn month(
             .max()
             .unwrap_or_default()
             .normalize(),
+        profit: profit.normalize(),
+        loss: loss.normalize(),
+        wins: by_day.values().map(|a| a.wins).sum(),
+        losses: by_day.values().map(|a| a.losses).sum(),
     })
 }
 

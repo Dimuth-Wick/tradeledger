@@ -6,7 +6,7 @@ import {
   type TradeFill,
   type WithId,
 } from "../lib/api";
-import { formatDateTime, formatR, pnlClass, signed } from "../lib/format";
+import { formatDateTime, formatR, pnlClass, usd } from "../lib/format";
 import type { TagInfo } from "../lib/tagIndex";
 import TagChip from "./TagChip";
 
@@ -157,8 +157,8 @@ export default function TradeList({
                 {t.direction === "long" ? "Long" : "Short"}
               </td>
               <td>{t.status === "open" ? "Open" : "Closed"}</td>
-              <td className={`num ${pnlClass(t.netPnl)}`}>
-                {signed(t.netPnl)}
+              <td className={`num ${pnlClass(t.netPnl)}`} title={usd(t.netPnl)}>
+                {usd(t.netPnl, { round: true })}
               </td>
               <td className={`num ${pnlClass(t.rMultiple)}`}>
                 {formatR(t.rMultiple)}

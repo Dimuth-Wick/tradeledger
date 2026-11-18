@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createTrade, previewTrade, type Trade } from "../lib/api";
-import { formatR, formatRr, pnlClass, signed } from "../lib/format";
+import { formatR, formatRr, pnlClass, usd } from "../lib/format";
 import {
   emptyForm,
   hasInput,
@@ -278,11 +278,11 @@ export default function TradeForm({ onSaved }: Props) {
             </dd>
             <dt>Gross PnL</dt>
             <dd className={pnlClass(current.trade.grossPnl)}>
-              {signed(current.trade.grossPnl)}
+              {usd(current.trade.grossPnl)}
             </dd>
             <dt>Net PnL</dt>
             <dd className={pnlClass(current.trade.netPnl)}>
-              {signed(current.trade.netPnl)}
+              {usd(current.trade.netPnl)}
             </dd>
           </dl>
         )}

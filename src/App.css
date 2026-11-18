@@ -1908,3 +1908,84 @@ button:active:not(:disabled) {
 .kpis > div:first-child dt {
   opacity: 0.88;
 }
+
+/* --- Calendar month summary: profit, loss, net --- */
+
+.month-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 4px 0 10px;
+}
+
+.month-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-1);
+  /* a colored bar on the left says which total it is */
+  border-left: 4px solid var(--border);
+}
+
+.month-stat-label {
+  font-size: 0.85em;
+  color: var(--muted);
+}
+
+.month-stat strong {
+  font-size: 1.6em;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.month-stat-detail {
+  font-size: 0.8em;
+  color: var(--muted);
+}
+
+.month-stat.profit {
+  border-left-color: var(--pos);
+}
+
+.month-stat.profit strong {
+  color: var(--pos);
+}
+
+.month-stat.loss {
+  border-left-color: var(--neg);
+}
+
+.month-stat.loss strong {
+  color: var(--neg);
+}
+
+/* Net is the headline: the brand gradient when up, red when down. */
+.month-stat.net {
+  border: none;
+  color: #ffffff;
+}
+
+.month-stat.net.up {
+  background: var(--energy);
+  box-shadow: var(--energy-shadow);
+}
+
+.month-stat.net.down {
+  background: linear-gradient(135deg, #ff6b6b, #d2414d);
+}
+
+.month-stat.net .month-stat-label,
+.month-stat.net .month-stat-detail {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+@media (max-width: 760px) {
+  .month-summary {
+    grid-template-columns: 1fr;
+  }
+}

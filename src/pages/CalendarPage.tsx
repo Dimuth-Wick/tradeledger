@@ -18,7 +18,7 @@ import {
   shiftMonth,
   timeIn,
 } from "../lib/calendar";
-import { formatR, pnlClass, round2, signed } from "../lib/format";
+import { formatR, isNegative, pnlClass, usd } from "../lib/format";
 
 interface Props {
   /** Opens the trade on the Trades tab. */
@@ -135,29 +135,54 @@ export default function CalendarPage({ onOpenTrade }: Props) {
 
       {data && (
         <>
-          <p className="log-summary">
-            Net{" "}
-            <strong
-              className={pnlClass(data.netPnl)}
-              title={signed(data.netPnl)}
+          <div className="month-summary">
+            <div className="month-stat profit">
+              <span className="month-stat-label">Total profit</span>
+              <strong title={usd(data.profit)}>
+                {usd(data.profit, { round: true })}
+              </strong>
+              <span className="month-stat-detail">
+                {plural(data.wins, "winning trade")}
+              </span>
+            </div>
+            <div className="month-stat loss">
+              <span className="month-stat-label">Total loss</span>
+              <strong title={usd(data.loss)}>
+                {usd(data.loss, { round: true })}
+              </strong>
+              <span className="month-stat-detail">
+                {plural(data.losses, "losing trade")}
+              </span>
+            </div>
+            <div
+              className={`month-stat net ${
+                isNegative(data.netPnl) ? "down" : "up"
+              }`}
             >
-              {signed(round2(data.netPnl))}
-            </strong>{" "}
-            · {plural(data.trades, "trade")} on{" "}
-            {plural(data.tradingDays, "day")} · {data.greenDays} green /{" "}
-            {data.redDays} red
+              <span className="month-stat-label">Net profit</span>
+              <strong title={usd(data.netPnl)}>
+                {usd(data.netPnl, { round: true })}
+              </strong>
+              <span className="month-stat-detail">
+                {plural(data.trades, "trade")} on{" "}
+                {plural(data.tradingDays, "day")}
+              </span>
+            </div>
+          </div>
+          <p className="log-summary">
+            {data.greenDays} green / {data.redDays} red days
             {data.bestDay && (
               <>
                 {" "}
-                · best {dayTitle(data.bestDay.date)}{" "}
-                {signed(round2(data.bestDay.netPnl))}
+                · best day {dayTitle(data.bestDay.date)}{" "}
+                {usd(data.bestDay.netPnl, { round: true })}
               </>
             )}
             {data.worstDay && data.worstDay.date !== data.bestDay?.date && (
               <>
                 {" "}
-                · worst {dayTitle(data.worstDay.date)}{" "}
-                {signed(round2(data.worstDay.netPnl))}
+                · worst day {dayTitle(data.worstDay.date)}{" "}
+                {usd(data.worstDay.netPnl, { round: true })}
               </>
             )}
           </p>
@@ -196,14 +221,14 @@ export default function CalendarPage({ onOpenTrade }: Props) {
                           <button
                             type="button"
                             aria-pressed={d.date === selected}
-                            aria-label={`${dayTitle(d.date)}: ${plural(d.trades, "trade")}, net ${signed(d.netPnl)}`}
+                            aria-label={`${dayTitle(d.date)}: ${plural(d.trades, "trade")}, net ${usd(d.netPnl)}`}
                             onClick={() =>
                               setSelected((s) => (s === d.date ? null : d.date))
                             }
                           >
                             <span className="day-num">{d.day}</span>
                             <span className="day-pnl">
-                              {signed(round2(d.netPnl))}
+                              {usd(d.netPnl, { round: true })}
                             </span>
                             <span className="day-count">
                               {plural(d.trades, "trade")}
@@ -219,7 +244,7 @@ export default function CalendarPage({ onOpenTrade }: Props) {
                     {w.trades > 0 ? (
                       <>
                         <span className={`day-pnl ${pnlClass(w.netPnl)}`}>
-                          {signed(round2(w.netPnl))}
+                          {usd(w.netPnl, { round: true })}
                         </span>
                         <span className="day-count">
                           {plural(w.trades, "trade")}
@@ -245,7 +270,7 @@ export default function CalendarPage({ onOpenTrade }: Props) {
           <h2>
             {dayTitle(selected)} · {plural(selectedDay.trades, "trade")} · net{" "}
             <span className={pnlClass(selectedDay.netPnl)}>
-              {signed(selectedDay.netPnl)}
+              {usd(selectedDay.netPnl, { round: true })}
             </span>
           </h2>
           <table className="trade-list">
@@ -269,7 +294,7 @@ export default function CalendarPage({ onOpenTrade }: Props) {
                   <td>{t.symbol}</td>
                   <td className={t.direction}>{t.direction}</td>
                   <td className={`num ${pnlClass(t.netPnl)}`}>
-                    {signed(t.netPnl)}
+                    {usd(t.netPnl, { round: true })}
                   </td>
                   <td className={`num ${pnlClass(t.rMultiple)}`}>
                     {formatR(t.rMultiple)}

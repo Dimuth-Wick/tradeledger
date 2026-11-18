@@ -88,6 +88,9 @@ fn month_in_utc() {
     assert_eq!((feb28.in_month, feb28.trades), (false, 0));
 
     assert_eq!((m.trades, m.net_pnl), (5, dec!(4))); // 11 + 0 − 7
+    // Winners A + C = 15, losers B + E = −11; profit + loss = net 4.
+    assert_eq!((m.profit, m.wins), (dec!(15), 2));
+    assert_eq!((m.loss, m.losses), (dec!(-11), 2));
     assert_eq!((m.trading_days, m.green_days, m.red_days), (3, 1, 1));
     assert_eq!(m.best_day.as_ref().unwrap().date, "2026-03-02");
     assert_eq!(m.worst_day.as_ref().unwrap().net_pnl, dec!(-7));
@@ -119,6 +122,7 @@ fn time_zone_moves_trades_between_days_and_months() {
     assert_eq!(day(&m, "2026-03-03").net_pnl, dec!(5)); // C moves to the 3rd
     assert_eq!(day(&m, "2026-03-31").trades, 0); // E moves out to April
     assert_eq!((m.trades, m.net_pnl), (5, dec!(111))); // D, A, B, C, G
+    assert_eq!((m.profit, m.loss), (dec!(115), dec!(-4))); // D + A + C, B
     assert_eq!(m.weeks[0].net_pnl, dec!(100));
     assert_eq!(m.today, "2026-03-16"); // 20:00 UTC = 01:30 next day
 }

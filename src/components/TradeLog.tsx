@@ -6,7 +6,7 @@ import {
   type TagGroup,
   type TradePage,
 } from "../lib/api";
-import { pnlClass, signed } from "../lib/format";
+import { pnlClass, usd } from "../lib/format";
 import { indexTags } from "../lib/tagIndex";
 import {
   DEFAULT_SORT,
@@ -200,7 +200,7 @@ export default function TradeLog({ version, ...actions }: Props) {
             win{result.wins === 1 ? "" : "s"} / {result.losses} loss
             {result.losses === 1 ? "" : "es"} · closed net{" "}
             <span className={pnlClass(result.closedNetPnl)}>
-              {signed(result.closedNetPnl)}
+              {usd(result.closedNetPnl, { round: true })}
             </span>
           </p>
 

@@ -11,7 +11,7 @@ import {
 } from "recharts";
 import { chartMotion } from "../../lib/motion";
 import type { CurveRow } from "../../lib/dashboard";
-import { formatDateTime, pnlClass, signed } from "../../lib/format";
+import { formatDateTime, pnlClass, usd, usdTick } from "../../lib/format";
 
 /** One bar per closed trade: up = win, down = loss. */
 export default function PnlBars({ rows }: { rows: CurveRow[] }) {
@@ -33,7 +33,7 @@ export default function PnlBars({ rows }: { rows: CurveRow[] }) {
         >
           <CartesianGrid vertical={false} />
           <XAxis dataKey="n" />
-          <YAxis width={64} />
+          <YAxis width={64} tickFormatter={usdTick} />
           <ReferenceLine y={0} className="chart-zero" />
           <Tooltip
             cursor={{ className: "chart-cursor" }}
@@ -48,7 +48,7 @@ export default function PnlBars({ rows }: { rows: CurveRow[] }) {
                   <div>
                     Net{" "}
                     <strong className={pnlClass(row.pnlText)}>
-                      {signed(row.pnlText)}
+                      {usd(row.pnlText, { round: true })}
                     </strong>
                   </div>
                 </div>

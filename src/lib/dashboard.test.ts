@@ -58,8 +58,8 @@ const byLabel = (s: Stats) =>
 describe("kpis", () => {
   it("formats the tiles from Rust's numbers", () => {
     const k = byLabel(stats);
-    expect(k["Net PnL"]).toMatchObject({ value: "+12.75", tone: "pos" });
-    expect(k["Net PnL"].detail).toBe("gross +17.75 · fees 4 · funding 1");
+    expect(k["Net PnL"]).toMatchObject({ value: "+$12.75", tone: "pos" });
+    expect(k["Net PnL"].detail).toBe("gross +$17.75 · fees $4 · funding +$1");
     expect(k["Win rate"]).toMatchObject({
       value: "40%",
       detail: "2W · 2L · 1BE",
@@ -71,10 +71,10 @@ describe("kpis", () => {
     });
     // Tiles show 2 decimals; the exact value is the hover title.
     expect(k["Avg win / loss"]).toMatchObject({
-      value: "+9.5 / -3.13",
-      title: "+9.5 / -3.125",
+      value: "+$9.5 / -$3.13",
+      title: "+$9.5 / -$3.125",
     });
-    expect(k["Max drawdown"]).toMatchObject({ value: "-4", tone: "neg" });
+    expect(k["Max drawdown"]).toMatchObject({ value: "-$4", tone: "neg" });
     expect(k["Max drawdown"].detail).toContain("→");
     expect(k["Trades"].detail).toBe("5 closed · 1 open");
   });
@@ -86,7 +86,7 @@ describe("kpis", () => {
     const k = byLabel(empty);
     expect(k["Profit factor"].value).toBe("—");
     expect(k["Win rate"].value).toBe("—");
-    expect(k["Max drawdown"]).toMatchObject({ value: "0", tone: "" });
+    expect(k["Max drawdown"]).toMatchObject({ value: "$0", tone: "" });
   });
 });
 

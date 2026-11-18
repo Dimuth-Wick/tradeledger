@@ -35,6 +35,34 @@ export function round2(d: Decimal): string {
   return sign + `${s.slice(0, -2)}.${s.slice(-2)}`.replace(/\.?0+$/, "");
 }
 
+/** "1234567.5" → "1,234,567.5" (text only, no floats). */
+function groupThousands(abs: string): string {
+  const [int, frac] = abs.split(".");
+  const grouped = int.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return frac === undefined ? grouped : `${grouped}.${frac}`;
+}
+
+/**
+ * Money in US dollars (USDT is treated as 1:1): "+$1,234.56", "-$23.21",
+ * "$0". `sign: false` drops the "+" (for fees and totals that are always
+ * positive); `round: true` shows 2 decimals (exact value elsewhere).
+ */
+export function usd(
+  d: Decimal,
+  { sign = true, round = false }: { sign?: boolean; round?: boolean } = {},
+): string {
+  const v = round ? round2(d) : d;
+  if (isZero(v)) return "$0";
+  const neg = v.startsWith("-");
+  const body = groupThousands(neg ? v.slice(1) : v.replace(/^\+/, ""));
+  return `${neg ? "-" : sign ? "+" : ""}$${body}`;
+}
+
+/** Chart axis tick in dollars: 300 → "$300", -300 → "-$300". */
+export function usdTick(v: number): string {
+  return v < 0 ? `-$${-v}` : `$${v}`;
+}
+
 /** R-multiple: "2" → "+2R", null → "—". */
 export function formatR(d: Decimal | null): string {
   return d === null ? "—" : `${signed(d)}R`;

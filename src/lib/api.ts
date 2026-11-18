@@ -565,6 +565,12 @@ export interface CalendarMonth {
   worstDay: DayRef | null;
   /** Largest |day net|, for scaling cell colors. */
   maxAbsDay: Decimal;
+  /** Sum of the winning trades' net PnL (≥ 0). */
+  profit: Decimal;
+  /** Sum of the losing trades' net PnL (≤ 0). */
+  loss: Decimal;
+  wins: number;
+  losses: number;
 }
 
 export function getCalendarMonth(
