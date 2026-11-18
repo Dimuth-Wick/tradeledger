@@ -78,7 +78,7 @@ export default function HomePage({
   return (
     <main className="page">
       <header>
-        <h1>TradeLedger</h1>
+        <h1>Trades</h1>
       </header>
 
       <section>
