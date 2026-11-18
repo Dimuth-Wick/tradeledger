@@ -11,6 +11,7 @@ pub mod import_flow;
 pub mod importers;
 pub mod journal;
 pub mod models;
+pub mod playbooks;
 pub mod reports;
 pub mod risk;
 pub mod screenshots;
@@ -103,6 +104,13 @@ pub fn run() {
             commands::calendar::set_time_zone,
             commands::calendar::list_time_zones,
             commands::reports::get_report,
+            commands::playbooks::list_playbooks,
+            commands::playbooks::create_playbook,
+            commands::playbooks::update_playbook,
+            commands::playbooks::delete_playbook,
+            commands::playbooks::get_trade_playbook,
+            commands::playbooks::set_trade_playbook,
+            commands::playbooks::playbook_stats,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

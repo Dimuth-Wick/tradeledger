@@ -83,7 +83,7 @@ fn sample() -> Vec<WithId<Trade>> {
 const UTC: Zone = Zone::Fixed(0);
 
 fn simple(by: GroupBy, zone: Zone) -> Report {
-    build(&sample(), by, zone, &[], &BTreeMap::new(), None)
+    build(&sample(), by, zone, &Lookup::default(), None)
 }
 
 fn nets(r: &Report) -> Vec<(&str, u32, Decimal)> {
@@ -148,7 +148,7 @@ fn by_hour_lists_all_24() {
     assert_eq!(r.rows[0].win_rate, None); // empty hour
 }
 
-fn tag_setup() -> (Vec<TagGroup>, BTreeMap<i64, Vec<i64>>) {
+fn tag_setup() -> Lookup {
     let tag = |id, group_id, name: &str| Tag {
         id,
         group_id,
@@ -173,13 +173,16 @@ fn tag_setup() -> (Vec<TagGroup>, BTreeMap<i64, Vec<i64>>) {
     ];
     // Trade 2 has two tags; trade 4 none.
     let links = BTreeMap::from([(1, vec![10]), (2, vec![10, 20]), (3, vec![11])]);
-    (groups, links)
+    Lookup {
+        tag_groups: groups,
+        trade_tags: links,
+        ..Lookup::default()
+    }
 }
 
 #[test]
 fn by_tag_counts_a_trade_under_each_of_its_tags() {
-    let (groups, links) = tag_setup();
-    let r = build(&sample(), GroupBy::Tag, UTC, &groups, &links, None);
+    let r = build(&sample(), GroupBy::Tag, UTC, &tag_setup(), None);
     assert_eq!(
         nets(&r),
         [
@@ -194,8 +197,7 @@ fn by_tag_counts_a_trade_under_each_of_its_tags() {
 
 #[test]
 fn by_tag_within_one_group() {
-    let (groups, links) = tag_setup();
-    let r = build(&sample(), GroupBy::Tag, UTC, &groups, &links, Some(2));
+    let r = build(&sample(), GroupBy::Tag, UTC, &tag_setup(), Some(2));
     // Only Mistake tags; "No tag" = no mistake tagged (trades 1, 3, 4).
     assert_eq!(
         nets(&r),
@@ -227,4 +229,22 @@ fn query_applies_filters_and_reads_tags() {
     let part = query(&conn, &q, GroupBy::Symbol, None).unwrap();
     assert_eq!(nets(&part), [("ETHUSDT", 2, dec!(4))]);
     assert_eq!(part.open_trades, 0); // SOL opened on the 3rd
+}
+
+#[test]
+fn by_playbook_with_none_last() {
+    let mut trades = sample();
+    trades[0].item.playbook_id = Some(7); // +10
+    trades[1].item.playbook_id = Some(7); // −4
+    trades[2].item.playbook_id = Some(9); // deleted playbook → "No playbook"
+    let lookup = Lookup {
+        playbooks: BTreeMap::from([(7, "Breakout retest".to_string())]),
+        ..Lookup::default()
+    };
+    let r = build(&trades, GroupBy::Playbook, UTC, &lookup, None);
+    assert_eq!(
+        nets(&r),
+        [("Breakout retest", 2, dec!(6)), ("No playbook", 2, dec!(4))]
+    );
+    assert_eq!(r.rows[0].key, "playbook:7");
 }

@@ -6,6 +6,7 @@ import DashboardPage from "./pages/DashboardPage";
 import FieldsPage from "./pages/FieldsPage";
 import HomePage from "./pages/HomePage";
 import ImportPage from "./pages/ImportPage";
+import PlaybooksPage from "./pages/PlaybooksPage";
 import ReportsPage from "./pages/ReportsPage";
 import TagsPage from "./pages/TagsPage";
 import "./App.css";
@@ -16,6 +17,7 @@ type Page =
   | "reports"
   | "trades"
   | "import"
+  | "playbooks"
   | "tags"
   | "fields";
 
@@ -45,6 +47,7 @@ function Shell() {
             ["reports", "Reports"],
             ["trades", "Trades"],
             ["import", "Import"],
+            ["playbooks", "Playbooks"],
             ["tags", "Tags"],
             ["fields", "Fields"],
           ] as const
@@ -81,6 +84,11 @@ function Shell() {
       {page === "import" && (
         <main className="page">
           <ImportPage />
+        </main>
+      )}
+      {page === "playbooks" && (
+        <main className="page">
+          <PlaybooksPage />
         </main>
       )}
       {page === "tags" && (

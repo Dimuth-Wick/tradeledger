@@ -9,6 +9,7 @@ pub mod custom_fields;
 pub mod dashboard;
 pub mod grouping;
 pub mod import;
+pub mod playbooks;
 pub mod reports;
 pub mod screenshots;
 pub mod tags;

@@ -6,12 +6,17 @@ import { FillsPanel } from "../components/TradeList";
 import {
   getCustomValues,
   getTrade,
+  getTradePlaybook,
   listCustomFields,
+  listPlaybooks,
   previewJournal,
   setCustomValues,
+  setTradePlaybook,
   updateJournal,
   type CustomField,
   type FieldValue,
+  type Playbook,
+  type TradePlaybook,
   type Trade,
   type WithId,
 } from "../lib/api";
@@ -33,6 +38,7 @@ import {
   toJournalInput,
   type JournalForm,
 } from "../lib/journalForm";
+import { checklistDirty, followedText } from "../lib/playbooks";
 import { useUnsavedChanges } from "../lib/unsaved";
 
 const PREVIEW_DELAY_MS = 250;
@@ -100,6 +106,32 @@ function Detail({
   const [savedValues, setSavedValues] = useState<FieldValue[]>([]);
   const [drafts, setDrafts] = useState<FieldDrafts>({});
 
+  // Playbook: the choices, what's saved, and what's picked/ticked now.
+  const [playbooks, setPlaybooks] = useState<Playbook[]>([]);
+  const [savedPb, setSavedPb] = useState<TradePlaybook>({
+    playbookId: null,
+    checked: [],
+  });
+  const [pbId, setPbId] = useState<number | null>(null);
+  const [checked, setChecked] = useState<number[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([listPlaybooks(), getTradePlaybook(t.id)]).then(
+      ([list, saved]) => {
+        if (cancelled) return;
+        setPlaybooks(list);
+        setSavedPb(saved);
+        setPbId(saved.playbookId);
+        setChecked(saved.checked);
+      },
+      (err) => !cancelled && setMessage({ ok: false, text: String(err) }),
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [t.id]);
+
   useEffect(() => {
     let cancelled = false;
     Promise.all([listCustomFields(), getCustomValues(t.id)]).then(
@@ -121,7 +153,8 @@ function Detail({
   const journalDirty = isDirty(form, t);
   const changed = changedValues(fields, savedValues, drafts);
   const customDirty = changed.length > 0;
-  const dirty = journalDirty || customDirty;
+  const pbDirty = checklistDirty(savedPb, pbId, checked);
+  const dirty = journalDirty || customDirty || pbDirty;
   useUnsavedChanges(dirty);
 
   // Live R:R / R from Rust while editing the plan (same rules as saving).
@@ -165,6 +198,12 @@ function Detail({
         const values = await setCustomValues(t.id, changed);
         setSavedValues(values);
         setDrafts(draftsFrom(fields, values));
+      }
+      if (pbDirty) {
+        const pb = await setTradePlaybook(t.id, pbId, checked);
+        setSavedPb(pb);
+        setPbId(pb.playbookId);
+        setChecked(pb.checked);
       }
       setMessage({ ok: true, text: "Saved" });
     } catch (err) {
@@ -255,6 +294,28 @@ function Detail({
           </label>
         </div>
         {planError && <p className="status error">{planError}</p>}
+      </section>
+
+      <section className="card">
+        <h2>Playbook</h2>
+        <PlaybookChecklist
+          playbooks={playbooks}
+          playbookId={pbId}
+          checked={checked}
+          onPick={(id) => {
+            setPbId(id);
+            // Ticks belong to one playbook's rules; going back to the saved
+            // playbook restores its saved ticks.
+            setChecked(id === savedPb.playbookId ? savedPb.checked : []);
+            setMessage(null);
+          }}
+          onToggle={(ruleId, on) => {
+            setChecked((c) =>
+              on ? [...c, ruleId] : c.filter((x) => x !== ruleId),
+            );
+            setMessage(null);
+          }}
+        />
       </section>
 
       {fields.length > 0 && (
@@ -421,6 +482,75 @@ function Stat({
     <div>
       <dt>{label}</dt>
       <dd className={cls}>{value}</dd>
+    </div>
+  );
+}
+
+function PlaybookChecklist({
+  playbooks,
+  playbookId,
+  checked,
+  onPick,
+  onToggle,
+}: {
+  playbooks: Playbook[];
+  playbookId: number | null;
+  checked: number[];
+  onPick: (id: number | null) => void;
+  onToggle: (ruleId: number, on: boolean) => void;
+}) {
+  const pb = playbooks.find((p) => p.id === playbookId);
+  if (playbooks.length === 0) {
+    return (
+      <p className="hint">No playbooks yet. Create one on the Playbooks tab.</p>
+    );
+  }
+  return (
+    <div className="playbook-check">
+      <label className="inline">
+        Setup
+        <select
+          aria-label="Playbook"
+          value={playbookId ?? ""}
+          onChange={(e) =>
+            onPick(e.target.value === "" ? null : Number(e.target.value))
+          }
+        >
+          <option value="">None</option>
+          {playbooks.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
+        </select>
+      </label>
+      {pb && pb.rules.length > 0 && (
+        <>
+          <ul className="checklist">
+            {pb.rules.map((r) => (
+              <li key={r.id}>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={checked.includes(r.id)}
+                    onChange={(e) => onToggle(r.id, e.target.checked)}
+                  />
+                  {r.text}
+                </label>
+              </li>
+            ))}
+          </ul>
+          <p className="hint">
+            {followedText(
+              pb.rules.filter((r) => checked.includes(r.id)).length,
+              pb.rules.length,
+            )}
+          </p>
+        </>
+      )}
+      {pb && pb.rules.length === 0 && (
+        <p className="hint">This playbook has no rules yet.</p>
+      )}
     </div>
   );
 }

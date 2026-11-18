@@ -12,6 +12,10 @@ import {
   getCalendarMonth,
   getDayTrades,
   getReport,
+  createPlaybook,
+  updatePlaybook,
+  setTradePlaybook,
+  getTradePlaybook,
   getStats,
   saveDashboardLayout,
   setTimeZone,
@@ -147,6 +151,22 @@ describe("trade commands", () => {
       () => getStats({ from: 1, to: 2 }),
       { query: { from: 1, to: 2 } },
     ],
+    [
+      "create_playbook",
+      () => createPlaybook("Breakout", "", ["Trend agrees"]),
+      { name: "Breakout", description: "", rules: ["Trend agrees"] },
+    ],
+    [
+      "update_playbook",
+      () => updatePlaybook(3, "B", "d", [{ id: 1, text: "x" }]),
+      { id: 3, name: "B", description: "d", rules: [{ id: 1, text: "x" }] },
+    ],
+    [
+      "set_trade_playbook",
+      () => setTradePlaybook(7, 3, [1, 2]),
+      { tradeId: 7, playbookId: 3, checked: [1, 2] },
+    ],
+    ["get_trade_playbook", () => getTradePlaybook(7), { tradeId: 7 }],
     [
       "get_report",
       () => getReport({ from: 1 }, "tag", 2),

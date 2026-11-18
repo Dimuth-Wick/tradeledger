@@ -10,6 +10,7 @@ export const GROUPS: [GroupBy, string][] = [
   ["hour", "Hour"],
   ["market", "Market"],
   ["direction", "Side"],
+  ["playbook", "Playbook"],
 ];
 
 /** "2.5", "∞" (wins, no losses) or "—" (nothing to compare). */

@@ -592,7 +592,7 @@ export function listTimeZones(): Promise<ZoneInfo[]> {
 }
 
 export type GroupBy =
-  "tag" | "symbol" | "weekday" | "hour" | "market" | "direction";
+  "tag" | "symbol" | "weekday" | "hour" | "market" | "direction" | "playbook";
 
 /** Mirrors Rust `reports::ReportRow` (closed trades only). */
 export interface ReportRow {
@@ -626,6 +626,94 @@ export function getReport(
   tagGroup: number | null = null,
 ): Promise<Report> {
   return invoke<Report>("get_report", { query, groupBy, tagGroup });
+}
+
+/** Mirrors Rust `db::playbooks::Rule`. */
+export interface PlaybookRule {
+  id: number;
+  text: string;
+  position: number;
+}
+
+/** Mirrors Rust `db::playbooks::Playbook`. */
+export interface Playbook {
+  id: number;
+  name: string;
+  description: string;
+  rules: PlaybookRule[];
+  /** Trades linked to it. */
+  usedBy: number;
+}
+
+/** Mirrors Rust `playbooks::RuleInput`: id = existing rule, null = new. */
+export interface RuleInput {
+  id: number | null;
+  text: string;
+}
+
+/** Mirrors Rust `playbooks::TradePlaybook`. */
+export interface TradePlaybook {
+  playbookId: number | null;
+  /** Ticked rule ids. */
+  checked: number[];
+}
+
+/** Mirrors Rust `playbooks::PlaybookStats` (closed trades). */
+export interface PlaybookStats {
+  playbookId: number;
+  all: ReportRow;
+  followed: ReportRow;
+  broke: ReportRow;
+  /** Average % of rules ticked; null without trades or rules. */
+  adherence: Decimal | null;
+}
+
+export function listPlaybooks(): Promise<Playbook[]> {
+  return invoke<Playbook[]>("list_playbooks");
+}
+
+export function createPlaybook(
+  name: string,
+  description: string,
+  rules: string[],
+): Promise<number> {
+  return invoke<number>("create_playbook", { name, description, rules });
+}
+
+/** Saves the whole rule list in order; rules left out are deleted. */
+export function updatePlaybook(
+  id: number,
+  name: string,
+  description: string,
+  rules: RuleInput[],
+): Promise<void> {
+  return invoke<void>("update_playbook", { id, name, description, rules });
+}
+
+/** Linked trades keep existing, without a playbook. */
+export function deletePlaybook(id: number): Promise<void> {
+  return invoke<void>("delete_playbook", { id });
+}
+
+export function getTradePlaybook(tradeId: number): Promise<TradePlaybook> {
+  return invoke<TradePlaybook>("get_trade_playbook", { tradeId });
+}
+
+/** Playbook and ticks saved together; switching playbook clears old ticks. */
+export function setTradePlaybook(
+  tradeId: number,
+  playbookId: number | null,
+  checked: number[],
+): Promise<TradePlaybook> {
+  return invoke<TradePlaybook>("set_trade_playbook", {
+    tradeId,
+    playbookId,
+    checked,
+  });
+}
+
+export function playbookStats(): Promise<PlaybookStats[]> {
+  return invoke<PlaybookStats[]>("playbook_stats");
 }
 
 export function listSymbols(): Promise<string[]> {

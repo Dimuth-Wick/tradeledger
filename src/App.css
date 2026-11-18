@@ -1187,3 +1187,94 @@ button.link {
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+
+/* --- Playbooks --- */
+
+.heading-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+
+.heading-row h2,
+.heading-row h3 {
+  margin: 0;
+}
+
+.heading-row .spacer {
+  flex: 1;
+}
+
+.playbook-card,
+.playbook-editor {
+  margin-top: 12px;
+}
+
+.playbook-desc {
+  margin: 8px 0;
+  white-space: pre-wrap;
+}
+
+.rules-list {
+  margin: 8px 0 12px;
+  padding-left: 22px;
+}
+
+.rules-list li {
+  margin: 2px 0;
+}
+
+.playbook-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rules-edit {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.rule-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.rule-row input {
+  flex: 1;
+}
+
+.rule-row button {
+  padding: 4px 8px;
+}
+
+.rule-num {
+  width: 22px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.playbook-stats {
+  margin-top: 8px;
+}
+
+.checklist {
+  list-style: none;
+  margin: 10px 0 4px;
+  padding: 0;
+}
+
+.checklist li {
+  margin: 4px 0;
+}
+
+.checklist label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-direction: row;
+}

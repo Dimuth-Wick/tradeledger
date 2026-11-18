@@ -27,6 +27,7 @@ pub enum GroupBy {
     Hour,
     Market,
     Direction,
+    Playbook,
 }
 
 /// One group's numbers (closed trades only).
@@ -61,7 +62,11 @@ pub struct Report {
     pub open_trades: u32,
 }
 
-fn row(key: impl Into<String>, label: impl Into<String>, trades: &[&WithId<Trade>]) -> ReportRow {
+pub(crate) fn row(
+    key: impl Into<String>,
+    label: impl Into<String>,
+    trades: &[&WithId<Trade>],
+) -> ReportRow {
     let refs: Vec<(i64, &Trade)> = trades.iter().map(|t| (t.id, &t.item)).collect();
     let s = stats::compute(&refs);
     ReportRow {
@@ -134,16 +139,25 @@ fn group_by_key<'a>(
     rows
 }
 
+/// Names needed to label tag and playbook groups.
+#[derive(Debug, Default)]
+pub struct Lookup {
+    pub tag_groups: Vec<TagGroup>,
+    /// Trade id → tag ids.
+    pub trade_tags: BTreeMap<i64, Vec<i64>>,
+    /// Playbook id → name.
+    pub playbooks: BTreeMap<i64, String>,
+}
+
 /// Builds the report from already-filtered trades (pure, for tests).
 ///
-/// `trade_tags`: trade id → tag ids. `tag_group`: only that group's tags
-/// get rows (e.g. just "Mistake"); "No tag" then means none from that group.
+/// `tag_group`: only that group's tags get rows (e.g. just "Mistake");
+/// "No tag" then means none from that group.
 pub fn build(
     trades: &[WithId<Trade>],
     by: GroupBy,
     zone: Zone,
-    tag_groups: &[TagGroup],
-    trade_tags: &BTreeMap<i64, Vec<i64>>,
+    lookup: &Lookup,
     tag_group: Option<i64>,
 ) -> Report {
     let closed: Vec<&WithId<Trade>> = trades
@@ -196,10 +210,34 @@ pub fn build(
                 })
                 .collect()
         }
+        GroupBy::Playbook => {
+            let mut groups: BTreeMap<i64, Vec<&WithId<Trade>>> = BTreeMap::new();
+            let mut none = Vec::new();
+            for t in &closed {
+                match t
+                    .item
+                    .playbook_id
+                    .filter(|id| lookup.playbooks.contains_key(id))
+                {
+                    Some(id) => groups.entry(id).or_default().push(t),
+                    None => none.push(*t),
+                }
+            }
+            let mut rows: Vec<ReportRow> = groups
+                .iter()
+                .map(|(id, ts)| row(format!("playbook:{id}"), lookup.playbooks[id].clone(), ts))
+                .collect();
+            by_net_desc(&mut rows);
+            if !none.is_empty() {
+                rows.push(row("none", "No playbook", &none));
+            }
+            rows
+        }
         GroupBy::Tag => {
             // Tag id → "Group · Tag" for the tags that get rows.
             let mut known: BTreeMap<i64, String> = BTreeMap::new();
-            for g in tag_groups
+            for g in lookup
+                .tag_groups
                 .iter()
                 .filter(|g| tag_group.is_none_or(|id| id == g.id))
             {
@@ -210,7 +248,8 @@ pub fn build(
             let mut groups: BTreeMap<i64, Vec<&WithId<Trade>>> = BTreeMap::new();
             let mut untagged = Vec::new();
             for t in &closed {
-                let ids: Vec<i64> = trade_tags
+                let ids: Vec<i64> = lookup
+                    .trade_tags
                     .get(&t.id)
                     .map(|ids| {
                         ids.iter()
@@ -255,12 +294,21 @@ pub fn query(
 ) -> Result<Report, DbError> {
     let trades = trade_query::filtered(conn, q)?;
     let zone = calendar::zone(conn)?;
-    let (groups, links) = if by == GroupBy::Tag {
-        (db::tags::list(conn)?, db::tags::all_trade_tags(conn)?)
-    } else {
-        (Vec::new(), BTreeMap::new())
-    };
-    Ok(build(&trades, by, zone, &groups, &links, tag_group))
+    let mut lookup = Lookup::default();
+    match by {
+        GroupBy::Tag => {
+            lookup.tag_groups = db::tags::list(conn)?;
+            lookup.trade_tags = db::tags::all_trade_tags(conn)?;
+        }
+        GroupBy::Playbook => {
+            lookup.playbooks = db::playbooks::list(conn)?
+                .into_iter()
+                .map(|p| (p.id, p.name))
+                .collect();
+        }
+        _ => {}
+    }
+    Ok(build(&trades, by, zone, &lookup, tag_group))
 }
 
 #[cfg(test)]

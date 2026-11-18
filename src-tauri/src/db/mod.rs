@@ -15,6 +15,7 @@ pub mod fills;
 pub mod funding;
 pub mod import_batches;
 pub mod overrides;
+pub mod playbooks;
 pub mod screenshots;
 pub mod settings;
 pub mod tags;
