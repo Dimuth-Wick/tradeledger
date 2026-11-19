@@ -92,7 +92,7 @@ npm install          # JS libraries, from package.json / package-lock.json
 npm run tauri dev    # Rust libraries download + compile automatically (first run takes a few minutes)
 ```
 
-Library versions are pinned by `package-lock.json` and `src-tauri/Cargo.lock`; there is no separate requirements file.
+Library versions are pinned by `package-lock.json` and `backend/Cargo.lock`; there is no separate requirements file.
 
 ### 3. Checks before committing
 
@@ -123,6 +123,8 @@ $env:TRADELEDGER_DB_PATH = "$env:TEMP\tradeledger-demo.db"; npm run tauri dev
 ## Disclaimer
 
 TradeLedger is a journaling and analysis tool, not financial advice.
+
+TradeLedger is an independent project. It is not affiliated with, endorsed by or sponsored by Binance. "Binance" is a trademark of its owner and is used here only to describe which export files the app can read.
 
 ## License
 

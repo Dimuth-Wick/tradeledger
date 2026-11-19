@@ -1,7 +1,7 @@
 import type { Theme, ThemeMode } from "../connection/backend";
 
 // Puts the theme Rust returns onto the page: data-theme on <html> picks the
-// light or dark colors in App.css, and the accent goes into CSS variables.
+// light or dark colors in styles/app.css, and the accent goes into CSS variables.
 // A copy is kept in localStorage so the next start shows the right colors
 // before Rust answers (no white flash in dark mode).
 
