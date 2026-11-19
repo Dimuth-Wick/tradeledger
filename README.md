@@ -4,7 +4,7 @@
 
 > A free, open-source, offline **crypto trading journal** for your desktop. Import your Binance trades, plan your risk, tag your setups and mistakes, and see what actually makes you money.
 
-![version](https://img.shields.io/badge/version-1.0.0-orange) [![CI](https://github.com/Dimuth-Wick/tradeledger/actions/workflows/ci.yml/badge.svg)](https://github.com/Dimuth-Wick/tradeledger/actions/workflows/ci.yml) ![license](https://img.shields.io/badge/license-MIT-blue) ![stack](https://img.shields.io/badge/Tauri%202-Rust%20%2B%20React-informational)
+![version](https://img.shields.io/badge/version-1.1.0-orange) [![CI](https://github.com/Dimuth-Wick/tradeledger/actions/workflows/ci.yml/badge.svg)](https://github.com/Dimuth-Wick/tradeledger/actions/workflows/ci.yml) ![license](https://img.shields.io/badge/license-MIT-blue) ![stack](https://img.shields.io/badge/Tauri%202-Rust%20%2B%20React-informational)
 
 ![TradeLedger dashboard: key numbers and the daily equity curve](docs/screenshots/dashboard.png)
 
@@ -12,9 +12,9 @@
 
 ## Features
 
-- 📥 **Import** Binance spot and USDT-M futures trade history (CSV), or add trades by hand with **position size in USDT** (quantity and the 0.1% fee are worked out for you)
+- 📥 **Import** Binance spot and USDT-M futures trade history (CSV), or add trades by hand: pick the pair from a menu, enter the **position size in USDT**, and the quantity, 0.1% fee and profit or loss at your exit are worked out for you
 - 🧮 **Automatic trade grouping**: partial fills become one trade, with manual merge/split; fees and funding are included in net PnL
-- 🎯 **Risk plan per trade**: entry, stop loss, take profit → planned R:R and actual R-multiple
+- 🎯 **Risk plan per trade**: entry, stop loss, take profit → planned R:R and the profit or loss at each, shown while you type, plus the actual R-multiple
 - 📊 **Dashboard**: win rate, profit factor, expectancy, average win/loss, max drawdown, streaks, a **daily equity curve with the running win rate**, win/loss bars and the R distribution, in drag-and-drop, resizable widgets
 - 📅 **PnL calendar** with monthly total profit, total loss and net, in your time zone
 - 🏷️ **Tags, notes (Markdown), screenshots and custom fields** on every trade
@@ -25,8 +25,10 @@
 
 ## Screenshots
 
-| Calendar                                                                                     | Reports                                                                    |
+| New trade                                                                                    | Settings                                                                   |
 | -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| ![New trade form with live R:R and profit or loss](docs/screenshots/new-trade.png)           | ![Settings with tags, fields and backups](docs/screenshots/settings.png)   |
+| **Calendar**                                                                                 | **Reports**                                                                |
 | ![PnL calendar with monthly profit, loss and net](docs/screenshots/calendar.png)             | ![Reports grouped by tag](docs/screenshots/reports.png)                    |
 | **Trade log**                                                                                | **Playbooks**                                                              |
 | ![Trade log with tags and R-multiples](docs/screenshots/trades.png)                          | ![Playbook with followed vs skipped rules](docs/screenshots/playbooks.png) |
