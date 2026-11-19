@@ -1,3 +1,5 @@
+<p align="center"><img src="src-tauri/icons/icon.png" width="120" alt="TradeLedger logo"></p>
+
 # TradeLedger
 
 > A free, open-source, offline **crypto trading journal** for your desktop. Import your Binance trades, plan your risk, tag your setups and mistakes, and see what actually makes you money.

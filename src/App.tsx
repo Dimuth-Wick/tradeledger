@@ -137,52 +137,39 @@ function Shell() {
 
 export default App;
 
-/** Logo: two candlesticks, one up and one down, in the accent color. */
+/** Logo: white candlesticks climbing to an arrow on an orange tile (the
+ *  same artwork as the app icon, src-tauri/icons/app-icon.svg). */
 function BrandMark() {
   return (
-    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+    <svg viewBox="0 0 1024 1024" width="28" height="28" aria-hidden="true">
       <defs>
-        <linearGradient id="brand-energy" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#ffb020" />
-          <stop offset="0.5" stopColor="#ff7a18" />
-          <stop offset="1" stopColor="#ff4d4d" />
+        <linearGradient id="brand-tile" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#ffb21e" />
+          <stop offset="0.55" stopColor="#ff7417" />
+          <stop offset="1" stopColor="#f2450f" />
         </linearGradient>
       </defs>
       <rect
-        x="4"
-        y="3"
-        width="2"
-        height="18"
-        rx="1"
-        fill="url(#brand-energy)"
-        opacity="0.45"
+        x="32"
+        y="32"
+        width="960"
+        height="960"
+        rx="220"
+        fill="url(#brand-tile)"
       />
-      <rect
-        x="2.5"
-        y="7"
-        width="5"
-        height="9"
-        rx="1.5"
-        fill="url(#brand-energy)"
-      />
-      <rect
-        x="15"
-        y="2"
-        width="2"
-        height="17"
-        rx="1"
-        fill="url(#brand-energy)"
-        opacity="0.45"
-      />
-      <rect
-        x="13.5"
-        y="5"
-        width="5"
-        height="7"
-        rx="1.5"
-        fill="url(#brand-energy)"
-        opacity="0.7"
-      />
+      <g fill="#ffffff" stroke="#ffffff" strokeLinecap="round">
+        <line x1="292" y1="548" x2="292" y2="812" strokeWidth="30" />
+        <rect x="232" y="598" width="120" height="166" rx="28" stroke="none" />
+        <line x1="512" y1="396" x2="512" y2="772" strokeWidth="30" />
+        <rect x="452" y="446" width="120" height="250" rx="28" stroke="none" />
+        <line x1="732" y1="560" x2="732" y2="732" strokeWidth="30" />
+        <rect x="672" y="318" width="120" height="314" rx="28" stroke="none" />
+        <path
+          d="M732 168 L842 330 L622 330 Z"
+          strokeWidth="24"
+          strokeLinejoin="round"
+        />
+      </g>
     </svg>
   );
 }
