@@ -42,11 +42,14 @@ jobs:
       - name: Install npm packages
         shell: bash
         run: |
-          npm ci || {
-            msg=$(grep -h "npm error" ~/.npm/_logs/*-debug-0.log | tail -20 | paste -sd '|')
-            echo "::error title=npm ci failed::${msg}"
+          set +e +o pipefail
+          npm ci > npm-ci.log 2>&1
+          status=$?
+          cat npm-ci.log
+          if [ "$status" -ne 0 ]; then
+            echo "::error title=npm ci failed::$(tail -n 15 npm-ci.log | paste -sd '|')"
             exit 1
-          }
+          fi
 
       - name: UI lint, format and tests
         run: |
