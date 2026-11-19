@@ -96,6 +96,88 @@ pub fn resolve_size(input: &TradeInput) -> Result<(Decimal, Decimal), TradeError
     Ok((qty, fees))
 }
 
+/// What the risk-plan boxes send while you type (before the trade is saved).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PlanInput {
+    pub direction: Direction,
+    /// Planned entry price.
+    pub entry: Decimal,
+    pub stop_loss: Option<Decimal>,
+    pub take_profit: Option<Decimal>,
+    /// Position size in USDT; without it only the R:R can be worked out.
+    pub position_size: Option<Decimal>,
+}
+
+/// The plan's numbers, shown under the risk-plan boxes.
+#[derive(Debug, Clone, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PlanPreview {
+    /// Reward ÷ risk; needs both stop loss and take profit.
+    pub planned_rr: Option<Decimal>,
+    /// Result if the stop is hit, after fees (negative, to the cent).
+    /// Needs stop + size.
+    pub loss_at_stop: Option<Decimal>,
+    /// Result if the target is hit, after fees. Needs target + size.
+    pub profit_at_target: Option<Decimal>,
+    /// The automatic fee (`FEE_RATE` of the size) included above.
+    pub fees: Option<Decimal>,
+}
+
+/// Works out R:R and the profit/loss at the target and the stop. Fees are
+/// the same automatic fee a saved trade gets, so the numbers match.
+pub fn plan_preview(input: &PlanInput) -> Result<PlanPreview, TradeError> {
+    if input.entry <= Decimal::ZERO {
+        return Err(invalid("entry price must be greater than 0"));
+    }
+    if [input.stop_loss, input.take_profit, input.position_size]
+        .into_iter()
+        .flatten()
+        .any(|v| v <= Decimal::ZERO)
+    {
+        return Err(invalid(
+            "stop loss, take profit and position size must be greater than 0",
+        ));
+    }
+    let d = input.direction;
+    let risk = input
+        .stop_loss
+        .map(|stop| risk::risk_per_unit(d, input.entry, stop))
+        .transpose()?;
+    let reward = input
+        .take_profit
+        .map(|target| risk::reward_per_unit(d, input.entry, target))
+        .transpose()?;
+    let planned_rr = match (input.stop_loss, input.take_profit) {
+        (Some(stop), Some(target)) => Some(risk::planned_rr(d, input.entry, stop, target)?),
+        _ => None,
+    };
+
+    let sized = input.position_size.map(|size| {
+        let qty = size / input.entry;
+        (qty, round_amount(size * FEE_RATE))
+    });
+    let (loss_at_stop, profit_at_target) = match sized {
+        Some((qty, fees)) => (
+            risk.map(|r| round_cents(-(qty * r) - fees)),
+            reward.map(|r| round_cents(qty * r - fees)),
+        ),
+        None => (None, None),
+    };
+    Ok(PlanPreview {
+        planned_rr,
+        loss_at_stop,
+        profit_at_target,
+        fees: sized.map(|(_, fees)| fees),
+    })
+}
+
+/// Dollar amounts in the plan preview are shown to the cent.
+fn round_cents(v: Decimal) -> Decimal {
+    v.round_dp_with_strategy(2, RoundingStrategy::MidpointAwayFromZero)
+        .normalize()
+}
+
 fn invalid(msg: &str) -> TradeError {
     TradeError::Invalid(msg.to_string())
 }
@@ -253,6 +335,106 @@ mod tests {
     use super::*;
     use crate::database::open_in_memory;
     use rust_decimal_macros::dec;
+
+    fn plan(
+        direction: Direction,
+        stop: Option<Decimal>,
+        target: Option<Decimal>,
+        size: Option<Decimal>,
+    ) -> PlanInput {
+        PlanInput {
+            direction,
+            entry: dec!(100),
+            stop_loss: stop,
+            take_profit: target,
+            position_size: size,
+        }
+    }
+
+    #[test]
+    fn plan_preview_long_with_size() {
+        // $500 at 100 = 5 coins, fee 0.1% = $0.50. Stop 95: −25 −0.5;
+        // target 115: +75 −0.5; R:R 15 ÷ 5 = 3.
+        let p = plan_preview(&plan(
+            Direction::Long,
+            Some(dec!(95)),
+            Some(dec!(115)),
+            Some(dec!(500)),
+        ))
+        .unwrap();
+        assert_eq!(p.planned_rr, Some(dec!(3)));
+        assert_eq!(p.loss_at_stop, Some(dec!(-25.5)));
+        assert_eq!(p.profit_at_target, Some(dec!(74.5)));
+        assert_eq!(p.fees, Some(dec!(0.5)));
+    }
+
+    #[test]
+    fn plan_preview_short_and_partial_plans() {
+        // Short: stop above, target below.
+        let p = plan_preview(&plan(
+            Direction::Short,
+            Some(dec!(104)),
+            Some(dec!(90)),
+            Some(dec!(1000)),
+        ))
+        .unwrap();
+        assert_eq!(p.planned_rr, Some(dec!(2.5)));
+        assert_eq!(p.loss_at_stop, Some(dec!(-41))); // 10 × 4 + 1 fee
+        assert_eq!(p.profit_at_target, Some(dec!(99))); // 10 × 10 − 1 fee
+
+        // No size: R:R only.
+        let p = plan_preview(&plan(
+            Direction::Long,
+            Some(dec!(95)),
+            Some(dec!(110)),
+            None,
+        ))
+        .unwrap();
+        assert_eq!(p.planned_rr, Some(dec!(2)));
+        assert_eq!(
+            (p.loss_at_stop, p.profit_at_target, p.fees),
+            (None, None, None)
+        );
+
+        // Stop only: loss, no R:R.
+        let p = plan_preview(&plan(
+            Direction::Long,
+            Some(dec!(95)),
+            None,
+            Some(dec!(500)),
+        ))
+        .unwrap();
+        assert_eq!(p.planned_rr, None);
+        assert_eq!(p.loss_at_stop, Some(dec!(-25.5)));
+        assert_eq!(p.profit_at_target, None);
+
+        // Uneven quantity: $500 at 150 = 3.333… coins; stop 145 → −16.67 − 0.5.
+        let mut uneven = plan(Direction::Long, Some(dec!(145)), None, Some(dec!(500)));
+        uneven.entry = dec!(150);
+        assert_eq!(
+            plan_preview(&uneven).unwrap().loss_at_stop,
+            Some(dec!(-17.17))
+        );
+    }
+
+    #[test]
+    fn plan_preview_rejects_bad_levels() {
+        assert!(matches!(
+            plan_preview(&plan(Direction::Long, Some(dec!(105)), None, None)),
+            Err(TradeError::Risk(RiskError::StopOnWrongSide))
+        ));
+        assert!(matches!(
+            plan_preview(&plan(Direction::Short, None, Some(dec!(110)), None)),
+            Err(TradeError::Risk(RiskError::TargetOnWrongSide))
+        ));
+        assert!(matches!(
+            plan_preview(&plan(Direction::Long, Some(dec!(0)), None, None)),
+            Err(TradeError::Invalid(_))
+        ));
+        let mut zero_entry = plan(Direction::Long, None, None, None);
+        zero_entry.entry = dec!(0);
+        assert!(plan_preview(&zero_entry).is_err());
+    }
 
     /// Closed long: in 100 → out 110, qty 2, stop 95, target 115.
     fn closed_long() -> TradeInput {

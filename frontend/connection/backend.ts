@@ -231,6 +231,41 @@ export function previewTrade(input: TradeInput): Promise<Trade> {
   return invoke<Trade>("preview_trade", { input });
 }
 
+/** What the risk-plan boxes send (mirrors Rust `PlanInput`). */
+export interface PlanInput {
+  direction: Direction;
+  /** Planned entry price. */
+  entry: Decimal;
+  stopLoss: Decimal | null;
+  takeProfit: Decimal | null;
+  positionSize: Decimal | null;
+}
+
+/** Mirrors Rust `PlanPreview`. Amounts are after the automatic fee. */
+export interface PlanPreview {
+  plannedRr: Decimal | null;
+  lossAtStop: Decimal | null;
+  profitAtTarget: Decimal | null;
+  fees: Decimal | null;
+}
+
+/** R:R and the profit/loss at the target and stop; nothing is saved. */
+export function previewPlan(input: PlanInput): Promise<PlanPreview> {
+  return invoke<PlanPreview>("preview_plan", { input });
+}
+
+/** One entry of the symbol menu, e.g. BTCUSDT = BTC / USDT. */
+export interface SymbolChoice {
+  symbol: string;
+  base: string;
+  quote: string;
+}
+
+/** Popular pairs for the market, plus symbols already in the journal. */
+export function symbolChoices(market: Market): Promise<SymbolChoice[]> {
+  return invoke<SymbolChoice[]>("symbol_choices", { market });
+}
+
 export function createTrade(input: TradeInput): Promise<WithId<Trade>> {
   return invoke<WithId<Trade>>("create_trade", { input });
 }

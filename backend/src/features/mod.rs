@@ -31,6 +31,8 @@ pub mod risk;
 pub mod screenshots;
 /// Win rate, profit factor, drawdown, equity curve and the rest.
 pub mod stats;
+/// The symbol menu: popular Binance pairs per market.
+pub mod symbols;
 /// Tag groups and tags.
 pub mod tags;
 /// Light / dark / accent color.

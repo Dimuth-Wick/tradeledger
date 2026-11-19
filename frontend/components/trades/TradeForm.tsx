@@ -3,14 +3,20 @@ import PendingShots, { type PendingShot } from "./PendingShots";
 import {
   addScreenshot,
   createTrade,
+  previewPlan,
   previewTrade,
+  symbolChoices,
+  type PlanPreview,
+  type SymbolChoice,
   type Trade,
 } from "../../connection/backend";
 import { formatR, formatRr, pnlClass, usd } from "../../logic/format";
 import {
   emptyForm,
   hasInput,
+  toPlanInput,
   toTradeInput,
+  withEntryPrice,
   type TradeFormState,
 } from "../../logic/tradeForm";
 import { useUnsavedChanges } from "../../logic/unsaved";
@@ -21,6 +27,13 @@ const PREVIEW_DELAY_MS = 250;
 type Preview = { key: string } & (
   { ok: true; trade: Trade } | { ok: false; error: string }
 );
+
+type PlanResult = { key: string } & (
+  { ok: true; plan: PlanPreview } | { ok: false; error: string }
+);
+
+/** The symbol menu's "type your own" entry. */
+const OTHER = "__other__";
 
 interface Props {
   onSaved: () => void;
@@ -34,6 +47,22 @@ export default function TradeForm({ onSaved }: Props) {
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
   // Screenshots chosen before the trade exists; attached after saving.
   const [shots, setShots] = useState<PendingShot[]>([]);
+  // The symbol menu for the chosen market (from Rust).
+  const [choices, setChoices] = useState<SymbolChoice[]>([]);
+  // True after "Other" is picked: the symbol is typed instead.
+  const [typingSymbol, setTypingSymbol] = useState(false);
+  const [plan, setPlan] = useState<PlanResult | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    symbolChoices(form.market).then(
+      (list) => !cancelled && setChoices(list),
+      () => !cancelled && setChoices([]),
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [form.market]);
 
   const parsed = useMemo(() => toTradeInput(form), [form]);
   useUnsavedChanges(hasInput(form) || shots.length > 0);
@@ -58,14 +87,47 @@ export default function TradeForm({ onSaved }: Props) {
     };
   }, [parsed]);
 
+  // R:R and profit/loss at target/stop, as soon as the risk plan has them.
+  const planInput = useMemo(() => toPlanInput(form), [form]);
+  const planKey = planInput ? JSON.stringify(planInput) : null;
+  useEffect(() => {
+    if (!planInput) return;
+    const key = JSON.stringify(planInput);
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      previewPlan(planInput).then(
+        (p) => !cancelled && setPlan({ key, ok: true, plan: p }),
+        (err) => !cancelled && setPlan({ key, ok: false, error: String(err) }),
+      );
+    }, PREVIEW_DELAY_MS);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [planInput]);
+  const currentPlan = plan && plan.key === planKey ? plan : null;
+
   const current = preview && preview.key === inputKey ? preview : null;
+  // A symbol not in the menu (e.g. a spot pair after switching to futures)
+  // is shown in the typed box so it's never hidden.
+  const inMenu = choices.some((c) => c.symbol === form.symbol);
+  const showSymbolBox = typingSymbol || (form.symbol !== "" && !inMenu);
+  const autoFee = current?.ok
+    ? current.trade.fees
+    : currentPlan?.ok
+      ? currentPlan.plan.fees
+      : null;
   const canSave = parsed.ok && current?.ok === true && !saving;
 
   function set<K extends keyof TradeFormState>(
     key: K,
     value: TradeFormState[K],
   ) {
-    setForm((f) => ({ ...f, [key]: value }));
+    change((f) => ({ ...f, [key]: value }));
+  }
+
+  function change(next: (f: TradeFormState) => TradeFormState) {
+    setForm(next);
     setSavedMsg(null);
     setSaveError(null);
   }
@@ -92,10 +154,10 @@ export default function TradeForm({ onSaved }: Props) {
       }
       shots.forEach((s) => URL.revokeObjectURL(s.url));
       setShots([]);
-      // Keep the choices people repeat (exchange, market, direction).
+      // Keep the choices people repeat (market, direction).
+      setTypingSymbol(false);
       setForm({
         ...emptyForm(),
-        exchange: form.exchange,
         market: form.market,
         direction: form.direction,
       });
@@ -137,17 +199,41 @@ export default function TradeForm({ onSaved }: Props) {
             </label>
             <label>
               Symbol
-              <input
-                value={form.symbol}
-                onChange={(e) => set("symbol", e.target.value)}
-                placeholder="BTCUSDT"
-              />
+              <select
+                value={showSymbolBox ? OTHER : form.symbol}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setTypingSymbol(v === OTHER);
+                  set("symbol", v === OTHER ? "" : v);
+                }}
+              >
+                <option value="" disabled>
+                  Choose a pair…
+                </option>
+                {choices.map((c) => (
+                  <option key={c.symbol} value={c.symbol}>
+                    {c.quote ? `${c.base} / ${c.quote}` : c.symbol}
+                  </option>
+                ))}
+                <option value={OTHER}>Other (type it)…</option>
+              </select>
+              {showSymbolBox && (
+                <input
+                  aria-label="Symbol (typed)"
+                  value={form.symbol}
+                  onChange={(e) => set("symbol", e.target.value)}
+                  placeholder="e.g. WIFUSDT"
+                  autoFocus
+                />
+              )}
             </label>
             <label>
               Exchange
               <input
-                value={form.exchange}
-                onChange={(e) => set("exchange", e.target.value)}
+                value="Binance"
+                readOnly
+                className="locked"
+                tabIndex={-1}
               />
             </label>
           </div>
@@ -179,7 +265,10 @@ export default function TradeForm({ onSaved }: Props) {
               <input
                 inputMode="decimal"
                 value={form.avgEntry}
-                onChange={(e) => set("avgEntry", e.target.value)}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  change((f) => withEntryPrice(f, v));
+                }}
               />
             </label>
             <label>
@@ -212,39 +301,29 @@ export default function TradeForm({ onSaved }: Props) {
           </div>
           <div className="row">
             <label>
-              Fees
+              Fees (0.1%)
               <input
-                inputMode="decimal"
-                value={form.fees}
-                onChange={(e) => set("fees", e.target.value)}
-                placeholder={
-                  current?.ok && form.fees.trim() === ""
-                    ? `auto ${usd(current.trade.fees, { sign: false })} (0.1%)`
-                    : "auto: 0.1% of size"
+                readOnly
+                className="locked"
+                tabIndex={-1}
+                value={
+                  autoFee === null
+                    ? ""
+                    : usd(autoFee, { sign: false, round: true })
                 }
+                placeholder="worked out from position size"
               />
             </label>
             {futures && (
-              <>
-                <label>
-                  Funding
-                  <input
-                    inputMode="decimal"
-                    value={form.funding}
-                    onChange={(e) => set("funding", e.target.value)}
-                    placeholder="paid +, received −"
-                  />
-                </label>
-                <label>
-                  Leverage
-                  <input
-                    inputMode="numeric"
-                    value={form.leverage}
-                    onChange={(e) => set("leverage", e.target.value)}
-                    placeholder="10"
-                  />
-                </label>
-              </>
+              <label>
+                Leverage
+                <input
+                  inputMode="numeric"
+                  value={form.leverage}
+                  onChange={(e) => set("leverage", e.target.value)}
+                  placeholder="10"
+                />
+              </label>
             )}
           </div>
         </fieldset>
@@ -258,7 +337,7 @@ export default function TradeForm({ onSaved }: Props) {
                 inputMode="decimal"
                 value={form.plannedEntry}
                 onChange={(e) => set("plannedEntry", e.target.value)}
-                placeholder="= entry price"
+                placeholder="fills from entry price"
               />
             </label>
             <label>
@@ -278,6 +357,7 @@ export default function TradeForm({ onSaved }: Props) {
               />
             </label>
           </div>
+          <PlanSummary hasPlan={planInput !== null} result={currentPlan} />
         </fieldset>
 
         <fieldset>
@@ -344,5 +424,55 @@ export default function TradeForm({ onSaved }: Props) {
         {savedMsg && <p className="status ok">{savedMsg}</p>}
       </aside>
     </form>
+  );
+}
+
+/** The risk plan's numbers: R:R, and what you would make or lose at the
+ *  take profit and the stop loss (after the 0.1% fee). Worked out in Rust. */
+function PlanSummary({
+  hasPlan,
+  result,
+}: {
+  hasPlan: boolean;
+  result: PlanResult | null;
+}) {
+  if (!hasPlan) {
+    return (
+      <p className="hint plan-summary">
+        Add a stop loss and take profit to see the R:R and your profit or loss.
+      </p>
+    );
+  }
+  if (!result) return <p className="hint plan-summary">Calculating…</p>;
+  if (!result.ok) {
+    return <p className="status error plan-summary">{result.error}</p>;
+  }
+  const p = result.plan;
+  return (
+    <div className="plan-summary">
+      <dl>
+        <div>
+          <dt>R:R</dt>
+          <dd>{formatRr(p.plannedRr)}</dd>
+        </div>
+        <div>
+          <dt>Profit at take profit</dt>
+          <dd className={pnlClass(p.profitAtTarget)}>
+            {p.profitAtTarget === null
+              ? "—"
+              : usd(p.profitAtTarget, { round: true })}
+          </dd>
+        </div>
+        <div>
+          <dt>Loss at stop loss</dt>
+          <dd className={pnlClass(p.lossAtStop)}>
+            {p.lossAtStop === null ? "—" : usd(p.lossAtStop, { round: true })}
+          </dd>
+        </div>
+      </dl>
+      {p.fees === null && (
+        <p className="hint">Add a position size to see profit and loss in $.</p>
+      )}
+    </div>
   );
 }

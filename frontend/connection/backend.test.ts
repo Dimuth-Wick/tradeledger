@@ -35,10 +35,13 @@ import {
   ping,
   previewImport,
   previewJournal,
+  previewPlan,
   previewTrade,
   queryTrades,
+  symbolChoices,
   updateJournal,
   type JournalInput,
+  type PlanInput,
   updateTrade,
   type TradeInput,
 } from "./backend";
@@ -106,6 +109,14 @@ describe("trade commands", () => {
     notes: "fake note",
   };
 
+  const plan: PlanInput = {
+    direction: "long",
+    entry: "100",
+    stopLoss: "95",
+    takeProfit: null,
+    positionSize: "500",
+  };
+
   beforeEach(() => {
     invokeMock.mockReset();
     invokeMock.mockResolvedValue(undefined);
@@ -115,6 +126,8 @@ describe("trade commands", () => {
   // function and parameter names exactly, or the call fails at runtime.
   it.each([
     ["preview_trade", () => previewTrade(input), { input }],
+    ["preview_plan", () => previewPlan(plan), { input: plan }],
+    ["symbol_choices", () => symbolChoices("spot"), { market: "spot" }],
     ["create_trade", () => createTrade(input), { input }],
     ["update_trade", () => updateTrade(7, input), { id: 7, input }],
     ["delete_trade", () => deleteTrade(7), { id: 7 }],

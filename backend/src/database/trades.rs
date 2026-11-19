@@ -156,6 +156,14 @@ pub fn symbols(conn: &Connection) -> Result<Vec<String>, DbError> {
     Ok(rows.collect::<rusqlite::Result<_>>()?)
 }
 
+/// Distinct symbols traded on one market, for the new-trade symbol menu.
+pub fn symbols_for_market(conn: &Connection, market: Market) -> Result<Vec<String>, DbError> {
+    let mut stmt =
+        conn.prepare("SELECT DISTINCT symbol FROM trades WHERE market = ?1 ORDER BY symbol")?;
+    let rows = stmt.query_map([market], |r| r.get(0))?;
+    Ok(rows.collect::<rusqlite::Result<_>>()?)
+}
+
 fn from_row(r: &Row<'_>) -> rusqlite::Result<WithId<Trade>> {
     Ok(WithId {
         id: r.get("id")?,
@@ -200,6 +208,30 @@ mod tests {
         let t = test_data::trade();
         let id = insert(&conn, &t).unwrap();
         assert_eq!(get(&conn, id).unwrap(), Some(WithId { id, item: t }));
+    }
+
+    #[test]
+    fn symbols_for_market_only_lists_that_market() {
+        let conn = open_in_memory().unwrap();
+        for (market, symbol) in [
+            (Market::Usdm, "WIFUSDT"),
+            (Market::Usdm, "WIFUSDT"),
+            (Market::Spot, "ETHBTC"),
+            (Market::Usdm, "ARBUSDT"),
+        ] {
+            let mut t = test_data::trade();
+            t.market = market;
+            t.symbol = symbol.to_string();
+            insert(&conn, &t).unwrap();
+        }
+        assert_eq!(
+            symbols_for_market(&conn, Market::Usdm).unwrap(),
+            vec!["ARBUSDT", "WIFUSDT"]
+        );
+        assert_eq!(
+            symbols_for_market(&conn, Market::Spot).unwrap(),
+            vec!["ETHBTC"]
+        );
     }
 
     #[test]

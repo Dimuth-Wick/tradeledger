@@ -9,9 +9,10 @@ use tauri::State;
 use crate::database::{self as db, Db};
 use crate::features::journal::{self, JournalInput};
 use crate::features::stats::{self, Stats};
-use crate::features::trade_entry::{self, TradeInput};
+use crate::features::symbols::{self, SymbolChoice};
+use crate::features::trade_entry::{self, PlanInput, PlanPreview, TradeInput};
 use crate::features::trade_query::{self, TradePage, TradeQuery};
-use crate::models::{Trade, WithId};
+use crate::models::{Market, Trade, WithId};
 
 /// Runs `f` with the locked connection and converts any error to a String.
 fn with_conn<T, E: Display>(
@@ -28,6 +29,18 @@ fn with_conn<T, E: Display>(
 #[tauri::command]
 pub fn preview_trade(input: TradeInput) -> Result<Trade, String> {
     trade_entry::build_trade(&input, true).map_err(|e| e.to_string())
+}
+
+/// R:R and the profit/loss at the target and stop, for the risk-plan boxes.
+#[tauri::command]
+pub fn preview_plan(input: PlanInput) -> Result<PlanPreview, String> {
+    trade_entry::plan_preview(&input).map_err(|e| e.to_string())
+}
+
+/// The new-trade symbol menu for one market.
+#[tauri::command]
+pub fn symbol_choices(db: State<'_, Db>, market: Market) -> Result<Vec<SymbolChoice>, String> {
+    with_conn(&db, |c| symbols::choices_from_db(c, market))
 }
 
 #[tauri::command]

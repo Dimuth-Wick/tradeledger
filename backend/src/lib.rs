@@ -67,6 +67,8 @@ pub fn run() {
             connection::ping,
             connection::db_info,
             connection::trades::preview_trade,
+            connection::trades::preview_plan,
+            connection::trades::symbol_choices,
             connection::trades::create_trade,
             connection::trades::update_trade,
             connection::trades::delete_trade,

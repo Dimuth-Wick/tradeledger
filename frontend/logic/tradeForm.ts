@@ -1,13 +1,21 @@
-import type { Direction, Market, TradeInput } from "../connection/backend";
+import type {
+  Direction,
+  Market,
+  PlanInput,
+  TradeInput,
+} from "../connection/backend";
 
 // Turns what the user typed into a TradeInput for Rust. Only checks *format*
 // here (is it a number? is a required box empty?). Business rules — stop on
 // the right side, close after open, etc. — are checked in Rust, so the rules
 // live in one place.
 
-/** Every box is a string, exactly as typed. */
+/** Manual trades are always Binance trades (the box is locked). */
+export const EXCHANGE = "binance";
+
+/** Every box is a string, exactly as typed. Fees aren't a box: they are
+ *  always 0.1% of the position size, worked out in Rust. */
 export interface TradeFormState {
-  exchange: string;
   market: Market;
   symbol: string;
   direction: Direction;
@@ -19,9 +27,7 @@ export interface TradeFormState {
   avgEntry: string;
   avgExit: string;
   leverage: string;
-  /** Empty = automatic, 0.1% of the position size. */
-  fees: string;
-  funding: string;
+  /** Follows the entry price until the user types a different one. */
   plannedEntry: string;
   stopLoss: string;
   takeProfit: string;
@@ -44,7 +50,6 @@ export function toLocalInputValue(date: Date): string {
 
 export function emptyForm(now: Date = new Date()): TradeFormState {
   return {
-    exchange: "binance",
     market: "usdm",
     symbol: "",
     direction: "long",
@@ -54,8 +59,6 @@ export function emptyForm(now: Date = new Date()): TradeFormState {
     avgEntry: "",
     avgExit: "",
     leverage: "",
-    fees: "",
-    funding: "",
     plannedEntry: "",
     stopLoss: "",
     takeProfit: "",
@@ -64,7 +67,7 @@ export function emptyForm(now: Date = new Date()): TradeFormState {
 }
 
 /** True once the user typed something worth keeping. The prefilled boxes
- *  (exchange, market, side, open time) don't count. */
+ *  (market, side, open time) don't count. */
 export function hasInput(form: TradeFormState): boolean {
   const typed: (keyof TradeFormState)[] = [
     "symbol",
@@ -73,8 +76,6 @@ export function hasInput(form: TradeFormState): boolean {
     "avgEntry",
     "avgExit",
     "leverage",
-    "fees",
-    "funding",
     "plannedEntry",
     "stopLoss",
     "takeProfit",
@@ -84,7 +85,6 @@ export function hasInput(form: TradeFormState): boolean {
 }
 
 const UNSIGNED = /^(\d+\.?\d*|\.\d+)$/;
-const SIGNED = /^-?(\d+\.?\d*|\.\d+)$/;
 const INTEGER = /^\d+$/;
 
 class FormatError extends Error {}
@@ -131,12 +131,12 @@ export function toTradeInput(form: TradeFormState): FormResult {
     if (leverage !== "" && !INTEGER.test(leverage)) {
       throw new FormatError("Leverage: enter a whole number like 10");
     }
-    // Leverage and funding only exist on futures; ignore leftovers if the
-    // user switched the market back to spot.
+    // Leverage only exists on futures; ignore a leftover if the user
+    // switched the market back to spot.
     const futures = form.market === "usdm";
 
     const input: TradeInput = {
-      exchange: form.exchange.trim(),
+      exchange: EXCHANGE,
       market: form.market,
       symbol: form.symbol.trim(),
       direction: form.direction,
@@ -146,12 +146,10 @@ export function toTradeInput(form: TradeFormState): FormResult {
       avgEntry: decimal("Entry price", form.avgEntry)!,
       avgExit: decimal("Exit price", form.avgExit),
       leverage: futures && leverage !== "" ? Number(leverage) : null,
-      // Empty fees box = let Rust charge 0.1% of the position size.
-      fees: decimal("Fees", form.fees) ?? "0",
-      autoFees: form.fees.trim() === "",
-      funding: futures
-        ? (decimal("Funding", form.funding, SIGNED) ?? "0")
-        : "0",
+      // Rust charges 0.1% of the position size.
+      fees: "0",
+      autoFees: true,
+      funding: "0",
       plannedEntry: decimal("Planned entry", form.plannedEntry),
       stopLoss: decimal("Stop loss", form.stopLoss),
       takeProfit: decimal("Take profit", form.takeProfit),
@@ -164,4 +162,54 @@ export function toTradeInput(form: TradeFormState): FormResult {
     }
     throw err;
   }
+}
+
+/** Sets the entry price. The planned entry follows it while it is empty or
+ *  still equal to the old entry; once the user types their own planned
+ *  entry, it is left alone. */
+export function withEntryPrice(
+  form: TradeFormState,
+  avgEntry: string,
+): TradeFormState {
+  const follows =
+    form.plannedEntry.trim() === "" ||
+    form.plannedEntry.trim() === form.avgEntry.trim();
+  return {
+    ...form,
+    avgEntry,
+    plannedEntry: follows ? avgEntry : form.plannedEntry,
+  };
+}
+
+/** The risk-plan numbers to ask Rust about, or null when there is nothing
+ *  to work out yet (no entry, or neither stop loss nor take profit) or a
+ *  box isn't a number. */
+export function toPlanInput(form: TradeFormState): PlanInput | null {
+  const num = (raw: string): string | null | undefined => {
+    const v = raw.trim();
+    if (v === "") return null;
+    return UNSIGNED.test(v) ? v : undefined; // undefined = not a number
+  };
+  const planned = num(form.plannedEntry);
+  // A blank planned entry means "same as the entry price".
+  const entry = planned === null ? num(form.avgEntry) : planned;
+  const stopLoss = num(form.stopLoss);
+  const takeProfit = num(form.takeProfit);
+  const positionSize = num(form.positionSize);
+  if (
+    !entry ||
+    stopLoss === undefined ||
+    takeProfit === undefined ||
+    positionSize === undefined ||
+    (stopLoss === null && takeProfit === null)
+  ) {
+    return null;
+  }
+  return {
+    direction: form.direction,
+    entry,
+    stopLoss,
+    takeProfit,
+    positionSize,
+  };
 }

@@ -3,7 +3,9 @@ import {
   emptyForm,
   hasInput,
   toLocalInputValue,
+  toPlanInput,
   toTradeInput,
+  withEntryPrice,
   type TradeFormState,
 } from "./tradeForm";
 
@@ -69,7 +71,7 @@ describe("toTradeInput", () => {
       avgExit: null,
       leverage: null,
       fees: "0",
-      autoFees: true, // empty fees box = 0.1% of size, worked out in Rust
+      autoFees: true, // always 0.1% of size, worked out in Rust
       funding: "0",
       stopLoss: null,
       takeProfit: null,
@@ -84,14 +86,12 @@ describe("toTradeInput", () => {
     expect(result.ok && result.input.stopLoss).toBe(".5");
   });
 
-  it("parses a closed futures trade with leverage and negative funding", () => {
+  it("parses a closed futures trade with leverage", () => {
     const result = toTradeInput(
       filled({
         closeTime: "2026-11-14T11:00",
         avgExit: "37010.55",
         leverage: "10",
-        fees: "0.55",
-        funding: "-0.01",
       }),
     );
     expect(result.ok).toBe(true);
@@ -100,28 +100,102 @@ describe("toTradeInput", () => {
       new Date(2026, 10, 14, 11, 0).getTime(),
     );
     expect(result.input.leverage).toBe(10);
-    expect(result.input.funding).toBe("-0.01");
-    // A typed fee is kept as typed.
-    expect(result.input).toMatchObject({ fees: "0.55", autoFees: false });
+    expect(result.input).toMatchObject({
+      exchange: "binance",
+      autoFees: true,
+      funding: "0",
+    });
   });
 
-  it("ignores leverage and funding on spot", () => {
-    const result = toTradeInput(
-      filled({ market: "spot", leverage: "10", funding: "1" }),
-    );
+  it("ignores leverage on spot", () => {
+    const result = toTradeInput(filled({ market: "spot", leverage: "10" }));
     expect(result.ok && result.input.leverage).toBeNull();
-    expect(result.ok && result.input.funding).toBe("0");
   });
 
   it.each([
     ["positionSize", "abc", "Position size"],
     ["avgEntry", "1,5", "Entry price"],
     ["stopLoss", "-5", "Stop loss"],
-    ["fees", "1.2.3", "Fees"],
     ["leverage", "2.5", "Leverage"],
   ] as const)("rejects %s = %j with a %s message", (field, value, label) => {
     const result = toTradeInput(filled({ [field]: value }));
     expect(result).toMatchObject({ ok: false, incomplete: false });
     if (!result.ok) expect(result.error).toContain(label);
+  });
+});
+
+describe("withEntryPrice", () => {
+  it("fills the planned entry while it follows the entry", () => {
+    let form = withEntryPrice(emptyForm(), "100");
+    expect(form.plannedEntry).toBe("100");
+    form = withEntryPrice(form, "101.5");
+    expect(form).toMatchObject({ avgEntry: "101.5", plannedEntry: "101.5" });
+  });
+
+  it("keeps a planned entry the user typed", () => {
+    const form = withEntryPrice(
+      { ...emptyForm(), avgEntry: "100", plannedEntry: "99" },
+      "102",
+    );
+    expect(form).toMatchObject({ avgEntry: "102", plannedEntry: "99" });
+  });
+
+  it("starts following again after the planned entry is cleared", () => {
+    const form = withEntryPrice(
+      { ...emptyForm(), avgEntry: "100", plannedEntry: "" },
+      "103",
+    );
+    expect(form.plannedEntry).toBe("103");
+  });
+});
+
+describe("toPlanInput", () => {
+  const base = { ...emptyForm(), avgEntry: "100", plannedEntry: "100" };
+
+  it("needs an entry and a stop loss or take profit", () => {
+    expect(toPlanInput(emptyForm())).toBeNull();
+    expect(toPlanInput(base)).toBeNull();
+    expect(
+      toPlanInput({ ...base, avgEntry: "", plannedEntry: "", stopLoss: "95" }),
+    ).toBeNull();
+  });
+
+  it("sends the plan with the position size when given", () => {
+    expect(
+      toPlanInput({
+        ...base,
+        direction: "short",
+        stopLoss: "105",
+        takeProfit: "90",
+        positionSize: "500",
+      }),
+    ).toEqual({
+      direction: "short",
+      entry: "100",
+      stopLoss: "105",
+      takeProfit: "90",
+      positionSize: "500",
+    });
+    expect(toPlanInput({ ...base, takeProfit: "110" })).toMatchObject({
+      stopLoss: null,
+      takeProfit: "110",
+      positionSize: null,
+    });
+  });
+
+  it("uses the entry price when the planned entry is blank", () => {
+    expect(
+      toPlanInput({ ...base, plannedEntry: "", stopLoss: "95" })?.entry,
+    ).toBe("100");
+  });
+
+  it("waits while a box isn't a number", () => {
+    expect(toPlanInput({ ...base, stopLoss: "9,5" })).toBeNull();
+    expect(
+      toPlanInput({ ...base, stopLoss: "95", positionSize: "x" }),
+    ).toBeNull();
+    expect(
+      toPlanInput({ ...base, plannedEntry: "abc", stopLoss: "95" }),
+    ).toBeNull();
   });
 });
