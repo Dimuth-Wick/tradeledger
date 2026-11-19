@@ -29,6 +29,12 @@
 
 TradeLedger has no server and no account. Your trades are stored in your OS app-data folder (`%APPDATA%\TradeLedger` on Windows), never sent anywhere. API keys are not needed in v1.
 
+## Download
+
+Installers for Windows, macOS and Linux are on the [Releases](https://github.com/Dimuth-Wick/tradeledger/releases) page. They are not code-signed yet: on Windows choose **More info → Run anyway**; on macOS right-click the app and choose **Open** the first time.
+
+Releases are built by GitHub Actions (`.github/workflows/release.yml`) when a version tag such as `v1.0.0` is pushed; every push to `main` also runs the tests (`ci.yml`).
+
 ## Getting started (development)
 
 ### 1. Install the system tools (once per computer)

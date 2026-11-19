@@ -1,0 +1,77 @@
+# Builds the installers for Windows, macOS and Linux and attaches them to a
+# GitHub Release.
+#
+# Start it by pushing a version tag:   git tag v1.0.0 && git push origin v1.0.0
+# (or run it by hand from the Actions tab: "Release" → "Run workflow").
+#
+# The release is created as a DRAFT: check the files, then press "Publish".
+# Installers are not code-signed yet, so Windows SmartScreen and macOS
+# Gatekeeper will warn the first time they are opened.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    permissions:
+      contents: write # create the release and upload files
+    strategy:
+      fail-fast: false # one platform failing doesn't cancel the others
+      matrix:
+        include:
+          - platform: windows-latest
+            args: ""
+          - platform: macos-latest # one .dmg for Apple Silicon and Intel Macs
+            args: --target universal-apple-darwin
+          - platform: ubuntu-22.04
+            args: ""
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux build libraries
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          # The universal Mac build compiles for both chip types.
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install npm packages
+        run: npm ci
+
+      # Builds the app (runs `npm run build` first, per tauri.conf.json) and
+      # uploads the installers to one shared draft release.
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: v__VERSION__ # __VERSION__ = "version" in tauri.conf.json
+          releaseName: TradeLedger v__VERSION__
+          releaseBody: |
+            Offline crypto trading journal. Download the file for your system:
+
+            - **Windows:** `…_x64-setup.exe` (or `.msi`)
+            - **macOS:** `….dmg` (Apple Silicon and Intel)
+            - **Linux:** `….AppImage` or `.deb`
+
+            Not code-signed yet: on Windows choose "More info → Run anyway";
+            on macOS right-click the app → Open the first time.
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}
