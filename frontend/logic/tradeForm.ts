@@ -21,7 +21,6 @@ export interface TradeFormState {
   direction: Direction;
   /** `<input type="datetime-local">` value, e.g. "2026-11-14T10:30" (local time). */
   openTime: string;
-  closeTime: string;
   /** Position size in USDT (quantity is worked out in Rust). */
   positionSize: string;
   avgEntry: string;
@@ -54,7 +53,6 @@ export function emptyForm(now: Date = new Date()): TradeFormState {
     symbol: "",
     direction: "long",
     openTime: toLocalInputValue(now),
-    closeTime: "",
     positionSize: "",
     avgEntry: "",
     avgExit: "",
@@ -71,7 +69,6 @@ export function emptyForm(now: Date = new Date()): TradeFormState {
 export function hasInput(form: TradeFormState): boolean {
   const typed: (keyof TradeFormState)[] = [
     "symbol",
-    "closeTime",
     "positionSize",
     "avgEntry",
     "avgExit",
@@ -114,7 +111,7 @@ function time(label: string, raw: string): number | null {
 export function toTradeInput(form: TradeFormState): FormResult {
   const missing = [
     form.symbol.trim() === "" && "symbol",
-    form.openTime.trim() === "" && "open time",
+    form.openTime.trim() === "" && "date",
     form.positionSize.trim() === "" && "position size",
     form.avgEntry.trim() === "" && "entry price",
   ].filter(Boolean);
@@ -140,8 +137,11 @@ export function toTradeInput(form: TradeFormState): FormResult {
       market: form.market,
       symbol: form.symbol.trim(),
       direction: form.direction,
-      openTime: time("Open time", form.openTime)!,
-      closeTime: time("Close time", form.closeTime),
+      openTime: time("Date", form.openTime)!,
+      // There's no close-time box (how long a trade ran isn't known), so a
+      // trade with an exit price is closed on its date.
+      closeTime:
+        form.avgExit.trim() === "" ? null : time("Date", form.openTime),
       positionSize: decimal("Position size", form.positionSize)!,
       avgEntry: decimal("Entry price", form.avgEntry)!,
       avgExit: decimal("Exit price", form.avgExit),

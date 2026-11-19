@@ -86,18 +86,18 @@ describe("toTradeInput", () => {
     expect(result.ok && result.input.stopLoss).toBe(".5");
   });
 
-  it("parses a closed futures trade with leverage", () => {
+  it("closes a trade with an exit price on its date", () => {
     const result = toTradeInput(
       filled({
-        closeTime: "2026-11-14T11:00",
         avgExit: "37010.55",
         leverage: "10",
       }),
     );
     expect(result.ok).toBe(true);
     if (!result.ok) return;
+    expect(result.input.avgExit).toBe("37010.55");
     expect(result.input.closeTime).toBe(
-      new Date(2026, 10, 14, 11, 0).getTime(),
+      new Date(2026, 10, 14, 9, 30).getTime(),
     );
     expect(result.input.leverage).toBe(10);
     expect(result.input).toMatchObject({

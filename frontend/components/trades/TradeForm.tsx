@@ -260,6 +260,41 @@ export default function TradeForm({ onSaved }: Props) {
                 placeholder="e.g. 500"
               />
             </label>
+            {futures && (
+              <label>
+                Leverage
+                <input
+                  inputMode="numeric"
+                  value={form.leverage}
+                  onChange={(e) => set("leverage", e.target.value)}
+                  placeholder="10"
+                />
+              </label>
+            )}
+            <label>
+              Fees (0.1%)
+              <input
+                readOnly
+                className="locked"
+                tabIndex={-1}
+                value={
+                  autoFee === null
+                    ? ""
+                    : usd(autoFee, { sign: false, round: true })
+                }
+                placeholder="worked out from position size"
+              />
+            </label>
+          </div>
+          <div className="row">
+            <label>
+              Date
+              <input
+                type="datetime-local"
+                value={form.openTime}
+                onChange={(e) => set("openTime", e.target.value)}
+              />
+            </label>
             <label>
               Entry price
               <input
@@ -281,55 +316,9 @@ export default function TradeForm({ onSaved }: Props) {
               />
             </label>
           </div>
-          <div className="row">
-            <label>
-              Open time
-              <input
-                type="datetime-local"
-                value={form.openTime}
-                onChange={(e) => set("openTime", e.target.value)}
-              />
-            </label>
-            <label>
-              Close time
-              <input
-                type="datetime-local"
-                value={form.closeTime}
-                onChange={(e) => set("closeTime", e.target.value)}
-              />
-            </label>
-          </div>
-          <div className="row">
-            <label>
-              Fees (0.1%)
-              <input
-                readOnly
-                className="locked"
-                tabIndex={-1}
-                value={
-                  autoFee === null
-                    ? ""
-                    : usd(autoFee, { sign: false, round: true })
-                }
-                placeholder="worked out from position size"
-              />
-            </label>
-            {futures && (
-              <label>
-                Leverage
-                <input
-                  inputMode="numeric"
-                  value={form.leverage}
-                  onChange={(e) => set("leverage", e.target.value)}
-                  placeholder="10"
-                />
-              </label>
-            )}
-          </div>
-        </fieldset>
+          <ExitResult hasExit={form.avgExit.trim() !== ""} preview={current} />
 
-        <fieldset>
-          <legend>Risk plan</legend>
+          <h3 className="form-subhead">Risk plan</h3>
           <div className="row">
             <label>
               Planned entry
@@ -399,7 +388,7 @@ export default function TradeForm({ onSaved }: Props) {
             <dt>Quantity</dt>
             <dd>{current.trade.qty}</dd>
             <dt>Fees</dt>
-            <dd>{usd(current.trade.fees, { sign: false })}</dd>
+            <dd>{usd(current.trade.fees, { sign: false, round: true })}</dd>
             <dt>Planned R:R</dt>
             <dd>{formatRr(current.trade.plannedRr)}</dd>
             <dt>R-multiple</dt>
@@ -408,11 +397,11 @@ export default function TradeForm({ onSaved }: Props) {
             </dd>
             <dt>Gross PnL</dt>
             <dd className={pnlClass(current.trade.grossPnl)}>
-              {usd(current.trade.grossPnl)}
+              {usd(current.trade.grossPnl, { round: true })}
             </dd>
             <dt>Net PnL</dt>
             <dd className={pnlClass(current.trade.netPnl)}>
-              {usd(current.trade.netPnl)}
+              {usd(current.trade.netPnl, { round: true })}
             </dd>
           </dl>
         )}
@@ -473,6 +462,44 @@ function PlanSummary({
       {p.fees === null && (
         <p className="hint">Add a position size to see profit and loss in $.</p>
       )}
+    </div>
+  );
+}
+
+/** The actual result once an exit price is typed: profit or loss after the
+ *  fee, and the R-multiple. Comes from the same Rust preview as Save. */
+function ExitResult({
+  hasExit,
+  preview,
+}: {
+  hasExit: boolean;
+  preview: Preview | null;
+}) {
+  if (!hasExit) return null;
+  if (!preview?.ok) {
+    return (
+      <p className="hint plan-summary">
+        {preview && !preview.ok
+          ? preview.error
+          : "Choose a pair and fill in position size and entry price to see the result."}
+      </p>
+    );
+  }
+  const t = preview.trade;
+  return (
+    <div className="plan-summary">
+      <dl className="exit-result">
+        <div>
+          <dt>Profit / loss at exit</dt>
+          <dd className={pnlClass(t.netPnl)}>
+            {usd(t.netPnl, { round: true })}
+          </dd>
+        </div>
+        <div>
+          <dt>R-multiple</dt>
+          <dd className={pnlClass(t.rMultiple)}>{formatR(t.rMultiple)}</dd>
+        </div>
+      </dl>
     </div>
   );
 }
