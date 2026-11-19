@@ -7,7 +7,7 @@ import prettier from "eslint-config-prettier";
 
 export default tseslint.config(
   // Build output and Rust code are not ours to lint here.
-  { ignores: ["dist", "src-tauri", ".agents"] },
+  { ignores: ["dist", "backend", ".agents"] },
   {
     files: ["**/*.{ts,tsx}"],
     extends: [js.configs.recommended, ...tseslint.configs.recommended],

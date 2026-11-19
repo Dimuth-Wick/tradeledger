@@ -6,7 +6,7 @@
 *.sqlite
 *.sqlite3
 *.csv
-!tests/fixtures/*.csv
+!test-data/*.csv
 backups/
 *.zip
 .env
@@ -22,9 +22,9 @@ backups/
 skills-lock.json
 
 # --- Rust / Tauri ---
-/src-tauri/target/
+/backend/target/
 target/
-/src-tauri/gen/schemas/
+/backend/gen/schemas/
 
 # --- Node / Vite ---
 node_modules/

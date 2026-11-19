@@ -6,7 +6,7 @@
 > finished. The importers (T4.2/T4.3) match columns **by header name** and
 > accept the aliases listed here, so a renamed column is a one-line fix.
 
-All fixture files in `tests/fixtures/` contain **fake data only**.
+All fixture files in `test-data/` contain **fake data only**.
 
 ## Where the files come from
 
@@ -146,7 +146,7 @@ Used by the importer tests (T4.2/T4.3) and the grouping tests (T4.4).
 
 Skipped rows: 1 `TRANSFER`, 1 `COMMISSION`, 1 `REALIZED_PNL`.
 
-### Expected trade values (checked by `src-tauri/src/grouping/tests.rs`)
+### Expected trade values (checked by `backend/src/features/grouping/tests.rs`)
 
 | #        | Dir   | Status | Qty   | Avg entry | Avg exit | Gross     | Fees                           | Funding | Net      |
 | -------- | ----- | ------ | ----- | --------- | -------- | --------- | ------------------------------ | ------- | -------- |

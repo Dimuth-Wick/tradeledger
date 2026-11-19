@@ -35,7 +35,7 @@ jobs:
 
       - uses: swatinem/rust-cache@v2
         with:
-          workspaces: src-tauri
+          workspaces: backend
 
       # On failure, npm's own error lines are posted as an annotation, so
       # they can be read on the run page without opening the full log.
@@ -62,7 +62,7 @@ jobs:
         run: npm run build
 
       - name: Rust format, lint and tests
-        working-directory: src-tauri
+        working-directory: backend
         run: |
           cargo fmt --check
           cargo clippy --all-targets -- -D warnings

@@ -1,4 +1,4 @@
-<p align="center"><img src="src-tauri/icons/icon.png" width="120" alt="TradeLedger logo"></p>
+<p align="center"><img src="backend/icons/icon.png" width="120" alt="TradeLedger logo"></p>
 
 # TradeLedger
 
@@ -40,6 +40,17 @@
 | Desktop app | [Tauri 2](https://tauri.app)                              |
 | Core logic  | Rust (SQLite via rusqlite, `rust_decimal` for money math) |
 | UI          | React + TypeScript + Vite                                 |
+
+## Project structure
+
+```text
+frontend/    what you see — React pages, components, and connection/backend.ts (calls Rust)
+backend/     what works   — Rust: connection/ (called by the UI) → features/ (logic) → database/
+test-data/   fake CSV files for tests
+docs/        ARCHITECTURE.md (start here), screenshots
+```
+
+New to the code? Read **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**: it follows one click from the button to the database.
 
 ## Privacy
 
@@ -87,12 +98,12 @@ Library versions are pinned by `package-lock.json` and `src-tauri/Cargo.lock`; t
 
 ```bash
 npm run lint && npm run format:check && npm test
-cd src-tauri && cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test
+cd backend && cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test
 ```
 
 Your data lives in `%APPDATA%\TradeLedger` (Windows), outside the repo.
 
-To try imports with the fake files in `tests/fixtures/` without touching your real journal, point the app at a throwaway database:
+To try imports with the fake files in `test-data/` without touching your real journal, point the app at a throwaway database:
 
 ```powershell
 $env:TRADELEDGER_DB_PATH = "$env:TEMP\tradeledger-test.db"; npm run tauri dev
@@ -101,7 +112,7 @@ $env:TRADELEDGER_DB_PATH = "$env:TEMP\tradeledger-test.db"; npm run tauri dev
 To see every screen with plenty of data, create a demo database of about 70 made-up trades (three months, tags, playbooks), then open the app on it. The tool only creates new files, so it can't touch your journal:
 
 ```powershell
-cd src-tauri; cargo run --example seed_demo -- "$env:TEMP\tradeledger-demo.db"; cd ..
+cd backend; cargo run --example seed_demo -- "$env:TEMP\tradeledger-demo.db"; cd ..
 $env:TRADELEDGER_DB_PATH = "$env:TEMP\tradeledger-demo.db"; npm run tauri dev
 ```
 
