@@ -6,12 +6,12 @@ import {
   updateCustomField,
   type CustomField,
   type FieldType,
-} from "../connection/backend";
-import { FIELD_TYPE_LABELS, parseOptions } from "../logic/customFields";
-import { useUnsavedChanges } from "../logic/unsaved";
+} from "../../connection/backend";
+import { FIELD_TYPE_LABELS, parseOptions } from "../../logic/customFields";
+import { useUnsavedChanges } from "../../logic/unsaved";
 
-/** Define extra fields to fill in on every trade. */
-export default function FieldsPage() {
+/** Settings → Fields: extra fields to fill in on every trade. */
+export default function FieldSettings() {
   const [fields, setFields] = useState<CustomField[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,7 +34,7 @@ export default function FieldsPage() {
 
   return (
     <section className="fields-page">
-      <h2>Custom fields</h2>
+      <h3>Custom fields</h3>
       <p className="hint">
         Extra things to record on every trade, e.g. <b>Session</b> (choice:
         Asia, London, NY), <b>Confidence</b> (number), <b>Followed plan?</b>{" "}

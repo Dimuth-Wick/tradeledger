@@ -48,7 +48,7 @@ export default function TradeTags({ tradeId }: { tradeId: number }) {
   return (
     <div className="trade-tags">
       {withTags.length === 0 && (
-        <p className="hint">No tags yet. Create some on the Tags tab.</p>
+        <p className="hint">No tags yet. Create some in Settings → Tags.</p>
       )}
       {withTags.map((g) => (
         <div className="tag-line" key={g.id}>

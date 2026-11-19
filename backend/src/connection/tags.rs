@@ -1,4 +1,4 @@
-//! Tag commands for the Tags page, trade detail and trade log.
+//! Tag commands for Settings → Tags, trade detail and trade log.
 
 use std::fmt::Display;
 

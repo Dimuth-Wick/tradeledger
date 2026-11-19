@@ -55,7 +55,7 @@ Every feature follows this same path, so once you know one, you know them all.
 | `pages/`                | One file per tab: `DashboardPage`, `CalendarPage`, `HomePage` (Trades), …    |
 | `components/dashboard/` | Dashboard widgets: key numbers, equity and win-rate charts, R distribution   |
 | `components/trades/`    | New-trade form, trade log and list, notes, tags, screenshots                 |
-| `components/settings/`  | Backup, restore and CSV export                                               |
+| `components/settings/`  | The Settings sections: appearance, tags, custom fields, backup and export    |
 | `components/shared/`    | Pieces used everywhere: theme toggle, option chips, filters, tag chips       |
 | `logic/`                | Helpers with tests (`*.test.ts`): number formatting, form checks, chart rows |
 | `connection/backend.ts` | **The only file that talks to Rust.** One typed function per backend command |

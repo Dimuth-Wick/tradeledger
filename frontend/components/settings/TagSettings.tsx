@@ -8,12 +8,12 @@ import {
   updateTag,
   updateTagGroup,
   type TagGroup,
-} from "../connection/backend";
-import { FALLBACK_COLOR } from "../logic/tagIndex";
-import { useUnsavedChanges } from "../logic/unsaved";
+} from "../../connection/backend";
+import { FALLBACK_COLOR } from "../../logic/tagIndex";
+import { useUnsavedChanges } from "../../logic/unsaved";
 
-/** Manage tag groups (e.g. Setup, Mistake, Emotion) and their tags. */
-export default function TagsPage() {
+/** Settings → Tags: tag groups (e.g. Setup, Mistake, Emotion) and their tags. */
+export default function TagSettings() {
   const [groups, setGroups] = useState<TagGroup[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,7 +37,7 @@ export default function TagsPage() {
 
   return (
     <section className="tags-page">
-      <h2>Tags</h2>
+      <h3>Tags</h3>
       <p className="hint">
         Group your tags, e.g. <b>Setup</b> (what you traded), <b>Mistake</b>{" "}
         (what went wrong), <b>Emotion</b> (how you felt). Tags are added to

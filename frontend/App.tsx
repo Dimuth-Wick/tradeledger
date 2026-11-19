@@ -5,13 +5,11 @@ import { useGuard } from "./logic/unsaved";
 import { useIndicator } from "./logic/useIndicator";
 import CalendarPage from "./pages/CalendarPage";
 import DashboardPage from "./pages/DashboardPage";
-import FieldsPage from "./pages/FieldsPage";
 import HomePage from "./pages/HomePage";
 import ImportPage from "./pages/ImportPage";
 import PlaybooksPage from "./pages/PlaybooksPage";
 import ReportsPage from "./pages/ReportsPage";
 import SettingsPage from "./pages/SettingsPage";
-import TagsPage from "./pages/TagsPage";
 import "./styles/app.css";
 
 type Page =
@@ -21,9 +19,7 @@ type Page =
   | "trades"
   | "import"
   | "playbooks"
-  | "tags"
-  | "fields"
-  | "settings";
+  | "settings"; // Tags and Fields live inside Settings
 
 function App() {
   return (
@@ -68,8 +64,6 @@ function Shell() {
                 ["reports", "Reports"],
                 ["import", "Import"],
                 ["playbooks", "Playbooks"],
-                ["tags", "Tags"],
-                ["fields", "Fields"],
                 ["settings", "Settings"],
               ] as const
             ).map(([id, label]) => (
@@ -114,16 +108,6 @@ function Shell() {
       {page === "playbooks" && (
         <main className="page">
           <PlaybooksPage />
-        </main>
-      )}
-      {page === "tags" && (
-        <main className="page">
-          <TagsPage />
-        </main>
-      )}
-      {page === "fields" && (
-        <main className="page">
-          <FieldsPage />
         </main>
       )}
       {page === "settings" && (

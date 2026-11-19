@@ -1,115 +1,54 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import DataSettings from "../components/settings/DataSettings";
-import Segmented from "../components/shared/Segmented";
+import FieldSettings from "../components/settings/FieldSettings";
+import TagSettings from "../components/settings/TagSettings";
+import ThemeSettings from "../components/settings/ThemeSettings";
 import {
-  getTheme,
-  listAccentPresets,
-  setTheme,
-  type AccentPreset,
-  type Theme,
-  type ThemeMode,
-} from "../connection/backend";
-import { THEME_EVENT, switchTheme } from "../logic/theme";
+  SETTINGS_SECTIONS,
+  loadSection,
+  saveSection,
+  type SettingsSection,
+} from "../logic/settingsSections";
+import { useGuard } from "../logic/unsaved";
 
-const MODES: [ThemeMode, string][] = [
-  ["system", "Follow Windows"],
-  ["light", "Light"],
-  ["dark", "Dark"],
-];
-
-/** App preferences. Changes apply and save at once. */
+/** Settings: a side menu on the left, the chosen section on the right. */
 export default function SettingsPage() {
-  const [theme, setThemeState] = useState<Theme | null>(null);
-  const [presets, setPresets] = useState<AccentPreset[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  // Only the newest answer is applied (the color picker sends many).
-  const latest = useRef(0);
+  const [section, setSection] = useState<SettingsSection>(loadSection);
+  const guard = useGuard();
 
-  useEffect(() => {
-    getTheme().then(setThemeState, (err) => setError(String(err)));
-    listAccentPresets().then(setPresets, () => setPresets([]));
-    // The tab-bar toggle can change the theme while this page is open.
-    const onTheme = (e: Event) =>
-      setThemeState((e as CustomEvent<Theme>).detail);
-    window.addEventListener(THEME_EVENT, onTheme);
-    return () => window.removeEventListener(THEME_EVENT, onTheme);
-  }, []);
-
-  function change(mode: ThemeMode, accent: string) {
-    const id = ++latest.current;
-    setTheme(mode, accent).then(
-      (t) => {
-        if (id !== latest.current) return;
-        setThemeState(t);
-        switchTheme(t);
-        setError(null);
-      },
-      (err) => id === latest.current && setError(String(err)),
-    );
+  function open(id: SettingsSection) {
+    if (id === section) return;
+    // Leaving Tags or Fields drops what's typed there, so ask first.
+    guard(() => {
+      setSection(id);
+      saveSection(id);
+    });
   }
 
   return (
     <section className="settings-page">
       <h2>Settings</h2>
-      {error && <p className="status error">{error}</p>}
-
-      {theme && (
-        <div className="card">
-          <h3>Theme</h3>
-          <div className="setting-row">
-            <span className="setting-label">Colors</span>
-            <Segmented
-              label="Color mode"
-              options={MODES}
-              value={theme.mode}
-              onChange={(id) => change(id, theme.accent)}
-            />
-          </div>
-
-          <div className="setting-row">
-            <span className="setting-label">Accent</span>
-            <div className="swatches" role="group" aria-label="Accent color">
-              {presets.map((p) => (
-                <button
-                  key={p.hex}
-                  type="button"
-                  className="swatch"
-                  title={p.name}
-                  aria-label={`Accent ${p.name}`}
-                  aria-pressed={theme.accent === p.hex}
-                  style={{ background: p.hex }}
-                  onClick={() => change(theme.mode, p.hex)}
-                />
-              ))}
-              <label className="inline custom-color">
-                Custom
-                <input
-                  type="color"
-                  aria-label="Custom accent color"
-                  value={theme.accent}
-                  onChange={(e) => change(theme.mode, e.target.value)}
-                />
-              </label>
-            </div>
-          </div>
-
-          <div className="setting-row">
-            <span className="setting-label">Preview</span>
-            <div className="theme-preview">
-              <button type="button" className="primary">
-                Primary button
-              </button>
-              <span className="pos">+12.50 win</span>
-              <span className="neg">-4.20 loss</span>
-              <a href="#settings" onClick={(e) => e.preventDefault()}>
-                A link
-              </a>
-            </div>
-          </div>
+      <div className="settings-layout">
+        <nav className="settings-nav" aria-label="Settings sections">
+          {SETTINGS_SECTIONS.map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              className={section === id ? "active" : ""}
+              aria-current={section === id ? "page" : undefined}
+              onClick={() => open(id)}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
+        <div className="settings-pane">
+          {section === "appearance" && <ThemeSettings />}
+          {section === "tags" && <TagSettings />}
+          {section === "fields" && <FieldSettings />}
+          {section === "data" && <DataSettings />}
         </div>
-      )}
-
-      <DataSettings />
+      </div>
     </section>
   );
 }

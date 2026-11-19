@@ -1,4 +1,4 @@
-//! Custom field commands for the Fields page and trade detail.
+//! Custom field commands for Settings → Fields and trade detail.
 
 use std::fmt::Display;
 
