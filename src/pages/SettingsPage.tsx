@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import DataSettings from "../components/DataSettings";
 import Segmented from "../components/Segmented";
 import {
   getTheme,
@@ -107,6 +108,8 @@ export default function SettingsPage() {
           </div>
         </div>
       )}
+
+      <DataSettings />
     </section>
   );
 }

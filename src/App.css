@@ -2099,3 +2099,37 @@ button:active:not(:disabled) {
 .shots.pending .shot-remove:hover:not(:disabled) {
   background: var(--neg);
 }
+
+/* --- Settings: your data --- */
+
+.data-settings code {
+  font-size: 0.9em;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--surface-2);
+  word-break: break-all;
+}
+
+.data-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.data-actions button.primary {
+  width: auto;
+}
+
+.restore-confirm {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--neg) 45%, var(--border));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--neg) 6%, var(--surface));
+  animation: drop-in 0.22s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.restore-confirm p {
+  margin: 0 0 4px;
+}

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  exportTradesCsv,
   listSymbols,
   listTagGroups,
   queryTrades,
@@ -19,6 +20,8 @@ import {
   type LogSort,
 } from "../lib/tradeLog";
 import TradeList from "./TradeList";
+import { save } from "@tauri-apps/plugin-dialog";
+import { CSV_FILTER, csvFileName } from "../lib/dataFiles";
 
 interface Props {
   /** Bumped by the parent after a save/merge/split so the log refetches. */
@@ -41,11 +44,32 @@ export default function TradeLog({ version, ...actions }: Props) {
   const [symbols, setSymbols] = useState<string[]>([]);
   const [tagGroups, setTagGroups] = useState<TagGroup[]>([]);
   const tagInfo = useMemo(() => indexTags(tagGroups), [tagGroups]);
+  const [exporting, setExporting] = useState(false);
+  const [exported, setExported] = useState<string | null>(null);
 
   const query = useMemo(
     () => buildQuery(filters, sort, page, pageSize),
     [filters, sort, page, pageSize],
   );
+
+  /** Saves every trade matching the filters (all pages), via Rust. */
+  async function exportCsv() {
+    setExporting(true);
+    setExported(null);
+    try {
+      const path = await save({
+        defaultPath: csvFileName(new Date()),
+        filters: [CSV_FILTER],
+      });
+      if (!path) return;
+      const rows = await exportTradesCsv(query, path);
+      setExported(`Exported ${rows} trade${rows === 1 ? "" : "s"} to ${path}`);
+    } catch (err) {
+      setError(String(err));
+    } finally {
+      setExporting(false);
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -189,9 +213,18 @@ export default function TradeLog({ version, ...actions }: Props) {
         >
           Clear filters
         </button>
+        <button
+          type="button"
+          disabled={exporting || (result?.total ?? 0) === 0}
+          title="Save the trades matching these filters as a CSV file"
+          onClick={exportCsv}
+        >
+          Export CSV
+        </button>
       </div>
 
       {error && <p className="status error">{error}</p>}
+      {exported && <p className="status ok">{exported}</p>}
 
       {result && (
         <>

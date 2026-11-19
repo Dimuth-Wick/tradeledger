@@ -114,6 +114,19 @@ pub fn schema_version(conn: &Connection) -> Result<u32, DbError> {
     Ok(conn.pragma_query_value(None, "user_version", |row| row.get(0))?)
 }
 
+/// The schema version this build of the app creates. A backup with a
+/// higher version came from a newer app and can't be opened safely.
+pub fn migrations_latest() -> u32 {
+    static LATEST: std::sync::OnceLock<u32> = std::sync::OnceLock::new();
+    *LATEST.get_or_init(|| {
+        let mut conn = Connection::open_in_memory().expect("in-memory database");
+        migrations::migrations()
+            .to_latest(&mut conn)
+            .expect("migrations apply to an empty database");
+        schema_version(&conn).expect("user_version is readable")
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

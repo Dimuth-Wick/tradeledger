@@ -1,7 +1,9 @@
+pub mod backup;
 pub mod calendar;
 mod commands;
 pub mod custom_fields;
 pub mod dashboard_layout;
+pub mod export;
 // Public so the core can be used (and tested) as a library, not only through
 // the Tauri commands; also keeps not-yet-used repository functions from being
 // flagged as dead code before the commands that call them exist.
@@ -29,6 +31,7 @@ use tauri::Manager;
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             // data_dir() = %APPDATA% on Windows. We add our own "TradeLedger"
             // folder instead of app_data_dir(), which would use the bundle id.
@@ -115,6 +118,10 @@ pub fn run() {
             commands::theme::get_theme,
             commands::theme::set_theme,
             commands::theme::list_accent_presets,
+            commands::data::backup_now,
+            commands::data::inspect_backup,
+            commands::data::restore_backup,
+            commands::data::export_trades_csv,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

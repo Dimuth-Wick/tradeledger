@@ -83,6 +83,10 @@ cd src-tauri; cargo run --example seed_demo -- "$env:TEMP\tradeledger-demo.db"; 
 $env:TRADELEDGER_DB_PATH = "$env:TEMP\tradeledger-demo.db"; npm run tauri dev
 ```
 
+## Backups
+
+**Settings → Your data → Back up now** saves everything (trades, journal, tags, playbooks, screenshots) into one `.zip`. **Restore from backup…** shows what a backup holds before replacing anything, and always saves your current data first to `backups\before-restore-<time>.zip` next to the database. **Export CSV** (Settings, or the trade log with its filters) writes trades for spreadsheets.
+
 ## Disclaimer
 
 TradeLedger is a journaling and analysis tool, not financial advice.

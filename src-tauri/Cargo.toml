@@ -25,7 +25,8 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 # SQLite. "bundled" compiles SQLite into the app so users need nothing installed.
 # Version must match the one rusqlite_migration is built against.
-rusqlite = { version = "0.41", features = ["bundled"] }
+# "backup": copies a restored database into the open one (SQLite online backup).
+rusqlite = { version = "0.41", features = ["backup", "bundled"] }
 # Versioned schema changes (PRAGMA user_version), applied on startup.
 rusqlite_migration = "2.7.0"
 # Typed error enums with less boilerplate.
@@ -40,6 +41,10 @@ sha2 = "0.11.1"
 # Parses "2026-01-05 09:15:02" (UTC) export timestamps. No default features:
 # we only parse, we never read the system clock or time zone database here.
 chrono = { version = "0.4.45", default-features = false, features = ["std", "clock"] }
+# Backup files: the database and screenshots in one .zip (deflate only).
+zip = { version = "9.7.1", default-features = false, features = ["deflate"] }
+# Windows Save/Open dialogs for choosing backup and CSV files.
+tauri-plugin-dialog = "2"
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration

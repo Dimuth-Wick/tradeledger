@@ -80,7 +80,7 @@ pub fn mime_for(file_name: &str) -> &'static str {
 }
 
 /// Only names this module generates: letters, digits, '-', one '.ext'.
-fn is_generated_name(name: &str) -> bool {
+pub(crate) fn is_generated_name(name: &str) -> bool {
     let Some((stem, ext)) = name.rsplit_once('.') else {
         return false;
     };

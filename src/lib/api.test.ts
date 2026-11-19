@@ -14,6 +14,9 @@ import {
   getReport,
   createPlaybook,
   setTheme,
+  backupNow,
+  restoreBackup,
+  exportTradesCsv,
   updatePlaybook,
   setTradePlaybook,
   getTradePlaybook,
@@ -151,6 +154,13 @@ describe("trade commands", () => {
       "get_stats",
       () => getStats({ from: 1, to: 2 }),
       { query: { from: 1, to: 2 } },
+    ],
+    ["backup_now", () => backupNow("C:/b.zip"), { path: "C:/b.zip" }],
+    ["restore_backup", () => restoreBackup("C:/b.zip"), { path: "C:/b.zip" }],
+    [
+      "export_trades_csv",
+      () => exportTradesCsv({ symbol: "btc" }, "C:/t.csv"),
+      { query: { symbol: "btc" }, path: "C:/t.csv" },
     ],
     [
       "set_theme",

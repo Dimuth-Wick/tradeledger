@@ -772,6 +772,46 @@ export function listAccentPresets(): Promise<AccentPreset[]> {
   return invoke<AccentPreset[]>("list_accent_presets");
 }
 
+/** Mirrors Rust `backup::Manifest`: what a backup file holds. */
+export interface BackupManifest {
+  app: string;
+  format: number;
+  schemaVersion: number;
+  createdAt: TimestampMs;
+  trades: number;
+  screenshots: number;
+}
+
+/** Mirrors Rust `backup::RestoreResult`. */
+export interface RestoreResult {
+  restored: BackupManifest;
+  /** Where the data from before the restore was saved. */
+  safetyBackup: string;
+}
+
+/** Writes a backup zip (database + screenshots) to `path`. */
+export function backupNow(path: string): Promise<BackupManifest> {
+  return invoke<BackupManifest>("backup_now", { path });
+}
+
+/** Checks a backup file and says what's in it; changes nothing. */
+export function inspectBackup(path: string): Promise<BackupManifest> {
+  return invoke<BackupManifest>("inspect_backup", { path });
+}
+
+/** Replaces all data with the backup's (a safety copy is made first). */
+export function restoreBackup(path: string): Promise<RestoreResult> {
+  return invoke<RestoreResult>("restore_backup", { path });
+}
+
+/** Saves the trades matching `query` as CSV; resolves to the row count. */
+export function exportTradesCsv(
+  query: TradeQuery,
+  path: string,
+): Promise<number> {
+  return invoke<number>("export_trades_csv", { query, path });
+}
+
 export function listSymbols(): Promise<string[]> {
   return invoke<string[]>("list_symbols");
 }

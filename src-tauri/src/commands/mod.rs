@@ -7,6 +7,7 @@
 pub mod calendar;
 pub mod custom_fields;
 pub mod dashboard;
+pub mod data;
 pub mod grouping;
 pub mod import;
 pub mod playbooks;
