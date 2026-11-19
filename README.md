@@ -2,20 +2,34 @@
 
 > A free, open-source, offline **crypto trading journal** for your desktop. Import your Binance trades, plan your risk, tag your setups and mistakes, and see what actually makes you money.
 
-![status](https://img.shields.io/badge/status-in%20development-orange) ![license](https://img.shields.io/badge/license-MIT-blue) ![stack](https://img.shields.io/badge/Tauri%202-Rust%20%2B%20React-informational)
+![version](https://img.shields.io/badge/version-1.0.0-orange) [![CI](https://github.com/Dimuth-Wick/tradeledger/actions/workflows/ci.yml/badge.svg)](https://github.com/Dimuth-Wick/tradeledger/actions/workflows/ci.yml) ![license](https://img.shields.io/badge/license-MIT-blue) ![stack](https://img.shields.io/badge/Tauri%202-Rust%20%2B%20React-informational)
 
-## Features (v1 roadmap)
+![TradeLedger dashboard: key numbers and the daily equity curve](docs/screenshots/dashboard.png)
 
-- 📥 **Import** Binance spot and USDT-M futures trade history (CSV), or add trades manually
-- 🧮 **Automatic trade grouping**: partial fills become one trade; fees and funding are included in net PnL
+<sub>All screenshots use made-up demo data (see [Demo data](#getting-started-development)).</sub>
+
+## Features
+
+- 📥 **Import** Binance spot and USDT-M futures trade history (CSV), or add trades by hand with **position size in USDT** (quantity and the 0.1% fee are worked out for you)
+- 🧮 **Automatic trade grouping**: partial fills become one trade, with manual merge/split; fees and funding are included in net PnL
 - 🎯 **Risk plan per trade**: entry, stop loss, take profit → planned R:R and actual R-multiple
-- 📊 **Dashboard**: win rate, profit factor, expectancy, avg win/loss, equity curve, drawdown, with drag-and-drop widgets
-- 📅 **PnL calendar** heatmap
-- 🏷️ **Tags, notes, screenshots, custom fields** on every trade
-- 📈 **Reports** by tag, coin, weekday, hour, long/short
-- 📘 **Playbooks**: setup checklists and per-setup stats
-- 🎨 **Themes**: dark / light / accent colors
-- 🔒 **Private by design**: all data stays in a local SQLite file on your computer, with one-click backup
+- 📊 **Dashboard**: win rate, profit factor, expectancy, average win/loss, max drawdown, streaks, a **daily equity curve with the running win rate**, win/loss bars and the R distribution, in drag-and-drop, resizable widgets
+- 📅 **PnL calendar** with monthly total profit, total loss and net, in your time zone
+- 🏷️ **Tags, notes (Markdown), screenshots and custom fields** on every trade
+- 📈 **Reports** by tag, coin, weekday, hour, market, side and playbook
+- 📘 **Playbooks**: setup checklists on each trade, and whether following every rule pays
+- 🎨 **Themes**: light / dark / follow Windows, with an accent color
+- 🔒 **Private by design**: everything stays in a local SQLite file; one-click **backup & restore** (.zip) and **CSV export**
+
+## Screenshots
+
+| Calendar                                                                                     | Reports                                                                    |
+| -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| ![PnL calendar with monthly profit, loss and net](docs/screenshots/calendar.png)             | ![Reports grouped by tag](docs/screenshots/reports.png)                    |
+| **Trade log**                                                                                | **Playbooks**                                                              |
+| ![Trade log with tags and R-multiples](docs/screenshots/trades.png)                          | ![Playbook with followed vs skipped rules](docs/screenshots/playbooks.png) |
+| **Equity and win rate**                                                                      | **Dark mode**                                                              |
+| ![Daily equity curve with the running win rate below](docs/screenshots/dashboard-charts.png) | ![Dashboard in dark mode](docs/screenshots/dashboard-dark.png)             |
 
 ## Tech stack
 
