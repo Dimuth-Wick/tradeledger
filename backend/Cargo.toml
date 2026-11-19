@@ -46,6 +46,12 @@ zip = { version = "9.7.1", default-features = false, features = ["deflate"] }
 # Windows Save/Open dialogs for choosing backup and CSV files.
 tauri-plugin-dialog = "2"
 
+# Desktop only: in-app updates. "updater" checks GitHub Releases for a newer
+# signed version and installs it; "process" restarts the app afterwards.
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-updater = "2"
+tauri-plugin-process = "2"
+
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
 [profile.release]

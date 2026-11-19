@@ -41,3 +41,5 @@ pub mod theme;
 pub mod trade_entry;
 /// The trade log's filters, sorting and pages.
 pub mod trade_query;
+/// The safety backup made before an app update installs.
+pub mod updates;

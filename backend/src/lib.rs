@@ -37,6 +37,13 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
+            // In-app updates (desktop only): see features/updates.rs.
+            #[cfg(desktop)]
+            {
+                app.handle()
+                    .plugin(tauri_plugin_updater::Builder::new().build())?;
+                app.handle().plugin(tauri_plugin_process::init())?;
+            }
             // data_dir() = %APPDATA% on Windows. We add our own "TradeLedger"
             // folder instead of app_data_dir(), which would use the bundle id.
             // TRADELEDGER_DB_PATH lets developers run the app against a
@@ -128,6 +135,7 @@ pub fn run() {
             connection::data::inspect_backup,
             connection::data::restore_backup,
             connection::data::export_trades_csv,
+            connection::data::backup_before_update,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -13,7 +13,7 @@ describe("settings sections", () => {
     const ids = SETTINGS_SECTIONS.map(([id]) => id);
     expect(ids[0]).toBe("appearance");
     expect(new Set(ids).size).toBe(ids.length);
-    expect(ids).toEqual(["appearance", "tags", "fields", "data"]);
+    expect(ids).toEqual(["appearance", "tags", "fields", "data", "about"]);
   });
 
   it("keeps known values and falls back to Appearance", () => {

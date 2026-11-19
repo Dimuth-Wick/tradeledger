@@ -1,4 +1,7 @@
+import { getVersion } from "@tauri-apps/api/app";
 import { invoke } from "@tauri-apps/api/core";
+import { relaunch } from "@tauri-apps/plugin-process";
+import { check } from "@tauri-apps/plugin-updater";
 
 // The single place where the UI talks to Rust. Components import these typed
 // functions instead of calling invoke("...") with raw strings, so a renamed
@@ -837,6 +840,57 @@ export function inspectBackup(path: string): Promise<BackupManifest> {
 /** Replaces all data with the backup's (a safety copy is made first). */
 export function restoreBackup(path: string): Promise<RestoreResult> {
   return invoke<RestoreResult>("restore_backup", { path });
+}
+
+/** Saves everything to backups/before-update-<time>.zip next to the database. */
+export function backupBeforeUpdate(): Promise<BackupManifest> {
+  return invoke<BackupManifest>("backup_before_update");
+}
+
+/** The running app's version, e.g. "1.1.0". */
+export function appVersion(): Promise<string> {
+  return getVersion();
+}
+
+/** Download progress while an update installs. */
+export type UpdateStep =
+  | { step: "backup" }
+  | { step: "download"; done: number; total: number | null }
+  | { step: "install" };
+
+/** A newer version found on GitHub Releases. */
+export interface AvailableUpdate {
+  version: string;
+  /** Backs up, downloads, checks the signature, installs and restarts. */
+  install(onStep: (step: UpdateStep) => void): Promise<void>;
+}
+
+/** Asks GitHub (via the updater plugin) for a newer published version. */
+export async function checkForUpdate(): Promise<AvailableUpdate | null> {
+  const update = await check();
+  if (!update) return null;
+  return {
+    version: update.version,
+    async install(onStep) {
+      onStep({ step: "backup" });
+      await backupBeforeUpdate();
+      let done = 0;
+      let total: number | null = null;
+      await update.downloadAndInstall((event) => {
+        if (event.event === "Started") {
+          total = event.data.contentLength ?? null;
+        } else if (event.event === "Progress") {
+          done += event.data.chunkLength;
+        }
+        onStep(
+          event.event === "Finished"
+            ? { step: "install" }
+            : { step: "download", done, total },
+        );
+      });
+      await relaunch();
+    },
+  };
 }
 
 /** Saves the trades matching `query` as CSV; resolves to the row count. */

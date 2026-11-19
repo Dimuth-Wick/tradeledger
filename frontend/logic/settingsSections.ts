@@ -1,12 +1,14 @@
 // The parts of the Settings page, in the order of its side menu.
 
-export type SettingsSection = "appearance" | "tags" | "fields" | "data";
+export type SettingsSection =
+  "appearance" | "tags" | "fields" | "data" | "about";
 
 export const SETTINGS_SECTIONS: readonly [SettingsSection, string][] = [
   ["appearance", "Appearance"],
   ["tags", "Tags"],
   ["fields", "Fields"],
   ["data", "Your data"],
+  ["about", "About & updates"],
 ];
 
 const STORE_KEY = "tradeledger.settingsSection";

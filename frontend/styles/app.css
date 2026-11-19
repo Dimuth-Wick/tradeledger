@@ -1140,6 +1140,23 @@ html.theme-fade *::after {
   color: var(--neg);
 }
 
+/* --- Update pop-up --- */
+
+.update-dialog {
+  width: min(420px, calc(100vw - 32px));
+}
+
+.update-progress {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0;
+}
+
+.update-progress progress {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
 .hint {
   color: var(--muted);
 }

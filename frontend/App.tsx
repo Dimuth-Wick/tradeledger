@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import ThemeToggle from "./components/shared/ThemeToggle";
 import UnsavedProvider from "./components/shared/UnsavedProvider";
+import UpdateDialog from "./components/shared/UpdateDialog";
+import {
+  appVersion,
+  checkForUpdate,
+  type AvailableUpdate,
+} from "./connection/backend";
 import { useGuard } from "./logic/unsaved";
 import { useIndicator } from "./logic/useIndicator";
 import CalendarPage from "./pages/CalendarPage";
@@ -45,6 +51,14 @@ function Shell() {
       ?.querySelector("[data-selected='true']")
       ?.scrollIntoView({ block: "nearest", inline: "nearest" });
   }, [page]);
+  // Once per launch: is a newer version published on GitHub? Offline or
+  // any error → stay quiet (Settings → About can check by hand).
+  const [update, setUpdate] = useState<AvailableUpdate | null>(null);
+  const [version, setVersion] = useState<string | null>(null);
+  useEffect(() => {
+    checkForUpdate().then(setUpdate, () => {});
+    appVersion().then(setVersion, () => {});
+  }, []);
 
   return (
     <>
@@ -89,6 +103,13 @@ function Shell() {
           <ThemeToggle />
         </div>
       </header>
+      {update && (
+        <UpdateDialog
+          update={update}
+          current={version}
+          onClose={() => setUpdate(null)}
+        />
+      )}
       {page === "dashboard" && <DashboardPage />}
       {page === "calendar" && (
         <CalendarPage

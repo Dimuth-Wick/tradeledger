@@ -1,4 +1,5 @@
 import { useState } from "react";
+import AboutSettings from "../components/settings/AboutSettings";
 import DataSettings from "../components/settings/DataSettings";
 import FieldSettings from "../components/settings/FieldSettings";
 import TagSettings from "../components/settings/TagSettings";
@@ -47,6 +48,7 @@ export default function SettingsPage() {
           {section === "tags" && <TagSettings />}
           {section === "fields" && <FieldSettings />}
           {section === "data" && <DataSettings />}
+          {section === "about" && <AboutSettings />}
         </div>
       </div>
     </section>

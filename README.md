@@ -62,6 +62,8 @@ TradeLedger has no server and no account. Your trades are stored in your OS app-
 
 Installers for Windows, macOS and Linux are on the [Releases](https://github.com/Dimuth-Wick/tradeledger/releases) page. They are not code-signed yet: on Windows choose **More info → Run anyway**; on macOS right-click the app and choose **Open** the first time.
 
+From v1.1.0 on, the app updates itself: when a new version is published it shows an **Update available** pop-up (or use **Settings → About & updates**), backs up your data, installs the signed update and restarts. On Linux this works for the AppImage; `.deb` users download the new file.
+
 Releases are built by GitHub Actions (`.github/workflows/release.yml`) when a version tag such as `v1.0.0` is pushed; every push to `main` also runs the tests (`ci.yml`).
 
 ## Getting started (development)
