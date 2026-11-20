@@ -11,6 +11,7 @@ pub mod dashboard;
 pub mod data;
 pub mod grouping;
 pub mod import;
+pub mod milestones;
 pub mod playbooks;
 pub mod reports;
 pub mod screenshots;

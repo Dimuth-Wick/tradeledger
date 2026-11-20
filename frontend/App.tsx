@@ -2,11 +2,18 @@ import { useEffect, useRef, useState } from "react";
 import ThemeToggle from "./components/shared/ThemeToggle";
 import UnsavedProvider from "./components/shared/UnsavedProvider";
 import UpdateDialog from "./components/shared/UpdateDialog";
+import BadgeChip from "./components/shared/BadgeChip";
+import MilestonePopup from "./components/shared/MilestonePopup";
+import BadgesPage from "./pages/BadgesPage";
 import {
   appVersion,
   checkForUpdate,
+  getMilestones,
+  markMilestonesSeen,
   type AvailableUpdate,
+  type MilestoneProgress,
 } from "./connection/backend";
+import { celebration, onTradesChanged } from "./logic/milestones";
 import { useGuard } from "./logic/unsaved";
 import { useIndicator } from "./logic/useIndicator";
 import CalendarPage from "./pages/CalendarPage";
@@ -25,7 +32,8 @@ type Page =
   | "trades"
   | "import"
   | "playbooks"
-  | "settings"; // Tags and Fields live inside Settings
+  | "settings" // Tags and Fields live inside Settings
+  | "badges"; // opened from the badge in the top bar
 
 function App() {
   return (
@@ -59,6 +67,27 @@ function Shell() {
     checkForUpdate().then(setUpdate, () => {});
     appVersion().then(setVersion, () => {});
   }, []);
+  // A new milestone badge: on launch and whenever trades are added.
+  const [progress, setProgress] = useState<MilestoneProgress | null>(null);
+  useEffect(() => {
+    const check = () => getMilestones().then(setProgress, () => {});
+    check();
+    return onTradesChanged(check);
+  }, []);
+  const party = progress ? celebration(progress) : null;
+  function closeParty() {
+    // Hide at once; Rust remembers the badge as celebrated.
+    setProgress((p) => p && { ...p, unseen: [] });
+    markMilestonesSeen().then(setProgress, () => {});
+  }
+  // Leaving a page drops what's typed on it, so ask first.
+  function openPage(id: Page) {
+    if (page === id) return;
+    guard(() => {
+      setOpenTrade(null);
+      setPage(id);
+    });
+  }
 
   return (
     <>
@@ -87,22 +116,34 @@ function Shell() {
                 className={page === id ? "active" : ""}
                 data-selected={page === id}
                 aria-current={page === id ? "page" : undefined}
-                // Leaving a page drops what's typed on it, so ask first.
-                onClick={() =>
-                  page !== id &&
-                  guard(() => {
-                    setOpenTrade(null);
-                    setPage(id);
-                  })
-                }
+                onClick={() => openPage(id)}
               >
                 {label}
               </button>
             ))}
           </nav>
+          {progress && (
+            <BadgeChip
+              progress={progress}
+              active={page === "badges"}
+              onOpen={() => openPage("badges")}
+            />
+          )}
           <ThemeToggle />
         </div>
       </header>
+      {party && progress && !update && (
+        <MilestonePopup
+          badge={party.badge}
+          alsoUnlocked={party.alsoUnlocked}
+          trades={progress.trades}
+          onClose={closeParty}
+          onSeeAll={() => {
+            closeParty();
+            openPage("badges");
+          }}
+        />
+      )}
       {update && (
         <UpdateDialog
           update={update}
@@ -129,6 +170,11 @@ function Shell() {
       {page === "playbooks" && (
         <main className="page">
           <PlaybooksPage />
+        </main>
+      )}
+      {page === "badges" && progress && (
+        <main className="page">
+          <BadgesPage progress={progress} />
         </main>
       )}
       {page === "settings" && (

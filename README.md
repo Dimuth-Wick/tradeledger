@@ -20,6 +20,7 @@
 - 🏷️ **Tags, notes (Markdown), screenshots and custom fields** on every trade
 - 📈 **Reports** by tag, coin, weekday, hour, market, side and playbook
 - 📘 **Playbooks**: setup checklists on each trade, and whether following every rule pays
+- 🏅 **Badges** at 50, 100, 300, 500, 1,000, 2,000 and 5,000 trades logged: your badge sits in the top bar with a ring filling towards the next one, a celebration when you earn one, and a page with the whole ladder
 - 🎨 **Themes**: light / dark / follow Windows, with an accent color
 - 🔒 **Private by design**: everything stays in a local SQLite file; one-click **backup & restore** (.zip) and **CSV export**
 

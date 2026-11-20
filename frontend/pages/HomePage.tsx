@@ -12,6 +12,7 @@ import {
   type RegroupSummary,
 } from "../connection/backend";
 import { regroupSummary } from "../logic/importText";
+import { notifyTradesChanged } from "../logic/milestones";
 import { useGuard } from "../logic/unsaved";
 
 export default function HomePage({
@@ -22,7 +23,10 @@ export default function HomePage({
 }) {
   // Bumping this tells the trade log to fetch again (after save/merge/...).
   const [version, setVersion] = useState(0);
-  const refresh = () => setVersion((v) => v + 1);
+  const refresh = () => {
+    setVersion((v) => v + 1);
+    notifyTradesChanged(); // a new trade may unlock a milestone badge
+  };
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [db, setDb] = useState<DbInfo | null>(null);

@@ -885,6 +885,36 @@ export function restoreBackup(path: string): Promise<RestoreResult> {
   return invoke<RestoreResult>("restore_backup", { path });
 }
 
+/** Mirrors Rust `milestones::Milestone`: one badge. */
+export interface Milestone {
+  trades: number;
+  name: string;
+  message: string;
+  reached: boolean;
+}
+
+/** Mirrors Rust `milestones::Progress`. */
+export interface MilestoneProgress {
+  /** Trades logged now. */
+  trades: number;
+  milestones: Milestone[];
+  /** Next level; null once every badge is earned. */
+  next: number | null;
+  /** 0–100, from the previous level to `next`. */
+  percent: number;
+  /** Reached but not celebrated yet, lowest first. */
+  unseen: number[];
+}
+
+export function getMilestones(): Promise<MilestoneProgress> {
+  return invoke<MilestoneProgress>("get_milestones");
+}
+
+/** After the celebration: every badge reached so far counts as seen. */
+export function markMilestonesSeen(): Promise<MilestoneProgress> {
+  return invoke<MilestoneProgress>("mark_milestones_seen");
+}
+
 /** Saves everything to backups/before-update-<time>.zip next to the database. */
 export function backupBeforeUpdate(): Promise<BackupManifest> {
   return invoke<BackupManifest>("backup_before_update");

@@ -1140,6 +1140,413 @@ html.theme-fade *::after {
   color: var(--neg);
 }
 
+/* --- Milestone badges --- */
+
+.badge {
+  --b1: #e0a46a;
+  --b2: #9a5b2b;
+  --ink: #ffffff;
+  overflow: visible;
+}
+
+.badge-silver {
+  --b1: #eef1f5;
+  --b2: #8d97a6;
+  --ink: #2b3442;
+}
+.badge-gold {
+  --b1: #ffd75e;
+  --b2: #d48a00;
+  --ink: #4a2f00;
+}
+.badge-emerald {
+  --b1: #4fd69c;
+  --b2: #0b7a50;
+}
+.badge-sapphire {
+  --b1: #6aa8ff;
+  --b2: #1f4fb8;
+}
+.badge-ruby {
+  --b1: #ff7a8a;
+  --b2: #b0182e;
+}
+.badge-legend {
+  --b1: #ffb21e;
+  --b2: #7b2ff7;
+}
+
+.badge-stop-1 {
+  stop-color: var(--b1);
+}
+.badge-stop-2 {
+  stop-color: var(--b2);
+}
+
+.badge-shape {
+  stroke: var(--b2);
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+
+.badge-inner {
+  fill: none;
+  stroke: var(--ink);
+  stroke-opacity: 0.35;
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.badge-shine {
+  fill: #ffffff;
+  opacity: 0.25;
+}
+
+.badge-count {
+  fill: var(--ink);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.badge-locked .badge-shape {
+  stroke: var(--border);
+  stroke-dasharray: 6 5;
+}
+.badge-locked .badge-inner {
+  stroke: var(--border);
+  stroke-opacity: 1;
+}
+.badge-locked .badge-count {
+  fill: var(--muted);
+}
+
+/* Top-bar badge: current badge inside a ring that fills to the next. */
+.badge-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 12px 3px 3px;
+  margin-right: 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition:
+    border-color 160ms ease-out,
+    transform 160ms ease-out,
+    box-shadow 160ms ease-out;
+}
+
+.badge-chip:hover,
+.badge-chip.active {
+  border-color: var(--accent);
+  box-shadow: 0 2px 10px rgba(247, 103, 7, 0.18);
+}
+
+.badge-chip:hover {
+  transform: translateY(-1px);
+}
+
+.badge-chip-ring {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  flex: none;
+}
+
+/* Only the ring turns (so it fills from the top), not the badge inside. */
+.badge-chip-ring > svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.badge-chip-ring .ring-track {
+  fill: none;
+  stroke: var(--surface-2);
+  stroke-width: 4;
+}
+
+.badge-chip-ring .ring-fill {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 4;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 900ms ease-out;
+}
+
+.badge-chip-badge {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+
+.badge-chip-text {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+  font-size: 0.85em;
+  font-variant-numeric: tabular-nums;
+}
+
+.badge-chip-text span {
+  color: var(--muted);
+}
+
+/* Badges page: the hero card and the ladder. */
+.badges-page {
+  max-width: 820px;
+  margin: 0 auto;
+}
+
+.badges-hero {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding: 24px 28px;
+  flex-wrap: wrap;
+}
+
+.badges-hero-badge {
+  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.2));
+  animation: milestone-pop 700ms cubic-bezier(0.2, 0.9, 0.3, 1.4) both;
+}
+
+.badges-hero-text {
+  flex: 1 1 280px;
+}
+
+.badges-hero-text h2 {
+  margin: 0 0 4px;
+  font-size: 1.7em;
+}
+
+.badges-kicker {
+  color: var(--accent);
+  font-weight: 700;
+  margin: 0;
+}
+
+.badges-next {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.badges-next p {
+  margin: 0;
+}
+
+.badge-ladder {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.ladder-step {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  transition: transform 160ms ease-out;
+}
+
+.ladder-step.earned:hover {
+  transform: translateX(4px);
+}
+
+.ladder-step.next {
+  border-color: var(--accent);
+  box-shadow: 0 2px 12px rgba(247, 103, 7, 0.15);
+}
+
+.ladder-step.locked {
+  background: var(--surface-2);
+}
+
+.ladder-text {
+  display: grid;
+  gap: 2px;
+}
+
+.ladder-status {
+  font-size: 0.85em;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.ladder-status.earned {
+  color: var(--pos);
+  background: color-mix(in srgb, var(--pos) 12%, transparent);
+}
+
+.ladder-status.next {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.ladder-status.locked {
+  color: var(--muted);
+}
+
+.badges-more {
+  text-align: center;
+  margin-top: 16px;
+}
+
+.milestone-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.milestone-actions button {
+  flex: 1 1 0;
+  white-space: nowrap;
+}
+
+.milestone-bar {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.milestone-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #ffb21e, var(--accent));
+  animation: milestone-fill 900ms ease-out;
+}
+
+@keyframes milestone-fill {
+  from {
+    width: 0;
+  }
+}
+
+/* Celebration pop-up: the badge pops in, confetti bursts out. */
+.milestone-popup {
+  text-align: center;
+  width: min(400px, calc(100vw - 32px));
+  overflow: hidden;
+  animation: milestone-rise 360ms cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+.milestone-popup h2 {
+  margin: 0 0 6px;
+  font-size: 1.6em;
+}
+
+.milestone-kicker {
+  color: var(--accent);
+  font-weight: 700;
+  margin: 0;
+}
+
+.milestone-burst {
+  position: relative;
+  height: 150px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 4px;
+}
+
+.milestone-badge {
+  animation: milestone-pop 700ms cubic-bezier(0.2, 0.9, 0.3, 1.4) both;
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.25));
+}
+
+.confetti {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 8px;
+  height: 12px;
+  border-radius: 2px;
+  opacity: 0;
+  animation: confetti-burst 1100ms ease-out forwards;
+}
+
+.confetti-0 {
+  background: #ffb21e;
+}
+.confetti-1 {
+  background: var(--accent);
+}
+.confetti-2 {
+  background: var(--pos);
+}
+.confetti-3 {
+  background: #6aa8ff;
+}
+.confetti-4 {
+  background: #ff7a8a;
+}
+
+@keyframes milestone-rise {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.96);
+  }
+}
+
+@keyframes milestone-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.2) rotate(-25deg);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.12) rotate(6deg);
+  }
+  100% {
+    transform: scale(1) rotate(0);
+  }
+}
+
+@keyframes confetti-burst {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateY(0)
+      rotate(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(var(--angle))
+      translateY(calc(var(--distance) * -1)) rotate(540deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .milestone-popup,
+  .milestone-badge,
+  .badges-hero-badge,
+  .milestone-bar span {
+    animation: none;
+  }
+  .confetti {
+    display: none;
+  }
+  .badge-chip,
+  .badge-chip-ring .ring-fill,
+  .ladder-step {
+    transition: none;
+  }
+}
+
 /* --- Update pop-up --- */
 
 .update-dialog {

@@ -138,6 +138,8 @@ pub fn run() {
             connection::data::restore_backup,
             connection::data::export_trades_csv,
             connection::data::backup_before_update,
+            connection::milestones::get_milestones,
+            connection::milestones::mark_milestones_seen,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

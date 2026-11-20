@@ -23,6 +23,8 @@ pub mod grouping;
 pub mod import_flow;
 /// Plan, leverage and notes on a trade.
 pub mod journal;
+/// Badges at 50, 100, 300 … 5,000 trades logged.
+pub mod milestones;
 /// Setups with a rule checklist, and their stats.
 pub mod playbooks;
 /// Stats split by tag, coin, weekday, hour, market, side or playbook.

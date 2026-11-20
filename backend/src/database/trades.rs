@@ -75,6 +75,11 @@ pub fn insert(conn: &Connection, t: &Trade) -> Result<i64, DbError> {
     Ok(conn.last_insert_rowid())
 }
 
+/// How many trades are stored (open and closed, manual and imported).
+pub fn count(conn: &Connection) -> Result<u32, DbError> {
+    Ok(conn.query_row("SELECT COUNT(*) FROM trades", [], |r| r.get(0))?)
+}
+
 pub fn get(conn: &Connection, id: i64) -> Result<Option<WithId<Trade>>, DbError> {
     Ok(conn
         .query_row("SELECT * FROM trades WHERE id = ?1", [id], from_row)

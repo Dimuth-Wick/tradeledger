@@ -5,6 +5,7 @@ import {
   type ImportPreview,
   type ImportResult,
 } from "../connection/backend";
+import { notifyTradesChanged } from "../logic/milestones";
 import {
   newRowCount,
   previewWarnings,
@@ -58,6 +59,7 @@ export default function ImportPage() {
         step: "done",
         result: await confirmImport(fileName, content),
       });
+      notifyTradesChanged(); // may unlock a milestone badge
     } catch (err) {
       setError(String(err));
       setState({ step: "pick" });
