@@ -4,7 +4,7 @@
 
 > A free, open-source, offline **crypto trading journal** for your desktop. Import your Binance trades, plan your risk, tag your setups and mistakes, and see what actually makes you money.
 
-![version](https://img.shields.io/badge/version-1.1.0-orange) [![CI](https://github.com/Dimuth-Wick/tradeledger/actions/workflows/ci.yml/badge.svg)](https://github.com/Dimuth-Wick/tradeledger/actions/workflows/ci.yml) ![license](https://img.shields.io/badge/license-MIT-blue) ![stack](https://img.shields.io/badge/Tauri%202-Rust%20%2B%20React-informational)
+![version](https://img.shields.io/badge/version-1.2.0-orange) [![CI](https://github.com/Dimuth-Wick/tradeledger/actions/workflows/ci.yml/badge.svg)](https://github.com/Dimuth-Wick/tradeledger/actions/workflows/ci.yml) ![license](https://img.shields.io/badge/license-MIT-blue) ![stack](https://img.shields.io/badge/Tauri%202-Rust%20%2B%20React-informational)
 
 ![TradeLedger dashboard: key numbers and the daily equity curve](docs/screenshots/dashboard.png)
 
