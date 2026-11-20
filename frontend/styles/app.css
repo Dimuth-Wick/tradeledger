@@ -1599,6 +1599,21 @@ html.theme-fade *::after {
   white-space: nowrap;
 }
 
+/* Side, Status, Net PnL and R stand out in the trade log. */
+.trade-list td.strong,
+.trade-list th.strong,
+.trade-list th.strong .sort-button {
+  font-weight: 700;
+}
+
+.trade-list thead th.strong {
+  color: var(--text);
+}
+
+.exit-card .plan-summary {
+  margin-top: 12px;
+}
+
 @media (max-width: 760px) {
   .report-table .bar-col {
     display: none; /* the net PnL number stays; only the bar goes */

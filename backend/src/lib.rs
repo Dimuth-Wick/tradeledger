@@ -78,6 +78,8 @@ pub fn run() {
             connection::trades::symbol_choices,
             connection::trades::create_trade,
             connection::trades::update_trade,
+            connection::trades::preview_close,
+            connection::trades::close_trade,
             connection::trades::delete_trade,
             connection::trades::get_trade,
             connection::trades::list_trades,

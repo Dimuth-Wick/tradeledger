@@ -322,6 +322,71 @@ pub fn update(conn: &Connection, id: i64, input: &TradeInput) -> Result<WithId<T
     Ok(WithId { id, item: trade })
 }
 
+/// What the "Exit" box on a saved trade sends: the exit price and when it
+/// was closed, or both empty to reopen the trade.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CloseInput {
+    pub exit_price: Option<Decimal>,
+    pub close_time: Option<TimestampMs>,
+}
+
+/// The saved trade as form input, so it can be rebuilt with a new exit.
+/// Quantity and fees stay exactly as saved.
+fn input_from(t: &Trade) -> TradeInput {
+    TradeInput {
+        exchange: t.exchange.clone(),
+        market: t.market,
+        symbol: t.symbol.clone(),
+        direction: t.direction,
+        open_time: t.open_time,
+        close_time: t.close_time,
+        qty: t.qty,
+        position_size: None,
+        avg_entry: t.avg_entry,
+        avg_exit: t.avg_exit,
+        leverage: t.leverage,
+        fees: t.fees,
+        auto_fees: false,
+        funding: t.funding,
+        planned_entry: t.planned_entry,
+        stop_loss: t.stop_loss,
+        take_profit: t.take_profit,
+        notes: t.notes.clone(),
+        playbook_id: t.playbook_id,
+    }
+}
+
+/// The trade with `exit` applied, recomputed but not saved. Only manual
+/// trades: imported ones are closed by their fills.
+pub fn with_exit(existing: &Trade, exit: &CloseInput) -> Result<Trade, TradeError> {
+    if !existing.is_manual {
+        return Err(invalid(
+            "imported trades close from their fills; import the closing trades instead",
+        ));
+    }
+    if exit.exit_price.is_some() && exit.close_time.is_none() {
+        return Err(invalid("add the date the trade was closed"));
+    }
+    let mut input = input_from(existing);
+    input.avg_exit = exit.exit_price;
+    input.close_time = exit.exit_price.and(exit.close_time);
+    build_trade(&input, true)
+}
+
+/// What `close` would save, for the live preview.
+pub fn preview_close(conn: &Connection, id: i64, exit: &CloseInput) -> Result<Trade, TradeError> {
+    let existing = db::trades::get(conn, id)?.ok_or(TradeError::NotFound(id))?;
+    with_exit(&existing.item, exit)
+}
+
+/// Saves an exit price on an open manual trade (or changes or clears it).
+pub fn close(conn: &Connection, id: i64, exit: &CloseInput) -> Result<WithId<Trade>, TradeError> {
+    let trade = preview_close(conn, id, exit)?;
+    db::trades::update(conn, id, &trade)?;
+    Ok(WithId { id, item: trade })
+}
+
 pub fn delete(conn: &Connection, id: i64) -> Result<(), TradeError> {
     if db::trades::delete(conn, id)? {
         Ok(())
@@ -459,6 +524,80 @@ mod tests {
             notes: "test".into(),
             playbook_id: None,
         }
+    }
+
+    fn open_long() -> TradeInput {
+        TradeInput {
+            close_time: None,
+            avg_exit: None,
+            ..closed_long()
+        }
+    }
+
+    fn exit(price: Option<Decimal>, time: Option<TimestampMs>) -> CloseInput {
+        CloseInput {
+            exit_price: price,
+            close_time: time,
+        }
+    }
+
+    #[test]
+    fn close_later_works_out_pnl_and_r() {
+        let conn = open_in_memory().unwrap();
+        let saved = create(&conn, &open_long()).unwrap();
+        assert_eq!(saved.item.status, TradeStatus::Open);
+
+        let closed = close(&conn, saved.id, &exit(Some(dec!(110)), Some(5_000))).unwrap();
+
+        // 2 coins × +10 = 20 gross; − 0.4 fees − 0.1 funding (as saved).
+        let t = &closed.item;
+        assert_eq!(t.status, TradeStatus::Closed);
+        assert_eq!(t.avg_exit, Some(dec!(110)));
+        assert_eq!(t.close_time, Some(5_000));
+        assert_eq!(t.gross_pnl, dec!(20));
+        assert_eq!(t.net_pnl, dec!(19.5));
+        assert_eq!(t.r_multiple, Some(dec!(2)));
+        // Everything else stays as it was.
+        assert_eq!(
+            (t.qty, t.fees, t.notes.as_str()),
+            (dec!(2), dec!(0.4), "test")
+        );
+        assert_eq!(db::trades::get(&conn, saved.id).unwrap().unwrap().item, *t);
+    }
+
+    #[test]
+    fn clearing_the_exit_reopens() {
+        let conn = open_in_memory().unwrap();
+        let saved = create(&conn, &closed_long()).unwrap();
+        let t = close(&conn, saved.id, &exit(None, Some(5_000)))
+            .unwrap()
+            .item;
+        assert_eq!(t.status, TradeStatus::Open);
+        assert_eq!((t.avg_exit, t.close_time), (None, None));
+        assert_eq!(t.net_pnl, dec!(-0.5));
+        assert_eq!(t.r_multiple, None);
+    }
+
+    #[test]
+    fn close_rejects_bad_exits() {
+        let conn = open_in_memory().unwrap();
+        let saved = create(&conn, &open_long()).unwrap();
+        let err = |e: CloseInput| close(&conn, saved.id, &e).unwrap_err().to_string();
+        assert!(err(exit(Some(dec!(110)), None)).contains("date"));
+        assert!(err(exit(Some(dec!(0)), Some(5_000))).contains("exit price"));
+        assert!(err(exit(Some(dec!(110)), Some(500))).contains("before open"));
+        assert!(matches!(
+            close(&conn, 999, &exit(None, None)),
+            Err(TradeError::NotFound(999))
+        ));
+    }
+
+    #[test]
+    fn imported_trades_cannot_be_closed_by_hand() {
+        let mut t = build_trade(&open_long(), false).unwrap();
+        t.is_manual = false;
+        let e = with_exit(&t, &exit(Some(dec!(110)), Some(5_000))).unwrap_err();
+        assert!(e.to_string().contains("imported"));
     }
 
     #[test]

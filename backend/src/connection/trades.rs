@@ -10,7 +10,7 @@ use crate::database::{self as db, Db};
 use crate::features::journal::{self, JournalInput};
 use crate::features::stats::{self, Stats};
 use crate::features::symbols::{self, SymbolChoice};
-use crate::features::trade_entry::{self, PlanInput, PlanPreview, TradeInput};
+use crate::features::trade_entry::{self, CloseInput, PlanInput, PlanPreview, TradeInput};
 use crate::features::trade_query::{self, TradePage, TradeQuery};
 use crate::models::{Market, Trade, WithId};
 
@@ -55,6 +55,18 @@ pub fn update_trade(
     input: TradeInput,
 ) -> Result<WithId<Trade>, String> {
     with_conn(&db, |c| trade_entry::update(c, id, &input))
+}
+
+/// The trade with this exit applied, without saving (live preview).
+#[tauri::command]
+pub fn preview_close(db: State<'_, Db>, id: i64, input: CloseInput) -> Result<Trade, String> {
+    with_conn(&db, |c| trade_entry::preview_close(c, id, &input))
+}
+
+/// Saves an exit price on a manual trade (empty = reopen it).
+#[tauri::command]
+pub fn close_trade(db: State<'_, Db>, id: i64, input: CloseInput) -> Result<WithId<Trade>, String> {
+    with_conn(&db, |c| trade_entry::close(c, id, &input))
 }
 
 #[tauri::command]

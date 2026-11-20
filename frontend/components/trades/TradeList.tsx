@@ -108,10 +108,20 @@ export default function TradeList({
         <tr>
           <SortHeader label="Opened" field="openTime" {...h} />
           <SortHeader label="Symbol" field="symbol" {...h} />
-          <th>Side</th>
-          <th>Status</th>
-          <SortHeader label="Net PnL" field="netPnl" className="num" {...h} />
-          <SortHeader label="R" field="rMultiple" className="num" {...h} />
+          <th className="strong">Side</th>
+          <th className="strong">Status</th>
+          <SortHeader
+            label="Net PnL"
+            field="netPnl"
+            className="num strong"
+            {...h}
+          />
+          <SortHeader
+            label="R"
+            field="rMultiple"
+            className="num strong"
+            {...h}
+          />
           <th aria-label="Actions" />
         </tr>
       </thead>
@@ -153,14 +163,19 @@ export default function TradeList({
                   </div>
                 )}
               </td>
-              <td className={t.direction}>
+              <td className={`strong ${t.direction}`}>
                 {t.direction === "long" ? "Long" : "Short"}
               </td>
-              <td>{t.status === "open" ? "Open" : "Closed"}</td>
-              <td className={`num ${pnlClass(t.netPnl)}`} title={usd(t.netPnl)}>
+              <td className="strong">
+                {t.status === "open" ? "Open" : "Closed"}
+              </td>
+              <td
+                className={`num strong ${pnlClass(t.netPnl)}`}
+                title={usd(t.netPnl)}
+              >
                 {usd(t.netPnl, { round: true })}
               </td>
-              <td className={`num ${pnlClass(t.rMultiple)}`}>
+              <td className={`num strong ${pnlClass(t.rMultiple)}`}>
                 {formatR(t.rMultiple)}
               </td>
               <td className="num actions-cell">

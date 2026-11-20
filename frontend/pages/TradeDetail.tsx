@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import ExitCard from "../components/trades/ExitCard";
 import Notes from "../components/trades/Notes";
 import Screenshots from "../components/trades/Screenshots";
 import TradeTags from "../components/trades/TradeTags";
@@ -237,12 +238,16 @@ function Detail({
         <Stat label="Avg exit" value={t.avgExit ?? "—"} />
         <Stat
           label="Gross PnL"
-          value={usd(t.grossPnl)}
+          value={usd(t.grossPnl, { round: true })}
           cls={pnlClass(t.grossPnl)}
         />
         <Stat label="Fees" value={usd(t.fees, { sign: false })} />
         <Stat label="Funding" value={usd(t.funding)} />
-        <Stat label="Net PnL" value={usd(t.netPnl)} cls={pnlClass(t.netPnl)} />
+        <Stat
+          label="Net PnL"
+          value={usd(t.netPnl, { round: true })}
+          cls={pnlClass(t.netPnl)}
+        />
         <Stat label="Planned R:R" value={formatRr(shown.plannedRr)} />
         <Stat
           label="R-multiple"
@@ -250,6 +255,8 @@ function Detail({
           cls={pnlClass(shown.rMultiple)}
         />
       </dl>
+
+      {t.isManual && <ExitCard trade={t} onSaved={onSaved} />}
 
       <section className="card">
         <h2>Plan</h2>

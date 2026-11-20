@@ -280,6 +280,25 @@ export function updateTrade(
   return invoke<WithId<Trade>>("update_trade", { id, input });
 }
 
+/** Mirrors Rust `trade_entry::CloseInput`: both null = reopen. */
+export interface CloseInput {
+  exitPrice: Decimal | null;
+  closeTime: TimestampMs | null;
+}
+
+/** The trade with this exit applied, not saved (live preview). */
+export function previewClose(id: number, input: CloseInput): Promise<Trade> {
+  return invoke<Trade>("preview_close", { id, input });
+}
+
+/** Saves the exit price on a manual trade (empty = reopen). */
+export function closeTrade(
+  id: number,
+  input: CloseInput,
+): Promise<WithId<Trade>> {
+  return invoke<WithId<Trade>>("close_trade", { id, input });
+}
+
 export function deleteTrade(id: number): Promise<void> {
   return invoke<void>("delete_trade", { id });
 }

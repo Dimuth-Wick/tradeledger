@@ -84,11 +84,11 @@ export function hasInput(form: TradeFormState): boolean {
 const UNSIGNED = /^(\d+\.?\d*|\.\d+)$/;
 const INTEGER = /^\d+$/;
 
-class FormatError extends Error {}
+export class FormatError extends Error {}
 
 /** Empty → null; otherwise must match `pattern`. Commas are not accepted
  *  because "1,5" means 1.5 in some countries and 15 in others. */
-function decimal(
+export function decimal(
   label: string,
   raw: string,
   pattern = UNSIGNED,
@@ -101,7 +101,7 @@ function decimal(
   return v;
 }
 
-function time(label: string, raw: string): number | null {
+export function time(label: string, raw: string): number | null {
   if (raw.trim() === "") return null;
   const ms = new Date(raw).getTime();
   if (Number.isNaN(ms)) throw new FormatError(`${label}: invalid date/time`);

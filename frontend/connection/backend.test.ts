@@ -15,6 +15,8 @@ import {
   createPlaybook,
   setTheme,
   backupNow,
+  closeTrade,
+  previewClose,
   restoreBackup,
   exportTradesCsv,
   updatePlaybook,
@@ -169,6 +171,16 @@ describe("trade commands", () => {
       { query: { from: 1, to: 2 } },
     ],
     ["backup_now", () => backupNow("C:/b.zip"), { path: "C:/b.zip" }],
+    [
+      "preview_close",
+      () => previewClose(7, { exitPrice: "160", closeTime: 5 }),
+      { id: 7, input: { exitPrice: "160", closeTime: 5 } },
+    ],
+    [
+      "close_trade",
+      () => closeTrade(7, { exitPrice: null, closeTime: null }),
+      { id: 7, input: { exitPrice: null, closeTime: null } },
+    ],
     ["restore_backup", () => restoreBackup("C:/b.zip"), { path: "C:/b.zip" }],
     [
       "export_trades_csv",
