@@ -45,7 +45,7 @@ struct Widget {
     min: [u32; 2],
 }
 
-const WIDGETS: [Widget; 4] = [
+const WIDGETS: [Widget; 8] = [
     Widget {
         id: "kpis",
         place: [0, 0, 12, 6],
@@ -65,6 +65,27 @@ const WIDGETS: [Widget; 4] = [
         id: "r-dist",
         place: [6, 16, 6, 7],
         min: [3, 4],
+    },
+    // Where the money comes from (features/breakdown.rs).
+    Widget {
+        id: "outcomes",
+        place: [0, 23, 4, 7],
+        min: [3, 5],
+    },
+    Widget {
+        id: "market",
+        place: [4, 23, 4, 7],
+        min: [3, 4],
+    },
+    Widget {
+        id: "side",
+        place: [8, 23, 4, 7],
+        min: [3, 4],
+    },
+    Widget {
+        id: "coins",
+        place: [0, 30, 12, 8],
+        min: [4, 4],
     },
 ];
 
@@ -188,7 +209,12 @@ mod tests {
         let layout = load(&conn).unwrap();
         assert_eq!(layout, default_layout());
         let ids: Vec<&str> = layout.iter().map(|l| l.i.as_str()).collect();
-        assert_eq!(ids, ["kpis", "equity", "pnl-bars", "r-dist"]);
+        assert_eq!(
+            ids,
+            [
+                "kpis", "equity", "pnl-bars", "r-dist", "outcomes", "market", "side", "coins"
+            ]
+        );
     }
 
     #[test]
@@ -232,12 +258,13 @@ mod tests {
     fn missing_widgets_are_added_below() {
         // An older saved layout without the R chart.
         let clean = validate(&[item("kpis", 0, 0, 12, 6), item("equity", 0, 6, 6, 5)]).unwrap();
-        let tail: Vec<(&str, u32, u32)> = clean[2..]
+        let tail: Vec<(&str, u32, u32)> = clean[2..4]
             .iter()
             .map(|l| (l.i.as_str(), l.x, l.y))
             .collect();
         // Bottom of the saved ones is 6 + 5 = 11; each new one stacks below.
         assert_eq!(tail, [("pnl-bars", 0, 11), ("r-dist", 0, 18)]);
+        assert_eq!(clean.len(), WIDGETS.len());
     }
 
     #[test]

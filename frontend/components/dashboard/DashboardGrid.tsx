@@ -12,9 +12,13 @@ import {
   dailyRows,
   kpis,
   rRows,
+  sliceRows,
+  type DashFilters,
 } from "../../logic/dashboard";
+import BreakdownBars from "./BreakdownBars";
 import EquityChart from "./EquityChart";
 import KpiTiles from "./KpiTiles";
+import OutcomeRing from "./OutcomeRing";
 import PnlBars from "./PnlBars";
 import RDistribution from "./RDistribution";
 
@@ -23,6 +27,10 @@ const TITLES: Record<string, string> = {
   equity: "Equity and win rate",
   "pnl-bars": "Win / loss per trade",
   "r-dist": "R distribution",
+  outcomes: "Trades won and lost",
+  market: "Futures vs spot",
+  side: "Long vs short",
+  coins: "Earnings by coin",
 };
 
 interface Props {
@@ -32,6 +40,9 @@ interface Props {
   /** Drag (by the title bar) and resize only while editing. */
   editing: boolean;
   onLayout: (next: LayoutItem[]) => void;
+  /** The dashboard filters; clicking a bar sets or clears one. */
+  filters: DashFilters;
+  onFilters: (next: DashFilters) => void;
 }
 
 /** The widgets on a 12-column grid that can be dragged and resized. */
@@ -40,10 +51,13 @@ export default function DashboardGrid({
   layout,
   editing,
   onLayout,
+  filters,
+  onFilters,
 }: Props) {
   const { width, containerRef, mounted } = useContainerWidth();
   const rows = useMemo(() => curveRows(stats), [stats]);
   const days = useMemo(() => dailyRows(stats), [stats]);
+  const b = stats.breakdown;
 
   function body(id: string) {
     switch (id) {
@@ -59,6 +73,45 @@ export default function DashboardGrid({
             rows={rRows(stats.rBuckets)}
             withR={stats.tradesWithR}
             closed={stats.closed}
+          />
+        );
+      case "outcomes":
+        return <OutcomeRing stats={stats} />;
+      case "market":
+        return (
+          <BreakdownBars
+            label="Net PnL by market"
+            rows={sliceRows(b.byMarket)}
+            selected={filters.market || null}
+            onPick={(k) =>
+              onFilters({
+                ...filters,
+                market: (k ?? "") as DashFilters["market"],
+              })
+            }
+          />
+        );
+      case "side":
+        return (
+          <BreakdownBars
+            label="Net PnL by side"
+            rows={sliceRows(b.bySide)}
+            selected={filters.direction || null}
+            onPick={(k) =>
+              onFilters({
+                ...filters,
+                direction: (k ?? "") as DashFilters["direction"],
+              })
+            }
+          />
+        );
+      case "coins":
+        return (
+          <BreakdownBars
+            label="Net PnL by coin"
+            rows={sliceRows(b.bySymbol)}
+            selected={filters.symbol.trim().toUpperCase() || null}
+            onPick={(k) => onFilters({ ...filters, symbol: k ?? "" })}
           />
         );
       default:

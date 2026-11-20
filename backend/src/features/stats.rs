@@ -17,6 +17,7 @@ use rust_decimal::{Decimal, RoundingStrategy};
 use serde::Serialize;
 
 use crate::database::DbError;
+use crate::features::breakdown::{self, Breakdown};
 use crate::features::calendar::{self, Zone};
 use crate::features::trade_query::{self, TradeQuery};
 use crate::models::{TimestampMs, Trade, TradeStatus};
@@ -96,6 +97,8 @@ pub struct Stats {
     /// One point per calendar day from the first close to the last (days
     /// without trades included). Filled by `query`, which knows the zone.
     pub daily: Vec<DayPoint>,
+    /// Results by market, side and coin (for the dashboard bars).
+    pub breakdown: Breakdown,
 }
 
 /// The account at the end of one day (in the calendar's time zone).
@@ -298,6 +301,7 @@ pub fn compute(trades: &[(i64, &Trade)]) -> Stats {
         equity_curve: curve,
         r_buckets: buckets,
         daily: Vec::new(),
+        breakdown: breakdown::compute(trades),
     }
 }
 

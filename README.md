@@ -15,7 +15,7 @@
 - 📥 **Import** Binance spot and USDT-M futures trade history (CSV), or add trades by hand: pick the pair from a menu, enter the **position size in USDT**, and the quantity, 0.1% fee and profit or loss at your exit are worked out for you
 - 🧮 **Automatic trade grouping**: partial fills become one trade, with manual merge/split; fees and funding are included in net PnL
 - 🎯 **Risk plan per trade**: entry, stop loss, take profit → planned R:R and the profit or loss at each, shown while you type, plus the actual R-multiple
-- 📊 **Dashboard**: win rate, profit factor, expectancy, average win/loss, max drawdown, streaks, a **daily equity curve with the running win rate**, win/loss bars and the R distribution, in drag-and-drop, resizable widgets
+- 📊 **Dashboard**: win rate, profit factor, expectancy, average win/loss, max drawdown, streaks, a **daily equity curve with the running win rate**, win/loss bars, the R distribution, a wins/losses ring and **earnings by futures vs spot, long vs short and coin** (click a bar to filter), in drag-and-drop, resizable widgets
 - 📅 **PnL calendar** with monthly total profit, total loss and net, in your time zone
 - 🏷️ **Tags, notes (Markdown), screenshots and custom fields** on every trade
 - 📈 **Reports** by tag, coin, weekday, hour, market, side and playbook

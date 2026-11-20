@@ -7,6 +7,8 @@
 
 /// Back up everything to one .zip and restore it.
 pub mod backup;
+/// Results split by market, side and coin.
+pub mod breakdown;
 /// PnL calendar (days in the chosen time zone) and the time-zone setting.
 pub mod calendar;
 /// User-defined fields on trades (text, number, choice, checkbox).

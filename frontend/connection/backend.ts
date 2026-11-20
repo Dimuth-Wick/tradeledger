@@ -437,6 +437,30 @@ export interface Stats {
   rBuckets: RBucket[];
   /** Every day from first to last close (quiet days included). */
   daily: DayPoint[];
+  /** Results by market, side and coin. */
+  breakdown: Breakdown;
+}
+
+/** Mirrors Rust `breakdown::Slice`: the closed trades of one group. */
+export interface Slice {
+  /** "usdm", "spot", "long", "short" or a symbol. */
+  key: string;
+  label: string;
+  netPnl: Decimal;
+  closed: number;
+  wins: number;
+  losses: number;
+  winRate: Decimal | null;
+}
+
+/** Mirrors Rust `breakdown::Breakdown`. */
+export interface Breakdown {
+  /** Futures, then spot. */
+  byMarket: Slice[];
+  /** Long, then short. */
+  bySide: Slice[];
+  /** Coins with closed trades, best first. */
+  bySymbol: Slice[];
 }
 
 /** Mirrors Rust `stats::DayPoint`: the account at the end of one day. */

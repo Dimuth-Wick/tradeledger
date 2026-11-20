@@ -107,6 +107,8 @@ export default function DashboardPage() {
           layout={layout}
           editing={editing}
           onLayout={saveLayout}
+          filters={filters}
+          onFilters={setFilters}
         />
       )}
     </main>

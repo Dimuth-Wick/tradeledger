@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   exportTradesCsv,
-  listSymbols,
   listTagGroups,
   queryTrades,
   type TagGroup,
@@ -33,7 +32,8 @@ interface Props {
   onOpen: (id: number) => void;
 }
 
-/** Filter bar + sortable trade table + pagination. All querying is in Rust. */
+/** Date and tag filters + sortable trade table + pagination. All querying
+ *  is in Rust. Market, side, coin and result live on the Dashboard as charts. */
 export default function TradeLog({ version, ...actions }: Props) {
   const [filters, setFilters] = useState<LogFilters>(EMPTY_FILTERS);
   const [sort, setSort] = useState<LogSort>(DEFAULT_SORT);
@@ -41,7 +41,6 @@ export default function TradeLog({ version, ...actions }: Props) {
   const [pageSize, setPageSize] = useState<number>(PAGE_SIZES[0]);
   const [result, setResult] = useState<TradePage | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [symbols, setSymbols] = useState<string[]>([]);
   const [tagGroups, setTagGroups] = useState<TagGroup[]>([]);
   const tagInfo = useMemo(() => indexTags(tagGroups), [tagGroups]);
   const [exporting, setExporting] = useState(false);
@@ -87,7 +86,6 @@ export default function TradeLog({ version, ...actions }: Props) {
   }, [query, version]);
 
   useEffect(() => {
-    listSymbols().then(setSymbols, () => setSymbols([]));
     listTagGroups().then(setTagGroups, () => setTagGroups([]));
   }, [version]);
 
@@ -115,73 +113,6 @@ export default function TradeLog({ version, ...actions }: Props) {
             value={filters.to}
             onChange={(e) => setFilter("to", e.target.value)}
           />
-        </label>
-        <label>
-          Symbol
-          <input
-            list="symbol-options"
-            value={filters.symbol}
-            placeholder="any"
-            onChange={(e) => setFilter("symbol", e.target.value)}
-          />
-          <datalist id="symbol-options">
-            {symbols.map((s) => (
-              <option key={s} value={s} />
-            ))}
-          </datalist>
-        </label>
-        <label>
-          Market
-          <select
-            value={filters.market}
-            onChange={(e) =>
-              setFilter("market", e.target.value as LogFilters["market"])
-            }
-          >
-            <option value="">Any</option>
-            <option value="usdm">Futures</option>
-            <option value="spot">Spot</option>
-          </select>
-        </label>
-        <label>
-          Side
-          <select
-            value={filters.direction}
-            onChange={(e) =>
-              setFilter("direction", e.target.value as LogFilters["direction"])
-            }
-          >
-            <option value="">Any</option>
-            <option value="long">Long</option>
-            <option value="short">Short</option>
-          </select>
-        </label>
-        <label>
-          Status
-          <select
-            value={filters.status}
-            onChange={(e) =>
-              setFilter("status", e.target.value as LogFilters["status"])
-            }
-          >
-            <option value="">Any</option>
-            <option value="open">Open</option>
-            <option value="closed">Closed</option>
-          </select>
-        </label>
-        <label>
-          Result
-          <select
-            value={filters.outcome}
-            onChange={(e) =>
-              setFilter("outcome", e.target.value as LogFilters["outcome"])
-            }
-          >
-            <option value="">Any</option>
-            <option value="win">Win</option>
-            <option value="loss">Loss</option>
-            <option value="breakeven">Breakeven</option>
-          </select>
         </label>
         <label>
           Tag

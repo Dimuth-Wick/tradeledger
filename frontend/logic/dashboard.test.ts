@@ -9,8 +9,11 @@ import {
   dashQuery,
   formatHold,
   kpis,
+  outcomeRows,
   presetRange,
   rRows,
+  sliceRows,
+  sliceSummary,
 } from "./dashboard";
 
 // Same fake sample as the Rust stats tests: closed nets +9, −4, +10, 0, −2.25
@@ -72,7 +75,66 @@ const stats: Stats = {
     { label: "0R to 1R", from: 0, to: 1, count: 1 },
     { label: "≥ 3R", from: 3, to: null, count: 1 },
   ],
+  breakdown: {
+    byMarket: [
+      {
+        key: "usdm",
+        label: "Futures",
+        netPnl: "15",
+        closed: 3,
+        wins: 2,
+        losses: 1,
+        winRate: "66.67",
+      },
+      {
+        key: "spot",
+        label: "Spot",
+        netPnl: "-2.25",
+        closed: 1,
+        wins: 0,
+        losses: 1,
+        winRate: "0",
+      },
+    ],
+    bySide: [],
+    bySymbol: [
+      {
+        key: "ETHUSDT",
+        label: "ETH/USDT",
+        netPnl: "0",
+        closed: 1,
+        wins: 0,
+        losses: 0,
+        winRate: "0",
+      },
+    ],
+  },
 };
+
+describe("breakdown rows", () => {
+  it("shapes bars with tone and summary", () => {
+    const [fut, spot] = sliceRows(stats.breakdown.byMarket);
+    expect(fut).toMatchObject({ value: 15, pnl: "15", tone: "pos" });
+    expect(spot).toMatchObject({ value: -2.25, tone: "neg" });
+    expect(sliceRows(stats.breakdown.bySymbol)[0].tone).toBe("flat");
+    expect(sliceSummary(fut)).toBe("3 trades · 67% won");
+    expect(sliceSummary(spot)).toBe("1 trade · 0% won");
+    expect(sliceSummary({ ...spot, closed: 0, winRate: null })).toBe(
+      "No closed trades",
+    );
+  });
+
+  it("ring leaves out empty outcomes", () => {
+    expect(outcomeRows(stats).map((r) => [r.key, r.count])).toEqual([
+      ["wins", 2],
+      ["losses", 2],
+      ["breakeven", 1],
+    ]);
+    expect(
+      outcomeRows({ ...stats, breakeven: 0, losses: 0 }).map((r) => r.key),
+    ).toEqual(["wins"]);
+  });
+});
 
 const byLabel = (s: Stats) =>
   Object.fromEntries(kpis(s).map((k) => [k.label, k]));

@@ -1348,6 +1348,179 @@ html.theme-fade *::after {
   fill: var(--neg);
 }
 
+.chart .bar-flat {
+  fill: var(--muted);
+}
+
+/* --- Where the money comes from (market / side / coin bars) --- */
+
+.breakdown-scroll {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.breakdown-inner {
+  min-height: 100%;
+}
+
+.breakdown-scroll .recharts-bar-rectangle path {
+  transition:
+    fill-opacity 160ms ease-out,
+    filter 160ms ease-out;
+}
+
+.breakdown-scroll .recharts-bar-rectangle:hover path {
+  filter: brightness(1.12);
+}
+
+.chart .bar-dim {
+  fill-opacity: 0.28;
+}
+
+.breakdown-scroll .recharts-cartesian-axis-tick-value,
+.breakdown-axis text {
+  fill: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.breakdown-value {
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.breakdown-value.pos {
+  fill: var(--pos);
+}
+
+.breakdown-value.neg {
+  fill: var(--neg);
+}
+
+.breakdown-value:not(.pos):not(.neg) {
+  fill: var(--muted);
+}
+
+.chart-tip-hint {
+  color: var(--muted);
+  font-size: 0.85em;
+  margin-top: 4px;
+}
+
+/* --- Trades won and lost (ring) --- */
+
+.outcome {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 100%;
+  min-height: 0;
+}
+
+.outcome-ring {
+  flex: 1 1 60%;
+  height: 100%;
+  min-width: 120px;
+}
+
+.outcome-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  text-align: center;
+}
+
+.outcome-center strong {
+  font-size: 1.9em;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.outcome-center span {
+  color: var(--muted);
+  font-size: 0.85em;
+}
+
+.outcome-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  flex: 0 0 auto;
+  font-size: 0.9em;
+}
+
+.outcome-legend li {
+  display: grid;
+  grid-template-columns: 12px auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  cursor: default;
+  transition: background 160ms ease-out;
+}
+
+.outcome-legend li.active {
+  background: var(--surface-2);
+}
+
+.outcome-legend li.muted {
+  color: var(--muted);
+}
+
+.outcome-legend strong {
+  justify-self: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.outcome-legend .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.ring-wins {
+  fill: var(--pos);
+  background: var(--pos);
+}
+
+.ring-losses {
+  fill: var(--neg);
+  background: var(--neg);
+}
+
+.ring-breakeven {
+  fill: var(--muted);
+  background: var(--muted);
+}
+
+.ring-open {
+  background: var(--border);
+}
+
+.outcome-ring .recharts-sector {
+  transition: fill-opacity 160ms ease-out;
+}
+
+.outcome-ring .ring-dim {
+  fill-opacity: 0.25;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .breakdown-scroll .recharts-bar-rectangle path,
+  .outcome-legend li,
+  .outcome-ring .recharts-sector {
+    transition: none;
+  }
+}
+
 .chart .chart-cursor {
   fill: var(--border);
   fill-opacity: 0.35;

@@ -2,6 +2,7 @@ import type {
   Decimal,
   LayoutItem,
   RBucket,
+  Slice,
   Stats,
   TradeQuery,
 } from "../connection/backend";
@@ -291,6 +292,62 @@ export function changedLayout(
     return { ...item, x: g.x, y: g.y, w: g.w, h: g.h };
   });
   return changed ? next : null;
+}
+
+/** One bar of a "where the money comes from" chart. */
+export interface SliceRow {
+  key: string;
+  label: string;
+  /** Net PnL as a number, only for bar length (text comes from `pnl`). */
+  value: number;
+  pnl: Decimal;
+  closed: number;
+  wins: number;
+  losses: number;
+  winRate: Decimal | null;
+  tone: "pos" | "neg" | "flat";
+}
+
+export function sliceRows(slices: Slice[]): SliceRow[] {
+  return slices.map((s) => {
+    const value = Number(s.netPnl);
+    return {
+      key: s.key,
+      label: s.label,
+      value,
+      pnl: s.netPnl,
+      closed: s.closed,
+      wins: s.wins,
+      losses: s.losses,
+      winRate: s.winRate,
+      tone: value > 0 ? "pos" : value < 0 ? "neg" : "flat",
+    };
+  });
+}
+
+/** "12 trades · 58% won" (or "No closed trades"). */
+export function sliceSummary(r: SliceRow): string {
+  if (r.closed === 0) return "No closed trades";
+  const trades = `${r.closed} trade${r.closed === 1 ? "" : "s"}`;
+  return r.winRate === null
+    ? trades
+    : `${trades} · ${Number(r.winRate).toFixed(0)}% won`;
+}
+
+/** Ring segments for wins / losses / breakeven, empty ones left out. */
+export interface OutcomeRow {
+  key: "wins" | "losses" | "breakeven";
+  label: string;
+  count: number;
+}
+
+export function outcomeRows(s: Stats): OutcomeRow[] {
+  const rows: OutcomeRow[] = [
+    { key: "wins", label: "Wins", count: s.wins },
+    { key: "losses", label: "Losses", count: s.losses },
+    { key: "breakeven", label: "Breakeven", count: s.breakeven },
+  ];
+  return rows.filter((r) => r.count > 0);
 }
 
 export interface RRow {
